@@ -17,14 +17,13 @@ input [63:0] rs1_cdb_in;     // CDB bus from functional units
 input  [4:0] rs1_cdb_tag;    // CDB tag bus from functional units 
 input        rs1_cdb_valid;  // The data on the CDB is valid 
 input [63:0] rs1_opa_in;     // Operand a from Rename  
-input [63:0] rs1_opb_in;     // Operand a from Rename 
+input [63:0] rs1_opb_in;     // Operand b from Rename 
 input        rs1_opa_valid;  // Is Opa a Tag or immediate data (READ THIS COMMENT) 
-input        rs1_opb_valid;  // Is Opb a tag or immediate data (READ THIS COMMENT) 
+input        rs1_opb_valid;  // Is Opb b tag or immediate data (READ THIS COMMENT) 
 input        rs1_load_in;    // Signal from rename to flop opa/b 
 input        rs1_use_enable; // Signal to send data to Func units AND to free this RS 
 input        reset;          // reset signal 
 input        clock;          // the clock 
- 
  
 output        rs1_ready_out;     // This RS is in use and ready to go to EX 
 output [63:0] rs1_opa_out;       // This RS' opa 
@@ -62,13 +61,10 @@ assign rs1_dest_tag_out = rs1_use_enable ? DestTag : 64'b0;
 assign LoadAFromCDB = (rs1_cdb_tag[4:0] == OPa) && !OPaValid && InUse && rs1_cdb_valid; 
 assign LoadBFromCDB = (rs1_cdb_tag[4:0] == OPb) && !OPbValid && InUse && rs1_cdb_valid; 
 
-
-
 always @(posedge clock) 
 begin 
     if (reset) 
     begin 
- 
             OPa <= `SD 0; 
             OPb <= `SD 0; 
             OPaValid <= `SD 0; 
