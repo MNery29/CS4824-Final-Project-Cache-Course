@@ -190,7 +190,6 @@ MULT_DEPS = verilog/mult_stage.sv
 $(call DEPS,mult): $(MULT_DEPS)
 
 # No dependencies for the rob (TODO: add any you create)
-ROB_DEPS =
 $(call DEPS,rob): $(ROB_DEPS)
 
 # This allows you to use the following make targets:
