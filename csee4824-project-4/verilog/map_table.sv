@@ -7,14 +7,15 @@ module map_table(
     input [4:0] rs2_addr, //Source register 2 address
     input [4:0] r_dest, //Destination register address from Reservation Station
 
-    input [4:0] tag_in, //Read port for tag
+    input [4:0] rs_tag_in, //Read port for tag
     //input tag_in_valid,
-    input [4:0] cdb_tag, //Read CDB tag broadcast 
-
+    input [4:0] cdb_tag_in, //Read CDB tag broadcast 
     input read_cdb,
 
     output logic [4:0] rs1_tag, //Tag output to RS opA
     output logic [4:0] rs2_tag, //Tag output to RS opB
+    output logic rs1_tag_valid,
+    output logic rs2_tag_valid,
 
     output logic [4:0] regfile_rs1_addr,
     output logic [4:0] regfile_rs2_addr,
@@ -43,7 +44,7 @@ module map_table(
         else begin
             if (read_cdb) begin
                 for (int i = 31; i >= 0; i--) begin
-                    if (has_tag[i] && (tags[i] == cdb_tag)) begin
+                    if (has_tag[i] && (tags[i] == cdb_tag_in)) begin
                         indx <= i;
                         hit <= 1;
                         tags[i] = 5'b0;
@@ -53,7 +54,7 @@ module map_table(
             end else begin
                 //Read tag from RS
                 if (r_dest != `ZERO_REG) begin
-                    tags[r_dest] <= tag_in;
+                    tags[r_dest] <= rs_tag_in;
                 end
                 //Tag outputs to RS
                 if (has_tag[rs1_addr]) begin

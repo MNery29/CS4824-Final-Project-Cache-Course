@@ -11,7 +11,7 @@ module rs1(rs1_dest_in, rs1_opa_in, rs1_opa_valid, rs1_opb_in, rs1_opb_valid,
            rs1_cdb_in, rs1_cdb_tag, rs1_cdb_valid, rs1_load_in, rs1_avail_out, 
            rs1_ready_out, rs1_opa_out, rs1_opb_out, rs1_dest_tag_out, rs1_use_enable,  
            reset, clock); 
- 
+
 input  [4:0] rs1_dest_in;    // The destination of this instruction 
 input [63:0] rs1_cdb_in;     // CDB bus from functional units 
 input  [4:0] rs1_cdb_tag;    // CDB tag bus from functional units 
@@ -56,7 +56,7 @@ assign rs1_opa_out = rs1_use_enable ? OPa : 64'b0;
 assign rs1_opb_out = rs1_use_enable ? OPb : 64'b0; 
  
 assign rs1_dest_tag_out = rs1_use_enable ? DestTag : 64'b0;
- 
+
 // Has the tag we are waiting for shown up on the CDB 
 assign LoadAFromCDB = (rs1_cdb_tag[4:0] == OPa) && !OPaValid && InUse && rs1_cdb_valid; 
 assign LoadBFromCDB = (rs1_cdb_tag[4:0] == OPb) && !OPbValid && InUse && rs1_cdb_valid; 

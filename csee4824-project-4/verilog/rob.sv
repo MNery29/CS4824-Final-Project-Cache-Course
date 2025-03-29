@@ -13,7 +13,7 @@
 module rob(
     //standard input signals for module.
     input reset,
-    input clk,
+    input clock,
 
     //input signals from dispatch stage 
     //opcode
