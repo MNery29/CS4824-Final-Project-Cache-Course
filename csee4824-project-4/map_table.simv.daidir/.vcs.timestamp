@@ -1,0 +1,133 @@
+0
+44
++define+CLOCK_PERIOD=1000.0ps
++itf+/tools/synopsys/vcs/U-2023.03-SP2-1/linux64/lib/vcsdp_lite.tab
++vc
++vcsd1
++vpi
++warn=noDEBUG_DEP
++warn=noENUMASSIGN
++warn=noTFIPC
+-Mamsrun=
+-Masflags=
+-Mcc=gcc
+-Mcfl= -pipe -fPIC -I /homes/user/fac/tk3070/conda/include -O -I/tools/synopsys/vcs/U-2023.03-SP2-1/include
+-Mcplusplus=g++
+-Mcrt0=
+-Mcrtn=
+-Mcsrc=
+-Mexternalobj=
+-Mldflags= -rdynamic
+-Mobjects= /tools/synopsys/vcs/U-2023.03-SP2-1/linux64/lib/libvirsim.so /tools/synopsys/vcs/U-2023.03-SP2-1/linux64/lib/liberrorinf.so /tools/synopsys/vcs/U-2023.03-SP2-1/linux64/lib/libsnpsmalloc.so /tools/synopsys/vcs/U-2023.03-SP2-1/linux64/lib/libvfs.so
+-Mout=map_table.simv
+-Msaverestoreobj=/tools/synopsys/vcs/U-2023.03-SP2-1/linux64/lib/vcs_save_restore_new.o
+-Msyslibs=/tools/synopsys/verdi/verdi/U-2023.03-SP2-1/share/PLI/VCS/LINUX64/pli.a -ldl
+-Mupdate
+-Mvcsaceobjs=
+-Mxcflags= -pipe -fPIC -I/tools/synopsys/vcs/U-2023.03-SP2-1/include
+-Mxllcflags=
+-P
+-Xufe=2steps
+-debug_access+all+reverse
+-fsdb
+-full64
+-gen_obj
+-kdb
+-lca
+-line
+-nc
+-o map_table.simv
+-picarchive
+-sverilog
+/tools/synopsys/vcs/U-2023.03-SP2-1/linux64/bin/vcs1
+map_table.simv
+/tools/synopsys/verdi/verdi/U-2023.03-SP2-1/share/PLI/VCS/LINUX64/verdi.tab
+test/map_table_test.sv
+verilog/map_table.sv
+71
+which_declare=declare -f
+XDG_SESSION_ID=108
+XDG_RUNTIME_DIR=/run/user/35129
+XDG_DATA_DIRS=/user/stud/spring25/kz2504/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share
+VMR_MODE_FLAG=64
+VERDI_HOME=/tools/synopsys/verdi/verdi/U-2023.03-SP2-1
+VCS_PYTHON3=/tools/synopsys/vcs/U-2023.03-SP2-1/linux64/bin/Python-3.6.1/bin/python3
+VCS_PATHMAP_PRELOAD_DONE=1
+VCS_MX_HOME_INTERNAL=1
+VCS_MODE_FLAG=64
+VCS_LCAMSG_PRINT_OFF=1
+VCS_HOME=/tools/synopsys/vcs/U-2023.03-SP2-1
+VCS_EXEC_DONE=1
+VCS_DEPTH=0
+VCS_ARG_ADDED_FOR_TMP=1
+VCS_ARCH=linux64
+UNAME=/bin/uname
+TOOL_HOME=/tools/synopsys/vcs/U-2023.03-SP2-1/linux64
+SYNOPSYS_LC_ROOT=/tools/synopsys/lc/U-2022.12-SP6
+SYNOPSYS_ENV_SET=1
+SW_VCS=2020.12-SP2-1
+STROOT=/tools/synopsys/sentaurus/U-2022.12-SP2
+STDB=/user/stud/spring25/kz2504/DB
+SSH_TTY=/dev/pts/2
+SSH_CONNECTION=10.207.34.116 63729 128.59.64.122 22
+SSH_CLIENT=10.207.34.116 63729 22
+SSH_ASKPASS=/usr/libexec/openssh/gnome-ssh-askpass
+SNPS_VERDI_INTERNAL_LP_XML_NEW_FLOW=1
+SNPS_VCS_PYTHON3=/tools/synopsys/vcs/U-2023.03-SP2-1/linux64/bin/Python-3.6.1/bin/python3
+SNPS_VCS_CLANG_PATH=/tools/synopsys/vcs/U-2023.03-SP2-1/linux64/clang
+SNPS_INTERNAL_VCS_LINUX_OS=linux
+SELINUX_USE_CURRENT_RANGE=
+SELINUX_ROLE_REQUESTED=
+SELINUX_LEVEL_REQUESTED=
+SCRNAME=vcs
+SCRIPT_NAME=vcs
+RSOFT_PROGRAMPATH=/tools/synopsys/photonicsolutions/2021.09-3/rsoft/bin
+RSLM_SERVER=lightwave6.ee.columbia.edu:27020
+RISCV32_HOME=/homes/user/fac/tk3070/tmp/riscv-gcc/riscv-32/bin
+QUARTUS_ENV_SET=1
+QSYS_ROOTDIR=/tools/intel/intelFPGA/21.1/quartus/sopc_builder/bin
+PHOTONICS_SOLUTIONS_VERSION=2021.09-3
+PHOTONICS_SOLUTIONS_ROOT=/tools/synopsys/photonicsolutions
+OVA_UUM=0
+OPTO_LINK_BASE=/tools/synopsys/photonicsolutions/2021.09-3/optodesigner/bin
+MGLS_LICENSE_FILE=1720@bioeelincad.ee.columbia.edu
+MGC_HOME=/tools/mentor/aok_cal_2024.3_25.13
+MFLAGS=
+MENTOR_ENV_SET=1
+MAKE_TERMOUT=/dev/pts/2
+MAKE_TERMERR=/dev/pts/2
+MAKELEVEL=1
+MAKEFLAGS=
+LESSOPEN=||/usr/bin/lesspipe.sh %s
+LC_ALL=C
+KRB5CCNAME=KCM:
+HPEESOF_DIR=/tools/keysight/ADS2020
+HISTCONTROL=ignoredups
+ELF2HEX_HOME=/homes/user/fac/tk3070/tmp/elf2hex-build/bin
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/35129/bus
+CLOCK_PERIOD=1000.0
+CDS_LIC_FILE=5280@bioeelincad.ee.columbia.edu
+CDSHOME=/tools/cadence/IC618.270
+CALIBRE_HOME=/tools/mentor/aok_cal_2024.3_25.13
+CADENCE_ENV_SET=1
+BASH_FUNC_which%%=() {  ( alias;_ eval ${which_declare} ) | /usr/bin/which --tty-only --read-alias --read-functions --show-tilde --show-dot $@_}
+AWPROOTDIR=/tools/ansys/AnsysEM/AnsysEM24.2
+ANS_NODEPCHECK=1
+ANSYSLMD_LICENSE_FILE=27005@bioeelincad.ee.columbia.edu
+ADS_LICENSE_FILE=8932@bioeelincad.ee.columbia.edu
+ADS_ENV_SET=1
+0
+0
+5
+1741916602 verilog/sys_defs.svh
+1743142484 verilog/map_table.sv
+1743141915 test/map_table_test.sv
+1697019014 /tools/synopsys/verdi/verdi/U-2023.03-SP2-1/share/PLI/VCS/LINUX64/verdi.tab
+1697253802 /tools/synopsys/vcs/U-2023.03-SP2-1/linux64/lib/vcsdp_lite.tab
+4
+1697255420 /tools/synopsys/vcs/U-2023.03-SP2-1/linux64/lib/libvirsim.so
+1697254610 /tools/synopsys/vcs/U-2023.03-SP2-1/linux64/lib/liberrorinf.so
+1697254517 /tools/synopsys/vcs/U-2023.03-SP2-1/linux64/lib/libsnpsmalloc.so
+1697254604 /tools/synopsys/vcs/U-2023.03-SP2-1/linux64/lib/libvfs.so
+1743142493 map_table.simv.daidir
+-1 partitionlib
