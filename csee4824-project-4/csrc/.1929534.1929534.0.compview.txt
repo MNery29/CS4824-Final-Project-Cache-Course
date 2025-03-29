@@ -1,9 +1,0 @@
-{"vcs1":{"timestamp_begin":1743140298.868548697, "rt":2.17, "ut":0.21, "st":0.20}}
-{"vcselab":{"timestamp_begin":1743140301.089653939, "rt":0.93, "ut":0.26, "st":0.08}}
-{"link":{"timestamp_begin":1743140302.068152418, "rt":1.11, "ut":0.26, "st":0.09}}
-{"SNPS_VCS_INTERNAL_ROOT_START_TIME": 1743140298.217184596}
-{"VCS_COMP_START_TIME": 1743140298.217184596}
-{"VCS_COMP_END_TIME": 1743140303.909540333}
-{"VCS_USER_OPTIONS": "-CFLAGS -I /homes/user/fac/tk3070/conda/include -sverilog +vc -Mupdate -line -full64 -kdb -lca -nc -debug_access+all+reverse +warn=noTFIPC +warn=noDEBUG_DEP +warn=noENUMASSIGN +define+CLOCK_PERIOD=1000.0ps test/map_table_test.sv verilog/map_table.sv -o map_table.simv"}
-{"vcs1": {"peak_mem": 550816}}
-{"vcselab": {"peak_mem": 246056}}

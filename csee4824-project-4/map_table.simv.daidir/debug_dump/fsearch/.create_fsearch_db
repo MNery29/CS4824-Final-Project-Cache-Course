@@ -1,9 +1,0 @@
-#!/bin/sh -h 
-PYTHONHOME=/tools/synopsys/vcs/U-2023.03-SP2-1/etc/search/pyh
-export PYTHONHOME
-PYTHONPATH=/tools/synopsys/vcs/U-2023.03-SP2-1/linux64/lib/pylib27
-export PYTHONPATH
-LD_LIBRARY_PATH=/tools/synopsys/vcs/U-2023.03-SP2-1/linux64/lib:/tools/synopsys/vcs/U-2023.03-SP2-1/linux64/lib/pylib27
-export LD_LIBRARY_PATH
-/tools/synopsys/vcs/U-2023.03-SP2-1/linux64/bin/vcsfind_create_index.exe  -z  "/homes/user/stud/spring25/kz2504/csee4824/CS4824-Final-Project-Cache-Course/csee4824-project-4/map_table.simv.daidir/debug_dump/fsearch/./idents_oqy3fW.xml.gz" "/homes/user/stud/spring25/kz2504/csee4824/CS4824-Final-Project-Cache-Course/csee4824-project-4/map_table.simv.daidir/debug_dump/fsearch/./idents_tapi.xml.gz" -o "/homes/user/stud/spring25/kz2504/csee4824/CS4824-Final-Project-Cache-Course/csee4824-project-4/map_table.simv.daidir/debug_dump/fsearch/fsearch.db_tmp"
-\mv "/homes/user/stud/spring25/kz2504/csee4824/CS4824-Final-Project-Cache-Course/csee4824-project-4/map_table.simv.daidir/debug_dump/fsearch/fsearch.db_tmp" "/homes/user/stud/spring25/kz2504/csee4824/CS4824-Final-Project-Cache-Course/csee4824-project-4/map_table.simv.daidir/debug_dump/fsearch/fsearch.db"

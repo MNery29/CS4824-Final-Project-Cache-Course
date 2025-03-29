@@ -1,3 +1,0 @@
-*design* DebussyLib (btIdent Verdi_U-2023.03-SP2-1)
-Command arguments:  -lib  /homes/user/stud/spring25/kz2504/csee4824/CS4824-Final-Project-Cache-Course/csee4824-project-4/map_table.simv.daidir/work  -saveLevel  -elab  /homes/user/stud/spring25/kz2504/csee4824/CS4824-Final-Project-Cache-Course/csee4824-project-4/map_table.simv.daidir/kdb  -simflow  -simdir  /homes/user/stud/spring25/kz2504/csee4824/CS4824-Final-Project-Cache-Course/csee4824-project-4/map_table.simv.daidir/kdb_libs  -topfile  /homes/user/stud/spring25/kz2504/csee4824/CS4824-Final-Project-Cache-Course/csee4824-project-4/map_table.simv.daidir/.elabcomTopFile  -ssv  -ssy  -Lf  work  +disable_message+C00380+C00381  +disable_message+C00388+C00389  -SNPS_ELABCOM  -saveElab 
-Total	0 error(s),   0 warning(s)
