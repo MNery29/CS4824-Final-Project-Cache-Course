@@ -10,19 +10,21 @@
 
 `include "verilog/sys_defs.svh"
 
-module stage_if_old (
+module stage_if (
     input             clock,          // system clock
     input             reset,          // system reset
     input             if_valid,       // only go to next PC when true
     input             take_branch,    // taken-branch signal
     input [`XLEN-1:0] branch_target,  // target pc: use if take_branch is TRUE
-    input [63:0]      Imem2proc_data, // data coming back from Instruction memory
+    input [63:0]      Icache_data_out, // data coming back from cache
+    input             Icache_valid_out,// high when valid
 
     output IF_ID_PACKET      if_packet,
-    output logic [`XLEN-1:0] proc2Imem_addr // address sent to Instruction memory
+    output logic [`XLEN-1:0] proc2Icache_addr // address sent to icache
 );
 
     logic [`XLEN-1:0] PC_reg; // PC we are currently fetching
+
 
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
@@ -35,13 +37,13 @@ module stage_if_old (
         end
     end
 
-    // address of the instruction we're fetching (64 bit memory lines)
-    // mem always gives us 8=2^3 bytes, so ignore the last 3 bits
-    assign proc2Imem_addr = {PC_reg[`XLEN-1:3], 3'b0};
+    //i think icache alr ignores the lower 3 bits
+    assign proc2Icache_addr = PC_reg;
 
-    // this mux is because the Imem gives us 64 bits not 32 bits
-    assign if_packet.inst = (~if_valid) ? `NOP :
-                            PC_reg[2] ? Imem2proc_data[63:32] : Imem2proc_data[31:0];
+    // this mux is because the Icache gives us 64 bits not 32 bits
+    assign if_packet.inst = (if_valid && Icache_valid_out)
+                          ? PC_reg[2] ? Icache_data_out[63:32] : Icache_data_out[31:0]
+                          : `NOP;
 
     assign if_packet.PC  = PC_reg;
     assign if_packet.NPC = PC_reg + 4; // pass PC+4 down pipeline w/instruction

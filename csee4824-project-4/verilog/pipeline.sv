@@ -62,8 +62,62 @@ module pipeline (
     logic if_id_enable, id_ex_enable, ex_mem_enable, mem_wb_enable;
 
     // Outputs from IF-Stage and IF/ID Pipeline Register
+    logic [`XLEN-1:0] proc2Icache_addr;
+    logic [63:0]      Icache_data_out;
+    logic             Icache_valid_out;
+    logic [1:0]       proc2Imem_command;
     logic [`XLEN-1:0] proc2Imem_addr;
+    logic [3:0]  Imem2proc_response, // Should be zero unless there is a response
+    logic [63:0] Imem2proc_data,
+    logic [3:0]  Imem2proc_tag,
+
+    always_comb begin
+        if (proc2Dmem_command != BUS_NONE) begin // read or write DATA from memory
+            proc2mem_command = proc2Dmem_command;
+            proc2mem_addr    = proc2Dmem_addr;
+            proc2mem_size    = proc2Dmem_size;  // size is never DOUBLE in project 3
+        end else begin                          // read an INSTRUCTION from memory
+            proc2mem_command = BUS_LOAD;
+            proc2mem_addr    = proc2Imem_addr;
+            proc2mem_size    = DOUBLE;          // instructions load a full memory line (64 bits)
+        end
+        proc2mem_data = {32'b0, proc2Dmem_data};
+    end
+
     IF_ID_PACKET if_packet, if_id_reg;
+
+    stage_if stage_if_0 (
+        // Inputs
+        .clock (clock),
+        .reset (reset),
+        .if_valid       (next_if_valid),
+        .take_branch    (ex_mem_reg.take_branch),
+        .branch_target  (ex_mem_reg.alu_result),
+        .Icache_data_out (Icache_data_out),
+        .Icache_valid_out (Icache_valid_out),
+
+        // Outputs
+        .if_packet      (if_packet),
+        .proc2Icache_addr (proc2Icache_addr)
+    );
+
+    icache icache_0 (
+        //input
+        .clock           (clock),
+        .reset           (reset),
+        //input
+        .Imem2proc_response(Imem2proc_response),
+        .Imem2proc_data    (Imem2proc_data),
+        .Imem2proc_tag     (Imem2proc_tag),
+        //input
+        .proc2Icache_addr  (proc2Icache_addr),  
+        //output
+        .proc2Imem_command (proc2Imem_command),
+        .proc2Imem_addr    (proc2Imem_addr),
+        //output
+        .Icache_data_out   (Icache_data_out),
+        .Icache_valid_out  (Icache_valid_out)
+    );
 
     // Outputs from ID stage and ID/EX Pipeline Register
     ID_EX_PACKET id_packet, id_ex_reg;
