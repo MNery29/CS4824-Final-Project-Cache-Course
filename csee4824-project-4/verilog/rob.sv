@@ -39,16 +39,17 @@ module rob(
     output map_table_tag_valid,
     //output signals to memory
     output [63:0] mem_addr,
+    output mem_valid,
     //rob full signal, for stalling/hazards   
     output rob_full
 );
     //internal signals
     //rob entries - 5
-    logic [63:0] rob_values[4:0];
-    logic [7:0] rob_opcode[4:0];
-    logic [4:0] rob_dest[4:0];
-    logic rob_busy [4:0]; //if operation is still happening
-    logic rob_ready[4:0]; //monitor if ROB values are ready to be committed
+    logic [63:0] rob_values[31:0];
+    logic [7:0] rob_opcode[31:0];
+    logic [4:0] rob_dest[31:0];
+    logic rob_busy [31:0]; //if operation is still happening
+    logic rob_ready[31:0]; //monitor if ROB values are ready to be committed
 
     //head and tail pointers for queue FIFO structure
     logic head[5:0];
@@ -58,11 +59,13 @@ module rob(
     
     always_ff @(posedge clk) begin
         if(reset) begin
-            rob_values[4:0] <= 0;
-            rob_dest[4:0] <= 0;
-            rob_ready[4:0] <= 0;
-            head[4:0] <= 0;
-            tail[4:0] <= 0;
+            for (int i = 0; i < 32; i++) begin
+                rob_values[i] <= 64'b0;
+                rob_dest[i] <= 0;
+                rob_ready[i] <= 0;
+            end
+            head <= 6'b0;
+            tail <= 6'b0;
         end
         else begin
             
@@ -79,12 +82,13 @@ module rob(
                 map_table_tag_valid <= 0;
             end
             if (cdb_valid) begin
-                rob_values[tag] <= cdb_value;
-                rob_ready[tag] <= 1'b1;
-                rob_busy[tag] <= 1'b0;
+                rob_values[cdb_tag] <= cdb_value;
+                rob_ready[cdb_tag] <= 1'b1;
+                rob_busy[cdb_tag] <= 1'b0;
             end
             if (retire_valid) begin
                 if (branch_mispredict) begin
+                    // S
                 //    head[4:0] <= map_table_tag;
                 end
                 else begin
@@ -97,6 +101,7 @@ module rob(
             end
         end
     end
+endmodule
 
 
 
