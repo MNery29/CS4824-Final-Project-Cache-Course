@@ -12,7 +12,7 @@ module rs1(rs1_dest_in, rs1_opa_in, rs1_opa_valid, rs1_opb_in, rs1_opb_valid,
            rs1_ready_out, rs1_opa_out, rs1_opb_out, rs1_dest_tag_out, rs1_use_enable,  
            reset, clock); 
 
-input  [4:0] rs1_dest_in;    // The destination of this instruction 
+input  [4:0] rs1_tag_in;    // The destination of this instruction 
 input [63:0] rs1_cdb_in;     // CDB bus from functional units 
 input  [4:0] rs1_cdb_tag;    // CDB tag bus from functional units 
 input        rs1_cdb_valid;  // The data on the CDB is valid 
