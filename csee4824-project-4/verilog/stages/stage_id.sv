@@ -289,7 +289,9 @@ module stage_id (
             OPA_IS_ZERO : rs1_opa_in = 32'b0; 
         endcase
         if (opa_select == OPA_IS_RS1) begin //If inst is R type
-            if (!mt_to_rs_tag1[0]) begin //Rs1 is not ready in ROB
+            if (mt_to_rs_tag1[4:0]) begin
+                
+            end if (!mt_to_rs_tag1[0]) begin //Rs1 is not ready in ROB
                 rs1_opa_valid = 0;
             end else begin
                 rs1_opa_valid = 1;
@@ -314,7 +316,7 @@ module stage_id (
         if (opa_select == OPA_IS_RS2) begin //If inst is R type
             if (!mt_to_rs_tag2[0]) begin //Rs1 is not ready in ROB
                 rs1_opb_valid = 0;
-            end else begin
+            end else begin //ADD READ FROM REGFILE LOGIC!
                 rs1_opb_valid = 1;
                 rob_to_rs_read2 = 1;
                 rob_read_tag2 = mt_to_rs_tag2[5:1];
@@ -387,7 +389,7 @@ module stage_id (
     //output signals to memory
         //.mem_addr(), //Will incorporate later with LSQ structures 
         //.mem_valid(),
-    //rob full signal, for stalling/hazards   
+    //rob full signal, for stalling/hazards 
         .rob_full(rob_full)
     );
 
@@ -402,7 +404,6 @@ module stage_id (
 
         .read_out_1 (id_packet.rs1_value),
         .read_out_2 (id_packet.rs2_value)
-
     );
 
     // Instantiate the instruction decoder

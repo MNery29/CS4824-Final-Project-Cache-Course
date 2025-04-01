@@ -1,0 +1,21 @@
+Info: [VCS_SAVE_RESTORE_INFO] ASLR (Address Space Layout Randomization) is detected on the machine. To enable $save functionality, ASLR will be switched off and simv re-executed.
+Please use '-no_save' simv switch to avoid re-execution or '-suppress=ASLR_DETECTED_INFO' to suppress this message.
+Chronologic VCS simulator copyright 1991-2023
+Contains Synopsys proprietary information.
+Compiler version U-2023.03-SP2-1_Full64; Runtime version U-2023.03-SP2-1_Full64;  Mar 31 19:55 2025
+Time:   0 clock:0 reset:1 read_cdb:0 load_entry:0 retire_entry: 0 retire_addr: xxxxx rs1_addr:00000 rs2_addr:00000 r_dest:00000 tag_in:00000 cdb_tag_in:00000 rs1_tag:xxxxxx rs2_tag:xxxxxx
+Time:   1 clock:1 reset:1 read_cdb:0 load_entry:0 retire_entry: 0 retire_addr: xxxxx rs1_addr:00000 rs2_addr:00000 r_dest:00000 tag_in:00000 cdb_tag_in:00000 rs1_tag:000000 rs2_tag:000000
+Time:   1 clock:0 reset:0 read_cdb:0 load_entry:1 retire_entry: 0 retire_addr: xxxxx rs1_addr:00001 rs2_addr:00010 r_dest:00011 tag_in:00001 cdb_tag_in:00000 rs1_tag:000000 rs2_tag:000000
+Time:   2 clock:1 reset:0 read_cdb:0 load_entry:1 retire_entry: 0 retire_addr: xxxxx rs1_addr:00001 rs2_addr:00010 r_dest:00011 tag_in:00001 cdb_tag_in:00000 rs1_tag:000000 rs2_tag:000000
+Time:   2 clock:0 reset:0 read_cdb:0 load_entry:0 retire_entry: 0 retire_addr: xxxxx rs1_addr:00010 rs2_addr:00011 r_dest:00000 tag_in:00000 cdb_tag_in:00000 rs1_tag:000000 rs2_tag:000010
+Time:   3 clock:1 reset:0 read_cdb:0 load_entry:0 retire_entry: 0 retire_addr: xxxxx rs1_addr:00010 rs2_addr:00011 r_dest:00000 tag_in:00000 cdb_tag_in:00000 rs1_tag:000000 rs2_tag:000010
+Time:   3 clock:0 reset:0 read_cdb:1 load_entry:0 retire_entry: 0 retire_addr: xxxxx rs1_addr:00010 rs2_addr:00011 r_dest:00000 tag_in:00000 cdb_tag_in:00001 rs1_tag:000000 rs2_tag:000010
+Time:   4 clock:1 reset:0 read_cdb:1 load_entry:0 retire_entry: 0 retire_addr: xxxxx rs1_addr:00010 rs2_addr:00011 r_dest:00000 tag_in:00000 cdb_tag_in:00001 rs1_tag:000000 rs2_tag:000011
+Time:   4 clock:0 reset:0 read_cdb:0 load_entry:0 retire_entry: 1 retire_addr: 00011 rs1_addr:00010 rs2_addr:00011 r_dest:00011 tag_in:00010 cdb_tag_in:00001 rs1_tag:000000 rs2_tag:000011
+Time:   5 clock:1 reset:0 read_cdb:0 load_entry:0 retire_entry: 1 retire_addr: 00011 rs1_addr:00010 rs2_addr:00011 r_dest:00011 tag_in:00010 cdb_tag_in:00001 rs1_tag:000000 rs2_tag:000000
+$finish called from file "test/map_table_test.sv", line 91.
+$finish at simulation time                 5000
+           V C S   S i m u l a t i o n   R e p o r t 
+Time: 5000 ps
+CPU Time:      0.300 seconds;       Data structure size:   0.0Mb
+Mon Mar 31 19:55:26 2025
