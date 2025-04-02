@@ -2,14 +2,21 @@ Info: [VCS_SAVE_RESTORE_INFO] ASLR (Address Space Layout Randomization) is detec
 Please use '-no_save' simv switch to avoid re-execution or '-suppress=ASLR_DETECTED_INFO' to suppress this message.
 Chronologic VCS simulator copyright 1991-2023
 Contains Synopsys proprietary information.
-Compiler version U-2023.03-SP2-1_Full64; Runtime version U-2023.03-SP2-1_Full64;  Apr  1 14:00 2025
-Time:   0 clock:0 reset:1 |Inputs:| cdb_valid:x cdb_tag:xxxxx cdb_in:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx rob_tag:xxxxx opa_valid:x opa_in:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx opb_valid:x opb_in:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx load_in:x use_en:x free_in:x                 |Outputs:| ready_out:x avail_out:x opa_out:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx opb_out:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx tag_out:xxxxx debug_status:00xxx
-Time:   1 clock:1 reset:1 |Inputs:| cdb_valid:x cdb_tag:xxxxx cdb_in:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx rob_tag:xxxxx opa_valid:x opa_in:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx opb_valid:x opb_in:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx load_in:x use_en:x free_in:x                 |Outputs:| ready_out:0 avail_out:1 opa_out:00000000000000000000000000000000 opb_out:00000000000000000000000000000000 tag_out:00000 debug_status:00000
-Time:   1 clock:0 reset:0 |Inputs:| cdb_valid:x cdb_tag:xxxxx cdb_in:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx rob_tag:xxxxx opa_valid:x opa_in:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx opb_valid:x opb_in:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx load_in:x use_en:x free_in:x                 |Outputs:| ready_out:0 avail_out:1 opa_out:00000000000000000000000000000000 opb_out:00000000000000000000000000000000 tag_out:00000 debug_status:00000
-Time:   2 clock:1 reset:0 |Inputs:| cdb_valid:x cdb_tag:xxxxx cdb_in:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx rob_tag:xxxxx opa_valid:x opa_in:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx opb_valid:x opb_in:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx load_in:x use_en:x free_in:x                 |Outputs:| ready_out:0 avail_out:1 opa_out:00000000000000000000000000000000 opb_out:00000000000000000000000000000000 tag_out:00000 debug_status:00000
-$finish called from file "test/reservation_station_test.sv", line 51.
-$finish at simulation time                 2000
+Compiler version U-2023.03-SP2-1_Full64; Runtime version U-2023.03-SP2-1_Full64;  Apr  1 16:40 2025
+Time:   0 clock:1 reset:1 |Inputs:| cdb_valid:0 cdb_tag:00000 cdb_in:00000000 rob_tag:00000 opa_valid:0 opa_in:00000000 opb_valid:0 opb_in:00000000 load_in:0 use_en:0 free_in:0                 |Outputs:| ready_out:0 avail_out:1 opa_out:00000000 opb_out:00000000 tag_out:00000 debug_status:000
+Time:   1 clock:0 reset:0 |Inputs:| cdb_valid:0 cdb_tag:00000 cdb_in:00000000 rob_tag:00000 opa_valid:0 opa_in:00000000 opb_valid:0 opb_in:00000000 load_in:0 use_en:0 free_in:0                 |Outputs:| ready_out:0 avail_out:1 opa_out:00000000 opb_out:00000000 tag_out:00000 debug_status:000
+Time:   1 clock:1 reset:0 |Inputs:| cdb_valid:0 cdb_tag:00000 cdb_in:00000000 rob_tag:00000 opa_valid:0 opa_in:00000000 opb_valid:0 opb_in:00000000 load_in:0 use_en:0 free_in:0                 |Outputs:| ready_out:0 avail_out:1 opa_out:00000000 opb_out:00000000 tag_out:00000 debug_status:000
+Time:   2 clock:0 reset:0 |Inputs:| cdb_valid:0 cdb_tag:00000 cdb_in:00000000 rob_tag:00001 opa_valid:0 opa_in:00000002 opb_valid:0 opb_in:00000003 load_in:1 use_en:1 free_in:0                 |Outputs:| ready_out:0 avail_out:1 opa_out:00000000 opb_out:00000000 tag_out:00000 debug_status:000
+Time:   2 clock:1 reset:0 |Inputs:| cdb_valid:0 cdb_tag:00000 cdb_in:00000000 rob_tag:00001 opa_valid:0 opa_in:00000002 opb_valid:0 opb_in:00000003 load_in:1 use_en:1 free_in:0                 |Outputs:| ready_out:0 avail_out:0 opa_out:00000002 opb_out:00000003 tag_out:00001 debug_status:100
+Time:   3 clock:0 reset:0 |Inputs:| cdb_valid:1 cdb_tag:00010 cdb_in:0000ffff rob_tag:00001 opa_valid:0 opa_in:00000002 opb_valid:0 opb_in:00000003 load_in:0 use_en:1 free_in:0                 |Outputs:| ready_out:0 avail_out:0 opa_out:00000002 opb_out:00000003 tag_out:00001 debug_status:100
+Time:   3 clock:1 reset:0 |Inputs:| cdb_valid:1 cdb_tag:00010 cdb_in:0000ffff rob_tag:00001 opa_valid:0 opa_in:00000002 opb_valid:0 opb_in:00000003 load_in:0 use_en:1 free_in:0                 |Outputs:| ready_out:0 avail_out:0 opa_out:0000ffff opb_out:00000003 tag_out:00001 debug_status:110
+Time:   4 clock:0 reset:0 |Inputs:| cdb_valid:1 cdb_tag:00011 cdb_in:ffff0000 rob_tag:00001 opa_valid:0 opa_in:00000002 opb_valid:0 opb_in:00000003 load_in:0 use_en:1 free_in:0                 |Outputs:| ready_out:0 avail_out:0 opa_out:0000ffff opb_out:00000003 tag_out:00001 debug_status:110
+Time:   4 clock:1 reset:0 |Inputs:| cdb_valid:1 cdb_tag:00011 cdb_in:ffff0000 rob_tag:00001 opa_valid:0 opa_in:00000002 opb_valid:0 opb_in:00000003 load_in:0 use_en:1 free_in:0                 |Outputs:| ready_out:1 avail_out:0 opa_out:0000ffff opb_out:ffff0000 tag_out:00001 debug_status:111
+Time:   5 clock:0 reset:0 |Inputs:| cdb_valid:0 cdb_tag:00011 cdb_in:ffff0000 rob_tag:00001 opa_valid:0 opa_in:00000002 opb_valid:0 opb_in:00000003 load_in:0 use_en:1 free_in:1                 |Outputs:| ready_out:1 avail_out:0 opa_out:0000ffff opb_out:ffff0000 tag_out:00001 debug_status:111
+Time:   5 clock:1 reset:0 |Inputs:| cdb_valid:0 cdb_tag:00011 cdb_in:ffff0000 rob_tag:00001 opa_valid:0 opa_in:00000002 opb_valid:0 opb_in:00000003 load_in:0 use_en:1 free_in:1                 |Outputs:| ready_out:0 avail_out:1 opa_out:00000000 opb_out:00000000 tag_out:00000 debug_status:000
+$finish called from file "test/reservation_station_test.sv", line 87.
+$finish at simulation time                 5500
            V C S   S i m u l a t i o n   R e p o r t 
-Time: 2000 ps
+Time: 5500 ps
 CPU Time:      0.310 seconds;       Data structure size:   0.0Mb
-Tue Apr  1 14:00:39 2025
+Tue Apr  1 16:40:56 2025

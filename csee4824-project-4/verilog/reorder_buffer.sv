@@ -7,6 +7,8 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
+//Temp ROB for integration with dispatch stage
+
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 
@@ -33,26 +35,28 @@ module reorder_buffer(
 
     //input signals from retire stage
     input retire_valid,
-    input branch_mispredict,
+    input clear_rob,
 
     //output signals to Regfile
-    output [4:0] reg_dest,
-    output [31:0] reg_value,
+    output logic [4:0] reg_dest,
+    output logic [31:0] reg_value,
 
     //output for reservation station/map table: Tag for latest dispatch 
     output [4:0] rob_tag_out,
     output [31:0] rob_to_rs_value1,
     output [31:0] rob_to_rs_value2,
-    output rob_out_valid,
+    output logic rob_out_valid,
     
     //output signals to memory
-    output [63:0] mem_addr,
-    output mem_valid,
+    output logic [31:0] mem_addr,
+    output logic mem_valid,
     //rob full signal, for stalling/hazards   
-    output rob_full
+    output rob_full,
+    //debug
+    output [11:0] rob_debug
 );
 
-    typedef enum logic[1:0] { EMPTY, BUSY, READY } rob_state; //used to track status of an instruction.
+    typedef enum logic[1:0] {EMPTY, BUSY, READY} rob_state; //used to track status of an instruction.
     //internal signals
     //rob entries - 5
     rob_state rob_status[31:0]; //status of each instruction in ROB
@@ -83,45 +87,45 @@ module reorder_buffer(
     );
     endfunction
 
-    always_ff @(posedge clk) begin
+    assign rob_tag_out = tail[4:0];
+
+    assign rob_to_rs_value1 = rob_to_rs_read1 ? rob_values[rob_read_tag1] : 32'b0;
+    assign rob_to_rs_value2 = rob_to_rs_read2 ? rob_values[rob_read_tag2] : 32'b0;
+    
+    assign rob_debug = {head, tail};
+
+    always_ff @(posedge clock) begin
         if(reset) begin
             for (int i = 0; i < 32; i++) begin
-                rob_values[i] <= 64'b0;
+                rob_values[i] <= 32'b0;
                 rob_dest[i] <= 0;
                 rob_opcode[i] <= 0;
                 rob_status[i] <= EMPTY;
             end
             head <= 6'b0;
             tail <= 6'b0;
-            rob_tag_out <= 5'b0;
+            reg_dest <= 5'b0;
+            reg_value <= 32'b0;
+            mem_valid <= 1'b0;
+            mem_addr <= 32'b0;
             rob_out_valid <= 0;
-            rob_to_rs_value <= 32'b0;
+
         end
         else begin
             //set default values
-            reg_valid <= 1'b0;
-            mem_valid <= 1'b0;
-            rob_out_valid <= 1'b0;
+            rob_out_valid <= 0;
 
             //dispatch stage logic, to handle incoming dispatch instruction. 
             if (dispatch_valid && !rob_full) begin
-                rob_values[tail[4:0]] <= 0; //temporary placeholder, await cdb update. 
+                rob_values[tail[4:0]] <= 32'b0; //temporary placeholder, await cdb update. 
                 rob_dest[tail[4:0]] <= dispatch_dest_reg; // set destination register 
                 rob_opcode[tail[4:0]] <= dispatch_opcode; // set opcode
                 rob_status[tail[4:0]] <= BUSY; // set status to busy till CDB udpate. 
-                rob_tag_out <= tail[4:0]; // update RS/MT tag w/ new entry 
                 rob_out_valid <= 1'b1; // set valid bit for output to RS/MT
                 tail <= tail + 1; //increment tail pointer, circular buffer style
             end else begin 
-                rob_out_valid <= 0; //reset tag/value output valid if no dispatch. 
+                rob_out_valid <= 1'b0; //reset tag/value output valid if no dispatch. 
             end 
-
-            //Read from ROB if RS needs a value ready in ROB but not retired
-            if (rob_to_rs_read1) begin
-                rob_to_rs_value1 <= rob_values[rob_read_tag1];
-            if (rob_to_rs_read2) begin
-                rob_to_rs_value2 <= rob_values[rob_read_tag2];
-            end
 
             //execute stage logic, to handle incoming CDB update.
             if (cdb_valid) begin
@@ -131,35 +135,18 @@ module reorder_buffer(
 
             // retire stage logic to commit ready instructions. Check if an instruction is ready to retire.  
             if (retire_valid && rob_status[head[4:0]] == READY) begin
-                if (branch_mispredict) begin
-                    //placeholder for misprediction. Update in detail later. 
-                    for (int i = 0; i < 32; i++) begin
-                        rob_values[i] <= 64'b0;
-                        rob_dest[i] <= 0;
-                        rob_opcode[i] <= 0;
-                        rob_status[i] <= EMPTY;
-                    end
-                    head <= tail; //reset head to tail to discard instructions. 
-                end
-                else begin
-                    //Check if to write to regfile
-                    if (regfile_retire(rob_opcode[head[4:0]])) begin
-                        reg_dest <= rob_dest[head[4:0]];
-                        reg_value <= rob_values[head[4:0]];
-                    end
-                    else begin
-                        reg_dest <= `ZERO_REG;
-                    end
-
-                    //Check if to write to memory
-                    if (memory_retire(rob_opcode[head[4:0]])) begin
-                        mem_addr <= rob_values[head[4:0]];
-                        mem_valid <= 1'b1;
-                    end
-
                     //update head pointer
+                    reg_dest <= regfile_retire(rob_opcode[head[4:0]]) ? rob_dest[head[4:0]] : `ZERO_REG;
+                    reg_value <= regfile_retire(rob_opcode[head[4:0]]) ? rob_values[head[4:0]] : 32'b0;
+
+                    mem_valid <= memory_retire(rob_opcode[head[4:0]]) ? 1'b1 : 1'b0;
+                    mem_addr <= memory_retire(rob_opcode[head[4:0]]) ? rob_values[head[4:0]] : 32'b0;
                     head <= head + 1;
-                end  
+            end else begin
+                reg_dest <= 5'b0;
+                reg_value <= 32'b0;
+                mem_valid <= 1'b0;
+                mem_addr <= 32'b0;
             end
         end
     end

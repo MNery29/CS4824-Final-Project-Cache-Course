@@ -379,7 +379,6 @@ module stage_id (
     //output signals to Regfile
         .reg_dest(rob_to_regfile_addr),
         .reg_value(rob_to_regfile_value),
-        //.reg_valid(), //Regfile doesn't have a 
 
     // output for map table: Tag for latest dispatch 
         .rob_tag_out(rob_tail),

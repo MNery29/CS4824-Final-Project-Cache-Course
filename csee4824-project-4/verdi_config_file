@@ -1,1 +1,1 @@
-simv.daidir = reservation_station.simv.daidir
+simv.daidir = reorder_buffer.simv.daidir

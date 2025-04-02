@@ -30,7 +30,7 @@ module reservation_station(
     output [31:0] rs_opb_out,     // Output Operand B
     output [4:0] rs_tag_out, // Output destination tag - where result is written to, used by ROB and Map Table 
     output       rs_avail_out,    // RS is available for a new instruction - indicates if RS is available for new instruction
-    output [4:0] rs_debug_status // Debugging info
+    output [2:0] rs_debug_status // Debugging info
 );
 
 //internal storage: 
@@ -40,8 +40,10 @@ logic OpaValid, OpbValid; // Operand A and B valid
 logic InUse; // RS entry is in use
 
 // Load from CDB if tags match
-logic LoadAFromCDB = (rs_cdb_tag == OPa) && !OpaValid && InUse && rs_cdb_valid;
-logic LoadBFromCDB = (rs_cdb_tag == OPb) && !OpbValid && InUse && rs_cdb_valid;
+logic LoadAFromCDB;
+logic LoadBFromCDB;
+assign LoadAFromCDB = (rs_cdb_tag == OPa) && !OpaValid && InUse && rs_cdb_valid;
+assign LoadBFromCDB = (rs_cdb_tag == OPb) && !OpbValid && InUse && rs_cdb_valid;
 
 //RS is availabile if not in use: 
 assign rs_avail_out = !InUse;
@@ -51,8 +53,8 @@ assign rs_ready_out = InUse && OpaValid && OpbValid;
 
 //Output operands
 //Output values
-assign rs_opa_out = (rs_use_enable) ? OPa : 31'b0;
-assign rs_opb_out = (rs_use_enable) ? OPb : 31'b0;
+assign rs_opa_out = (rs_use_enable) ? OPa : 32'b0;
+assign rs_opb_out = (rs_use_enable) ? OPb : 32'b0;
 assign rs_tag_out = (rs_use_enable) ? DestTag : 5'b0;
 
 //Debugging output to show status bits: 
@@ -60,8 +62,8 @@ assign rs_debug_status = {InUse, OpaValid, OpbValid};
 
 always @(posedge clock) begin
     if (reset) begin 
-        OPa <= 31'b0;
-        OPb <= 31'b0;
+        OPa <= 32'b0;
+        OPb <= 32'b0;
         DestTag <= 5'b0;
         OpaValid <= 1'b0;
         OpbValid <= 1'b0;
@@ -85,9 +87,14 @@ always @(posedge clock) begin
                 OPb <= rs_cdb_in;
                 OpbValid <= 1'b1;
             end 
-            //Free RS entry when instruction is issued. 
+            //Free RS entry when instruction is in execute.
             if (rs_free_in) begin
                 InUse <= 1'b0;
+                OPa <= 32'b0;
+                OPb <= 32'b0;
+                DestTag <= 5'b0;
+                OpaValid <= 1'b0;
+                OpbValid <= 1'b0;
             end 
         end
     end
