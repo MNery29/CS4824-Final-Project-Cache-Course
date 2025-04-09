@@ -10,6 +10,10 @@
 
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
+`include "verilog/map_table.sv"
+`include "verilog/reservation_station.sv"
+`include "verilog/reorder_buffer.sv"
+`include "verilog/regfile.sv"
 
 // Decode an instruction: generate useful datapath control signals by matching the RISC-V ISA
 // This module is purely combinational
@@ -201,103 +205,111 @@ module stage_id (
     input              clock,           // system clock
     input              reset,           // system reset
     input IF_ID_PACKET if_id_reg,
-    input              wb_regfile_en,   // Reg write enable from WB Stage
-    input [4:0]        wb_regfile_idx,  // Reg write index from WB Stage
-    input [`XLEN-1:0]  wb_regfile_data, // Reg write data from WB Stage
 
     //New I/O
-    input cdb_broadcast,
+    //CDB 
+    input cdb_valid,
     input [4:0] cdb_tag,
     input [31:0] cdb_value,
 
-    output ID_EX_PACKET id_packet
+    input mt_retire_entry,
+
+    input rs1_issue,
+    input rs1_clear,
+
+    input rob_retire_entry,
+    input rob_clear,
+    
+    output logic [31:0] opA,
+    output logic [31:0] opB,
+    output logic [4:0] output_tag,
+
+    output logic [45:0] rob_debug [31:0],
+    output logic [11:0] rob_pointers_debug,
+    output logic [6:0] mt_tags_debug [31:0],
+
+    output ALU_OPA_SELECT opa_select,
+    output ALU_OPB_SELECT opb_select,
+    output logic has_dest_reg,
+    output logic [4:0] dest_reg_idx
+
 );
+    logic [6:0] opcode;
+    assign opcode = if_id_reg.inst[6:0];
+    //logic has_dest_reg;
+    //logic [4:0] dest_reg_idx;
+    always_comb begin
+        if (has_dest_reg) begin 
+            dest_reg_idx = if_id_reg.inst.r.rd;
+        end
+    end
+    //assign dest_reg_idx = (has_dest_reg) ? if_id_reg.inst.r.rd : `ZERO_REG;
 
-    assign id_packet.inst = if_id_reg.inst;
-    assign id_packet.PC   = if_id_reg.PC;
-    assign id_packet.NPC  = if_id_reg.NPC;
+    //Map table signals
 
-    // For counting valid instructions executed
-    // and making the fetch stage die on halts/keeping track of when
-    // to allow the next instruction out of fetch
-    // 0 for HALT and illegal instructions (end processor on halt)
-    assign id_packet.valid = if_id_reg.valid & ~id_packet.illegal;
-
-    logic has_dest_reg;
-    assign id_packet.dest_reg_idx = (has_dest_reg) ? if_id_reg.inst.r.rd : `ZERO_REG;
-
-    logic [4:0] rs1_to_mt_tag;
-    logic [4:0] rob_tail; 
-    logic [4:0] mt_to_rs1_tag1, mt_to_rs1_tag2;
+    logic [4:0] rob_tag_out; //Tag output from ROB (tail pointer)
+    logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2; //MT outputs
     logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2, mt_to_regfile_rd;
 
-    logic dispatch_valid;
-    logic retire_valid;
+    logic mt_load_entry;
 
-    //Instantiate the map table
-    map_table map_table_0 (
-        .reset (reset),
-        .clock (clock),
-        .rs1_addr (if_id_reg.inst.r.rs1),
-        .rs2_addr (if_id_reg.inst.r.rs2),
-        .r_dest (if_id_reg.inst.r.rd),
-        .tag_in (rob_tail),
-        .dispatch_valid (dispatch_valid),
-        .cdb_tag_in (cdb_tag),
-        .read_cdb (cdb_broadcast),
-        .rs1_tag (mt_to_rs_tag1),
-        .rs2_tag (mt_to_rs_tag2),
-        .retire_addr (),
-        .retire_valid (retire_valid),
-        //.rs1_tag_valid(),
-        //.rs2_tag_valid(),
-        .regfile_rs1_addr (mt_to_regfile_rs1),
-        .regfile_rs2_addr (mt_to_regfile_rs2),
-        .reg_write (mt_to_regfile_rd),
+    //RS signals
+    logic [31:0] rs1_value; //Regile rs1 value (to RS)
+    logic [31:0] rs2_value; //Regile rs2 value (to RS)
 
-    );
-
-    logic [31:0] rs1_opa_in;
+    logic [31:0] rs1_opa_in; //RS operand inputs
     logic [31:0] rs1_opb_in;
     logic rs1_opa_valid;
     logic rs1_opb_valid;
 
-    logic load_rs; //RS control signals
-    logic issue_rs;
-    logic clear_rs;
+    logic rs1_load_entry; //RS control signals
 
-    logic rs_ready; //RS status outputs
-    logic rs_available;
-
-    logic [31:0] opA;
-    logic [31:0] opB;
-    logic output_tag;
-
-    logic rob_to_rs_read1;
-    logic rob_read_tag1;
-    logic rob_to_rs_value1;
+    logic rs1_ready; //RS status outputs
+    logic rs1_available;
+    
+    logic rob_to_rs_read1; //ROB to RS dataflow 
+    logic [4:0] rob_read_tag1;
+    logic [31:0] rob_to_rs_value1;
     logic rob_to_rs_read2;
-    logic rob_read_tag2;
-    logic rob_to_rs_value2;
+    logic [4:0] rob_read_tag2;
+    logic [31:0] rob_to_rs_value2;
 
+    //ROB signals
+    logic rob_load_entry; //ROB control signals
+
+    logic rob_full; //ROB outputs
+    logic [4:0] rob_dest_reg;
+    logic [31:0] rob_to_regfile_value;
+    logic rob_regfile_valid;
+    //Add mem outputs later!
+
+    assign mt_load_entry = if_id_reg.valid;
+    assign rs1_load_entry = if_id_reg.valid;
+    assign rob_load_entry = if_id_reg.valid;
+    
     //Reservation station operand muxes
+
+    //ALU_OPA_SELECT opa_select;
+    //ALU_OPB_SELECT opb_select;
+
     always_comb begin
         case (opa_select)
-            OPA_IS_RS1 : rs1_opa_in = {27'b0, mt_to_rs_tag1[5:1]}; //Sign extended tag for rs1
             OPA_IS_NPC : rs1_opa_in = if_id_reg.NPC; //Immediates
             OPA_IS_PC : rs1_opa_in = if_id_reg.PC;
             OPA_IS_ZERO : rs1_opa_in = 32'b0; 
         endcase
         if (opa_select == OPA_IS_RS1) begin //If inst is R type
-            if (mt_to_rs_tag1[4:0]) begin
-                
+            if (mt_to_rs_tag1[5:1] == 5'b0) begin //Tag is zero
+                rs1_opa_in = rs1_value; //Read value from regfile
+                rs1_opa_valid = 1; 
             end if (!mt_to_rs_tag1[0]) begin //Rs1 is not ready in ROB
-                rs1_opa_valid = 0;
+                rs1_opa_in = {27'b0, mt_to_rs_tag1[5:1]};
+                rs1_opa_valid = 0; //Clear valid bit
             end else begin
-                rs1_opa_valid = 1;
-                rob_to_rs_read1 = 1;
-                rob_read_tag1 = mt_to_rs_tag1[5:1];
+                rob_to_rs_read1 = 1; //Read value from ROB
+                rob_read_tag1 = mt_to_rs_tag1[5:1]; 
                 rs1_opa_in = rob_to_rs_value1; 
+                rs1_opa_valid = 1;
             end
         end else begin
             rs1_opa_valid = 1;
@@ -306,103 +318,118 @@ module stage_id (
 
     always_comb begin
         case (opb_select)
-            OPB_IS_RS2 : rs_opb_in = {27'b0, mt_to_rs_tag2[5:1]}; //Sign extended tag for rs2
-            OPB_IS_I_IMM  : rs1_opb_in = `RV32_signext_Iimm(id_ex_reg.inst);
-            OPB_IS_S_IMM  : rs1_opb_in = `RV32_signext_Simm(id_ex_reg.inst);
-            OPB_IS_B_IMM  : rs1_opb_in = `RV32_signext_Bimm(id_ex_reg.inst);
-            OPB_IS_U_IMM  : rs1_opb_in = `RV32_signext_Uimm(id_ex_reg.inst);
-            OPB_IS_J_IMM  : rs1_opb_in = `RV32_signext_Jimm(id_ex_reg.inst);
+            OPB_IS_I_IMM  : rs1_opb_in = `RV32_signext_Iimm(if_id_reg.inst);
+            OPB_IS_S_IMM  : rs1_opb_in = `RV32_signext_Simm(if_id_reg.inst);
+            OPB_IS_B_IMM  : rs1_opb_in = `RV32_signext_Bimm(if_id_reg.inst);
+            OPB_IS_U_IMM  : rs1_opb_in = `RV32_signext_Uimm(if_id_reg.inst);
+            OPB_IS_J_IMM  : rs1_opb_in = `RV32_signext_Jimm(if_id_reg.inst);
         endcase
-        if (opa_select == OPA_IS_RS2) begin //If inst is R type
-            if (!mt_to_rs_tag2[0]) begin //Rs1 is not ready in ROB
-                rs1_opb_valid = 0;
-            end else begin //ADD READ FROM REGFILE LOGIC!
-                rs1_opb_valid = 1;
-                rob_to_rs_read2 = 1;
-                rob_read_tag2 = mt_to_rs_tag2[5:1];
+        if (opb_select == OPB_IS_RS2) begin //If inst is R type
+            if (mt_to_rs_tag2[5:1] == 5'b0) begin //Tag is zero
+                rs1_opb_in = rs2_value; //Read value from regfile
+                rs1_opb_valid = 1; 
+            end if (!mt_to_rs_tag2[0]) begin //Rs2 is not ready in ROB
+                rs1_opb_in = {27'b0, mt_to_rs_tag2[5:1]};
+                rs1_opb_valid = 0; //Clear valid bit
+            end else begin
+                rob_to_rs_read2 = 1; //Read value from ROB
+                rob_read_tag2 = mt_to_rs_tag2[5:1]; 
                 rs1_opb_in = rob_to_rs_value2; 
+                rs1_opb_valid = 1;
             end
         end else begin
             rs1_opb_valid = 1;
         end 
     end
 
+    //Instantiate the map table
+    map_table map_table_0 (
+        .reset (reset),
+        .clock (clock),
+        .rs1_addr (if_id_reg.inst.r.rs1),
+        .rs2_addr (if_id_reg.inst.r.rs2),
+        .r_dest (dest_reg_idx),
+        .tag_in (rob_tag_out),
+        .load_entry (mt_load_entry),
+        .cdb_tag_in (cdb_tag),
+        .read_cdb (cdb_valid),
+        .retire_addr (rob_dest_reg),
+        .retire_entry (mt_retire_entry),
+
+        .rs1_tag (mt_to_rs_tag1),
+        .rs2_tag (mt_to_rs_tag2),
+        .regfile_rs1_addr (mt_to_regfile_rs1),
+        .regfile_rs2_addr (mt_to_regfile_rs2),
+        
+        .tags_debug(mt_tags_debug)
+    );
+
     //Instantiate the reservation station - Currently only supports one FU!
     reservation_station reservation_station_1 (
         .reset (reset),
         .clock (clock),
-        .rs_dest_in (rob_tail),
+        .rs_rob_tag (rob_tag_out),
         .rs_cdb_in (cdb_value),
         .rs_cdb_tag (cdb_tag),
-        .rs_cdb_valid (cdb_broadcast),
+        .rs_cdb_valid (cdb_valid),
         .rs_opa_in (rs1_opa_in),
         .rs_opb_in (rs1_opb_in),
         .rs_opa_valid (rs1_opa_valid),
         .rs_opb_valid (rs1_opb_valid),
-        .rs_load_in (load_rs),
-        .rs_use_enable (issue_rs),
-        .rs_free_in (clear_rs),
+        .rs_load_in (rs1_load_entry),
+        .rs_use_enable (rs1_issue),
+        .rs_free_in (rs1_clear),
  
-        .rs_ready_out (rs_ready),
+        .rs_ready_out (rs1_ready),
         .rs_opa_out (opA),
         .rs_opb_out (opB),
-        .rs_dest_tag_out (output_tag),
-        .rs_avail_out (rs_available)
-        
+        .rs_tag_out (output_tag),
+        .rs_avail_out (rs1_available)
     );
-
-    logic clear_rob;
-    logic [4:0] rob_to_regfile_addr;
-    logic [4:0] rob_to_regfile_value;
-    logic rob_full;
-
+    
+    //Instantiate the reorder buffer
     reorder_buffer reorder_buffer_0 (
         .reset (reset),
         .clock (clock),
-        .dispatch_dest_reg (if_id_reg.inst.r.rd),
-        .dispatch_opcode (if_id_reg.inst.opcode),
-        .dispatch_valid (dispatch_valid),
+        .dispatch_dest_reg (dest_reg_idx),
+        .dispatch_opcode (opcode),
+        .load_entry(rob_load_entry),
         .rob_to_rs_read1 (rob_to_rs_read1),
         .rob_read_tag1 (rob_read_tag1),
         .rob_to_rs_read2 (rob_to_rs_read2),
         .rob_read_tag2 (rob_read_tag2),
-
-    //input signals from execute stage 
-        .cdb_tag (cdb_tag), //cdb - commnon data bus
+        .cdb_tag (cdb_tag), 
         .cdb_value (cdb_value),
-        .cdb_valid (cdb_broadcast),
-
-    //input signals from retire stage
-        .retire_valid (retire_valid),
-        .branch_mispredict (clear_rob),
-
-    //output signals to Regfile
-        .reg_dest(rob_to_regfile_addr),
+        .cdb_valid (cdb_valid),
+        .retire_entry (rob_retire_entry),
+        .rob_clear (rob_clear),
+        
+        .reg_dest(rob_dest_reg),
         .reg_value(rob_to_regfile_value),
-
-    // output for map table: Tag for latest dispatch 
-        .rob_tag_out(rob_tail),
-        .rob_to_rs_value1(rob_to_rs_value1)
-        .rob_to_rs_value2(rob_to_rs_value2)
+        .reg_valid(rob_regfile_valid),
+        .rob_tag_out(rob_tag_out),
+        .rob_to_rs_value1(rob_to_rs_value1),
+        .rob_to_rs_value2(rob_to_rs_value2),
         //.rob_out_valid(),
-    //output signals to memory
         //.mem_addr(), //Will incorporate later with LSQ structures 
         //.mem_valid(),
-    //rob full signal, for stalling/hazards 
-        .rob_full(rob_full)
+        .rob_full(rob_full),
+
+        .rob_debug(rob_debug),
+        .rob_pointers(rob_pointers_debug)
     );
 
     // Instantiate the register file
     regfile regfile_0 (
         .clock  (clock),
-        .read_idx_1 (if_id_reg.inst.r.rs1),
-        .read_idx_2 (if_id_reg.inst.r.rs2),
-        .write_en   (wb_regfile_en),
-        .write_idx  (wb_regfile_idx),
-        .write_data (wb_regfile_data),
+        .read_idx_1 (mt_to_regfile_rs1),
+        .read_idx_2 (mt_to_regfile_rs2),
+        .write_en   (rob_regfile_valid),
+        .write_idx  (rob_dest_reg),
+        .write_data (rob_to_regfile_value),
 
-        .read_out_1 (id_packet.rs1_value),
-        .read_out_2 (id_packet.rs2_value)
+        .read_out_1 (rs1_value),
+        .read_out_2 (rs2_value)
     );
 
     // Instantiate the instruction decoder
@@ -412,17 +439,17 @@ module stage_id (
         .valid (if_id_reg.valid),
 
         // Outputs
-        .opa_select    (id_packet.opa_select),
-        .opb_select    (id_packet.opb_select),
-        .alu_func      (id_packet.alu_func),
-        .has_dest      (has_dest_reg),
-        .rd_mem        (id_packet.rd_mem),
-        .wr_mem        (id_packet.wr_mem),
-        .cond_branch   (id_packet.cond_branch),
-        .uncond_branch (id_packet.uncond_branch),
-        .csr_op        (id_packet.csr_op),
-        .halt          (id_packet.halt),
-        .illegal       (id_packet.illegal)
+        .opa_select    (opa_select),
+        .opb_select    (opb_select),
+        //.alu_func      (alu_func),
+        .has_dest      (has_dest_reg)
+        //.rd_mem        (rd_mem),
+        //.wr_mem        (wr_mem),
+        //.cond_branch   (cond_branch),
+        //.uncond_branch (uncond_branch),
+        //.csr_op        (csr_op),
+        //.halt          (halt),
+        //.illegal       (illegal)
     );
 
 

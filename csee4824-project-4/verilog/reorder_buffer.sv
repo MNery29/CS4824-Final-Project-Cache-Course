@@ -21,7 +21,7 @@ module reorder_buffer(
     //opcode
     input [4:0] dispatch_dest_reg,
     input [6:0] dispatch_opcode,
-    input dispatch_valid,
+    input load_entry,
     //If RS needs to read value ready in ROB
     input rob_to_rs_read1,
     input [4:0]rob_read_tag1,
@@ -34,12 +34,13 @@ module reorder_buffer(
     input cdb_valid,
 
     //input signals from retire stage
-    input retire_valid,
-    input clear_rob,
+    input retire_entry,
+    input rob_clear,
 
     //output signals to Regfile
     output logic [4:0] reg_dest,
     output logic [31:0] reg_value,
+    output logic reg_valid,
 
     //output for reservation station/map table: Tag for latest dispatch 
     output [4:0] rob_tag_out,
@@ -53,7 +54,8 @@ module reorder_buffer(
     //rob full signal, for stalling/hazards   
     output rob_full,
     //debug
-    output [11:0] rob_debug
+    output logic [45:0] rob_debug [31:0],
+    output logic [11:0] rob_pointers
 );
 
     typedef enum logic[1:0] {EMPTY, BUSY, READY} rob_state; //used to track status of an instruction.
@@ -87,12 +89,19 @@ module reorder_buffer(
     );
     endfunction
 
-    assign rob_tag_out = tail[4:0];
+    //Outputs to RS
+    assign rob_tag_out = tail[4:0] + 1'b1;
 
     assign rob_to_rs_value1 = rob_to_rs_read1 ? rob_values[rob_read_tag1] : 32'b0;
     assign rob_to_rs_value2 = rob_to_rs_read2 ? rob_values[rob_read_tag2] : 32'b0;
-    
-    assign rob_debug = {head, tail};
+
+    //Debug outputs
+    assign rob_pointers = {head, tail};
+    always_comb begin
+        for (int i = 0; i < 32; i++) begin
+            rob_debug[i] = {rob_status[i], rob_opcode[i], rob_dest[i], rob_values[i]};
+        end
+    end
 
     always_ff @(posedge clock) begin
         if(reset) begin
@@ -106,6 +115,7 @@ module reorder_buffer(
             tail <= 6'b0;
             reg_dest <= 5'b0;
             reg_value <= 32'b0;
+            reg_valid <= 1'b0;
             mem_valid <= 1'b0;
             mem_addr <= 32'b0;
             rob_out_valid <= 0;
@@ -116,7 +126,7 @@ module reorder_buffer(
             rob_out_valid <= 0;
 
             //dispatch stage logic, to handle incoming dispatch instruction. 
-            if (dispatch_valid && !rob_full) begin
+            if (load_entry && !rob_full) begin
                 rob_values[tail[4:0]] <= 32'b0; //temporary placeholder, await cdb update. 
                 rob_dest[tail[4:0]] <= dispatch_dest_reg; // set destination register 
                 rob_opcode[tail[4:0]] <= dispatch_opcode; // set opcode
@@ -134,17 +144,36 @@ module reorder_buffer(
             end
 
             // retire stage logic to commit ready instructions. Check if an instruction is ready to retire.  
-            if (retire_valid && rob_status[head[4:0]] == READY) begin
+            if (retire_entry && rob_status[head[4:0]] == READY) begin
+                if (rob_clear) begin
+                    //mispred or interrupt
+                    for (int i = 0; i < 32; i++) begin
+                        rob_values[i] <= 64'b0;
+                        rob_dest[i] <= 0;
+                        rob_opcode[i] <= 0;
+                        rob_status[i] <= EMPTY;
+
+                        reg_dest <= 5'b0;
+                        reg_value <= 32'b0;
+                        reg_valid <= 1'b0;
+                        mem_valid <= 1'b0;
+                        mem_addr <= 32'b0;
+                    end
+                    head <= tail; //reset head to tail to discard instructions. 
+                end else begin
                     //update head pointer
                     reg_dest <= regfile_retire(rob_opcode[head[4:0]]) ? rob_dest[head[4:0]] : `ZERO_REG;
                     reg_value <= regfile_retire(rob_opcode[head[4:0]]) ? rob_values[head[4:0]] : 32'b0;
+                    reg_valid <= regfile_retire(rob_opcode[head[4:0]]) ? 1'b1 : 1'b0;
 
                     mem_valid <= memory_retire(rob_opcode[head[4:0]]) ? 1'b1 : 1'b0;
                     mem_addr <= memory_retire(rob_opcode[head[4:0]]) ? rob_values[head[4:0]] : 32'b0;
                     head <= head + 1;
+                end
             end else begin
                 reg_dest <= 5'b0;
                 reg_value <= 32'b0;
+                reg_valid <= 1'b0;
                 mem_valid <= 1'b0;
                 mem_addr <= 32'b0;
             end

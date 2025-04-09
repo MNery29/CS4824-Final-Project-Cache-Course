@@ -2,23 +2,270 @@ Info: [VCS_SAVE_RESTORE_INFO] ASLR (Address Space Layout Randomization) is detec
 Please use '-no_save' simv switch to avoid re-execution or '-suppress=ASLR_DETECTED_INFO' to suppress this message.
 Chronologic VCS simulator copyright 1991-2023
 Contains Synopsys proprietary information.
-Compiler version U-2023.03-SP2-1_Full64; Runtime version U-2023.03-SP2-1_Full64;  Apr  2 14:30 2025
-Time:   0 clock:1 reset:1                 |Inputs| cdb_valid:0 cdb_tag:xxxxx cdb_value:xxxxxxxx dispatch_valid:0 dispatch_dest_reg:xxxxx dispatch_opcode:xxxxxxx read1:0 read2:0 read_tag1:xxxxx read_tag2:xxxxx retire_valid:0 clear_rob:0                 |Outputs| reg_dest:00000 reg_value:00000000 rob_out_valid:0 rob_tag_out:00000 read_value1:00000000 read_value2:00000000 rob_full:0 debug:000000000000
-Time:   1 clock:0 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 dispatch_valid:1 dispatch_dest_reg:00001 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_valid:0 clear_rob:0                 |Outputs| reg_dest:00000 reg_value:00000000 rob_out_valid:0 rob_tag_out:00000 read_value1:00000000 read_value2:00000000 rob_full:0 debug:000000000000
-Time:   1 clock:1 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 dispatch_valid:1 dispatch_dest_reg:00001 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_valid:0 clear_rob:0                 |Outputs| reg_dest:00000 reg_value:00000000 rob_out_valid:1 rob_tag_out:00001 read_value1:00000000 read_value2:00000000 rob_full:0 debug:000000000001
-Time:   2 clock:0 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 dispatch_valid:1 dispatch_dest_reg:00010 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_valid:0 clear_rob:0                 |Outputs| reg_dest:00000 reg_value:00000000 rob_out_valid:1 rob_tag_out:00001 read_value1:00000000 read_value2:00000000 rob_full:0 debug:000000000001
-Time:   2 clock:1 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 dispatch_valid:1 dispatch_dest_reg:00010 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_valid:0 clear_rob:0                 |Outputs| reg_dest:00000 reg_value:00000000 rob_out_valid:1 rob_tag_out:00010 read_value1:00000000 read_value2:00000000 rob_full:0 debug:000000000010
-Time:   3 clock:0 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 dispatch_valid:1 dispatch_dest_reg:01000 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_valid:0 clear_rob:0                 |Outputs| reg_dest:00000 reg_value:00000000 rob_out_valid:1 rob_tag_out:00010 read_value1:00000000 read_value2:00000000 rob_full:0 debug:000000000010
-Time:   3 clock:1 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 dispatch_valid:1 dispatch_dest_reg:01000 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_valid:0 clear_rob:0                 |Outputs| reg_dest:00000 reg_value:00000000 rob_out_valid:1 rob_tag_out:00011 read_value1:00000000 read_value2:00000000 rob_full:0 debug:000000000011
-Time:   4 clock:0 reset:0                 |Inputs| cdb_valid:1 cdb_tag:00000 cdb_value:ffffffff dispatch_valid:0 dispatch_dest_reg:01000 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_valid:0 clear_rob:0                 |Outputs| reg_dest:00000 reg_value:00000000 rob_out_valid:1 rob_tag_out:00011 read_value1:00000000 read_value2:00000000 rob_full:0 debug:000000000011
-Time:   4 clock:1 reset:0                 |Inputs| cdb_valid:1 cdb_tag:00000 cdb_value:ffffffff dispatch_valid:0 dispatch_dest_reg:01000 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_valid:0 clear_rob:0                 |Outputs| reg_dest:00000 reg_value:00000000 rob_out_valid:0 rob_tag_out:00011 read_value1:00000000 read_value2:00000000 rob_full:0 debug:000000000011
-Time:   5 clock:0 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 dispatch_valid:0 dispatch_dest_reg:00000 dispatch_opcode:0000000 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_valid:1 clear_rob:0                 |Outputs| reg_dest:00000 reg_value:00000000 rob_out_valid:0 rob_tag_out:00011 read_value1:00000000 read_value2:00000000 rob_full:0 debug:000000000011
-Time:   5 clock:1 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 dispatch_valid:0 dispatch_dest_reg:00000 dispatch_opcode:0000000 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_valid:1 clear_rob:0                 |Outputs| reg_dest:00001 reg_value:ffffffff rob_out_valid:0 rob_tag_out:00011 read_value1:00000000 read_value2:00000000 rob_full:0 debug:000001000011
-Time:   6 clock:0 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 dispatch_valid:0 dispatch_dest_reg:00000 dispatch_opcode:0000000 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_valid:1 clear_rob:0                 |Outputs| reg_dest:00001 reg_value:ffffffff rob_out_valid:0 rob_tag_out:00011 read_value1:00000000 read_value2:00000000 rob_full:0 debug:000001000011
-Time:   6 clock:1 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 dispatch_valid:0 dispatch_dest_reg:00000 dispatch_opcode:0000000 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_valid:1 clear_rob:0                 |Outputs| reg_dest:00000 reg_value:00000000 rob_out_valid:0 rob_tag_out:00011 read_value1:00000000 read_value2:00000000 rob_full:0 debug:000001000011
-$finish called from file "test/reorder_buffer_test.sv", line 157.
-$finish at simulation time                 6500
+Compiler version U-2023.03-SP2-1_Full64; Runtime version U-2023.03-SP2-1_Full64;  Apr  9 16:21 2025
+Time:   0 clock:1 reset:1                 |Inputs| cdb_valid:0 cdb_tag:xxxxx cdb_value:xxxxxxxx load_entry:0 dispatch_dest_reg:xxxxx dispatch_opcode:xxxxxxx read1:0 read2:0 read_tag1:xxxxx read_tag2:xxxxx retire_entry:0 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:0 rob_tag_out:00001 read_value1:00000000 read_value2:00000000 rob_full:0
+Time:   1 clock:0 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 load_entry:1 dispatch_dest_reg:00001 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_entry:0 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:0 rob_tag_out:00001 read_value1:00000000 read_value2:00000000 rob_full:0
+Time:   1 clock:1 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 load_entry:1 dispatch_dest_reg:00001 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_entry:0 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:1 rob_tag_out:00010 read_value1:00000000 read_value2:00000000 rob_full:0
+ROB contents:
+Status:01 Opcode:0110011 Dest:00001 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+H/T pointers:
+Head:000000 Tail:000001
+Time:   2 clock:0 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 load_entry:1 dispatch_dest_reg:00010 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_entry:0 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:1 rob_tag_out:00010 read_value1:00000000 read_value2:00000000 rob_full:0
+Time:   2 clock:1 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 load_entry:1 dispatch_dest_reg:00010 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_entry:0 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:1 rob_tag_out:00011 read_value1:00000000 read_value2:00000000 rob_full:0
+ROB contents:
+Status:01 Opcode:0110011 Dest:00001 Value:00000000
+Status:01 Opcode:0110011 Dest:00010 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+H/T pointers:
+Head:000000 Tail:000010
+Time:   3 clock:0 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 load_entry:1 dispatch_dest_reg:01000 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_entry:0 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:1 rob_tag_out:00011 read_value1:00000000 read_value2:00000000 rob_full:0
+Time:   3 clock:1 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 load_entry:1 dispatch_dest_reg:01000 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_entry:0 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:1 rob_tag_out:00100 read_value1:00000000 read_value2:00000000 rob_full:0
+ROB contents:
+Status:01 Opcode:0110011 Dest:00001 Value:00000000
+Status:01 Opcode:0110011 Dest:00010 Value:00000000
+Status:01 Opcode:0110011 Dest:01000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+H/T pointers:
+Head:000000 Tail:000011
+Time:   4 clock:0 reset:0                 |Inputs| cdb_valid:1 cdb_tag:00000 cdb_value:ffffffff load_entry:0 dispatch_dest_reg:01000 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_entry:0 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:1 rob_tag_out:00100 read_value1:00000000 read_value2:00000000 rob_full:0
+Time:   4 clock:1 reset:0                 |Inputs| cdb_valid:1 cdb_tag:00000 cdb_value:ffffffff load_entry:0 dispatch_dest_reg:01000 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_entry:0 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:0 rob_tag_out:00100 read_value1:00000000 read_value2:00000000 rob_full:0
+ROB contents:
+Status:10 Opcode:0110011 Dest:00001 Value:ffffffff
+Status:01 Opcode:0110011 Dest:00010 Value:00000000
+Status:01 Opcode:0110011 Dest:01000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+H/T pointers:
+Head:000000 Tail:000011
+Time:   5 clock:0 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 load_entry:0 dispatch_dest_reg:00000 dispatch_opcode:0000000 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_entry:1 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:0 rob_tag_out:00100 read_value1:00000000 read_value2:00000000 rob_full:0
+Time:   5 clock:1 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 load_entry:0 dispatch_dest_reg:00000 dispatch_opcode:0000000 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_entry:1 rob_clear:0                 |Outputs| reg_dest:00001 reg_value:ffffffff reg_valid:1 rob_out_valid:0 rob_tag_out:00100 read_value1:00000000 read_value2:00000000 rob_full:0
+ROB contents:
+Status:10 Opcode:0110011 Dest:00001 Value:ffffffff
+Status:01 Opcode:0110011 Dest:00010 Value:00000000
+Status:01 Opcode:0110011 Dest:01000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+H/T pointers:
+Head:000001 Tail:000011
+Time:   6 clock:0 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 load_entry:0 dispatch_dest_reg:00000 dispatch_opcode:0000000 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_entry:1 rob_clear:0                 |Outputs| reg_dest:00001 reg_value:ffffffff reg_valid:1 rob_out_valid:0 rob_tag_out:00100 read_value1:00000000 read_value2:00000000 rob_full:0
+Time:   6 clock:1 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 load_entry:0 dispatch_dest_reg:00000 dispatch_opcode:0000000 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_entry:1 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:0 rob_tag_out:00100 read_value1:00000000 read_value2:00000000 rob_full:0
+ROB contents:
+Status:10 Opcode:0110011 Dest:00001 Value:ffffffff
+Status:01 Opcode:0110011 Dest:00010 Value:00000000
+Status:01 Opcode:0110011 Dest:01000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+H/T pointers:
+Head:000001 Tail:000011
+Time:   7 clock:0 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 load_entry:1 dispatch_dest_reg:11111 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_entry:1 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:0 rob_tag_out:00100 read_value1:00000000 read_value2:00000000 rob_full:0
+Time:   7 clock:1 reset:0                 |Inputs| cdb_valid:0 cdb_tag:00000 cdb_value:00000000 load_entry:1 dispatch_dest_reg:11111 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:00000 read_tag2:00000 retire_entry:1 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:1 rob_tag_out:00101 read_value1:00000000 read_value2:00000000 rob_full:0
+ROB contents:
+Status:10 Opcode:0110011 Dest:00001 Value:ffffffff
+Status:01 Opcode:0110011 Dest:00010 Value:00000000
+Status:01 Opcode:0110011 Dest:01000 Value:00000000
+Status:01 Opcode:0110011 Dest:11111 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+Status:00 Opcode:0000000 Dest:00000 Value:00000000
+H/T pointers:
+Head:000001 Tail:000100
+$finish called from file "test/reorder_buffer_test.sv", line 200.
+$finish at simulation time                 7500
            V C S   S i m u l a t i o n   R e p o r t 
-Time: 6500 ps
-CPU Time:      0.310 seconds;       Data structure size:   0.0Mb
-Wed Apr  2 14:30:36 2025
+Time: 7500 ps
+CPU Time:      0.290 seconds;       Data structure size:   0.0Mb
+Wed Apr  9 16:21:43 2025

@@ -177,7 +177,7 @@ GREP = grep -E --color=auto
 # - with dependencies: 'rob.simv', 'rob.cov', and 'synth/rob.vg'
 
 # TODO: add more modules here
-TESTED_MODULES = mult rob map_table reservation_station reorder_buffer
+TESTED_MODULES = mult rob map_table reservation_station reorder_buffer stage_id
 
 MODULE = pipeline
 

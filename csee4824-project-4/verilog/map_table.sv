@@ -16,16 +16,15 @@ module map_table(
 
     output logic [5:0] rs1_tag, //Tag output to RS opA, w/ ready in ROB bit
     output logic [5:0] rs2_tag, //Tag output to RS opB, w/ ready in ROB bit
-    output logic rs1_tag_valid,
-    output logic rs2_tag_valid,
 
     output logic [4:0] regfile_rs1_addr, //Pass throughs
-    output logic [4:0] regfile_rs2_addr
-    //Needs a full signal probably?
+    output logic [4:0] regfile_rs2_addr,
+    //Debug outputs
+    output logic [6:0] tags_debug[31:0]
 );
 
     logic [4:0] tags[31:0];
-    logic [31:0] ready_in_rob;
+    logic ready_in_rob[31:0];
     logic has_tag[31:0];
 
     assign regfile_rs1_addr = rs1_addr;
@@ -38,6 +37,13 @@ module map_table(
         if (has_tag[rs2_addr]) begin
             rs2_tag = {tags[rs2_addr], ready_in_rob[rs2_addr]};
         end 
+    end
+
+    //Debug outputs
+    always_comb begin
+        for (int i = 0; i < 32; i++) begin
+            tags_debug[i] = {tags[i], ready_in_rob[i], has_tag[i]};
+        end
     end
     
     always_ff @(posedge clock) begin

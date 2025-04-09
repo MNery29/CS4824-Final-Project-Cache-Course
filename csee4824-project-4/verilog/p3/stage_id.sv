@@ -11,6 +11,7 @@
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 
+
 // Decode an instruction: generate useful datapath control signals by matching the RISC-V ISA
 // This module is purely combinational
 module decoder (
