@@ -7,23 +7,23 @@ module map_table(
     input [4:0] rs2_addr, //Source register 2 address
     input [4:0] r_dest, //Destination register address from Reservation Station
 
-    input [4:0] tag_in, //Read port for tag
+    input [5:0] tag_in, //Read port for tag
     input load_entry,
-    input [4:0] cdb_tag_in, //Read CDB tag broadcast 
+    input [5:0] cdb_tag_in, //Read CDB tag broadcast 
     input read_cdb, //CDB broadcast?
     input [4:0] retire_addr, //Read address of register retired to
     input retire_entry, //ROB retire?
 
-    output logic [5:0] rs1_tag, //Tag output to RS opA, w/ ready in ROB bit
-    output logic [5:0] rs2_tag, //Tag output to RS opB, w/ ready in ROB bit
+    output logic [6:0] rs1_tag, //Tag output to RS opA, w/ ready in ROB bit
+    output logic [6:0] rs2_tag, //Tag output to RS opB, w/ ready in ROB bit
 
     output logic [4:0] regfile_rs1_addr, //Pass throughs
     output logic [4:0] regfile_rs2_addr,
     //Debug outputs
-    output logic [6:0] tags_debug[31:0]
+    output logic [7:0] tags_debug[31:0]
 );
 
-    logic [4:0] tags[31:0];
+    logic [5:0] tags[31:0];
     logic ready_in_rob[31:0];
     logic has_tag[31:0];
 
@@ -50,7 +50,7 @@ module map_table(
         if (reset) begin
             for (int i = 0; i < 32; i++) begin
                 has_tag[i] <= 1;
-                tags[i] <= 5'b0;
+                tags[i] <= 6'b0;
                 ready_in_rob[i] <= 0;
             end
         end
@@ -64,7 +64,7 @@ module map_table(
                 end
             end
             if (retire_entry) begin
-                tags[retire_addr] <= 5'b0; //Clear tag at destination register on retire
+                tags[retire_addr] <= 6'b0; //Clear tag at destination register on retire
                 ready_in_rob[retire_addr] <= 0;
             end
             if (load_entry) begin

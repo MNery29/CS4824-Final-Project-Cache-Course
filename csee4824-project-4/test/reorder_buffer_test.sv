@@ -6,7 +6,8 @@
 module testbench;
 
     logic clock, reset, load_entry, rob_to_rs_read1, rob_to_rs_read2, cdb_valid, retire_entry, rob_clear, rob_full, rob_out_valid, reg_valid;
-    logic [4:0] dispatch_dest_reg, rob_read_tag1, rob_read_tag2, cdb_tag, reg_dest, rob_tag_out;
+    logic [4:0] dispatch_dest_reg, reg_dest;
+    logic [5:0] rob_read_tag1, rob_read_tag2, cdb_tag, rob_tag_out;
     logic [6:0] dispatch_opcode;
     logic [11:0] rob_pointers;
     logic [31:0] cdb_value, reg_value, rob_to_rs_value1, rob_to_rs_value2;

@@ -12,9 +12,9 @@
 `include "verilog/ISA.svh"
 
 module reservation_station(
-    input  [4:0] rs_rob_tag,      // Tag input for instruction (ROB tail pointer)
+    input  [5:0] rs_rob_tag,      // Tag input for instruction (ROB tail pointer)
     input [31:0] rs_cdb_in,       // Data from the CDB - FU operation result 
-    input  [4:0] rs_cdb_tag,      // Tag from the CDB - for identifying the corresponding register for the result
+    input  [5:0] rs_cdb_tag,      // Tag from the CDB - for identifying the corresponding register for the result
     input        rs_cdb_valid,    // CDB data is valid: indicating if CDB is valid and ready for use.
     input [31:0] rs_opa_in,       // Operand A: input from instruction, either register or CDB.
     input [31:0] rs_opb_in,       // Operand B: input from instruction, either register or CDB.
@@ -28,14 +28,14 @@ module reservation_station(
     output       rs_ready_out,    // RS is ready for execution - indicates if RS is ready to issue instruction to FU
     output [31:0] rs_opa_out,     // Output Operand A
     output [31:0] rs_opb_out,     // Output Operand B
-    output [4:0] rs_tag_out, // Output destination tag - where result is written to, used by ROB and Map Table 
+    output [5:0] rs_tag_out, // Output destination tag - where result is written to, used by ROB and Map Table 
     output       rs_avail_out,    // RS is available for a new instruction - indicates if RS is available for new instruction
-    output [2:0] rs_debug_status // Debugging info
+    output [74:0] rs_debug
 );
 
 //internal storage: 
 logic [31:0] OPa, OPb; // Operand A and B
-logic [4:0] DestTag; // Destination register tag, and op tags
+logic [5:0] DestTag; // Destination register tag, and op tags
 logic OpaValid, OpbValid; // Operand A and B valid
 logic InUse; // RS entry is in use
 
@@ -55,16 +55,16 @@ assign rs_ready_out = InUse && OpaValid && OpbValid;
 //Output values
 assign rs_opa_out = (rs_use_enable) ? OPa : 32'b0;
 assign rs_opb_out = (rs_use_enable) ? OPb : 32'b0;
-assign rs_tag_out = (rs_use_enable) ? DestTag : 5'b0;
+assign rs_tag_out = (rs_use_enable) ? DestTag : 6'b0;
 
-//Debugging output to show status bits: 
-assign rs_debug_status = {InUse, OpaValid, OpbValid};
+//Debug
+assign rs_debug = {OPa, OpaValid, OPb, OpbValid, DestTag, InUse, rs_ready_out, rs_avail_out};
 
 always @(posedge clock) begin
     if (reset) begin 
         OPa <= 32'b0;
         OPb <= 32'b0;
-        DestTag <= 5'b0;
+        DestTag <= 6'b0;
         OpaValid <= 1'b0;
         OpbValid <= 1'b0;
         InUse <= 1'b0;
@@ -92,7 +92,7 @@ always @(posedge clock) begin
                 InUse <= 1'b0;
                 OPa <= 32'b0;
                 OPb <= 32'b0;
-                DestTag <= 5'b0;
+                DestTag <= 6'b0;
                 OpaValid <= 1'b0;
                 OpbValid <= 1'b0;
             end 

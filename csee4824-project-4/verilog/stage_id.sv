@@ -209,7 +209,7 @@ module stage_id (
     //New I/O
     //CDB 
     input cdb_valid,
-    input [4:0] cdb_tag,
+    input [5:0] cdb_tag,
     input [31:0] cdb_value,
 
     input mt_retire_entry,
@@ -222,11 +222,12 @@ module stage_id (
     
     output logic [31:0] opA,
     output logic [31:0] opB,
-    output logic [4:0] output_tag,
+    output logic [5:0] output_tag,
 
     output logic [45:0] rob_debug [31:0],
     output logic [11:0] rob_pointers_debug,
-    output logic [6:0] mt_tags_debug [31:0],
+    output logic [7:0] mt_tags_debug [31:0],
+    output logic [74:0] rs_debug,
 
     output ALU_OPA_SELECT opa_select,
     output ALU_OPB_SELECT opb_select,
@@ -238,17 +239,13 @@ module stage_id (
     assign opcode = if_id_reg.inst[6:0];
     //logic has_dest_reg;
     //logic [4:0] dest_reg_idx;
-    always_comb begin
-        if (has_dest_reg) begin 
-            dest_reg_idx = if_id_reg.inst.r.rd;
-        end
-    end
-    //assign dest_reg_idx = (has_dest_reg) ? if_id_reg.inst.r.rd : `ZERO_REG;
+
+    assign dest_reg_idx = (has_dest_reg) ? if_id_reg.inst.r.rd : `ZERO_REG;
 
     //Map table signals
 
-    logic [4:0] rob_tag_out; //Tag output from ROB (tail pointer)
-    logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2; //MT outputs
+    logic [5:0] rob_tag_out; //Tag output from ROB (tail pointer)
+    logic [6:0] mt_to_rs_tag1, mt_to_rs_tag2; //MT output tags
     logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2, mt_to_regfile_rd;
 
     logic mt_load_entry;
@@ -268,10 +265,10 @@ module stage_id (
     logic rs1_available;
     
     logic rob_to_rs_read1; //ROB to RS dataflow 
-    logic [4:0] rob_read_tag1;
+    logic [5:0] rob_read_tag1;
     logic [31:0] rob_to_rs_value1;
     logic rob_to_rs_read2;
-    logic [4:0] rob_read_tag2;
+    logic [5:0] rob_read_tag2;
     logic [31:0] rob_to_rs_value2;
 
     //ROB signals
@@ -284,8 +281,8 @@ module stage_id (
     //Add mem outputs later!
 
     assign mt_load_entry = if_id_reg.valid;
-    assign rs1_load_entry = if_id_reg.valid;
-    assign rob_load_entry = if_id_reg.valid;
+    assign rob_load_entry = !rob_full ? if_id_reg.valid : 0;
+    assign rs1_load_entry = rs1_available ? if_id_reg.valid : 0;
     
     //Reservation station operand muxes
 
@@ -299,15 +296,15 @@ module stage_id (
             OPA_IS_ZERO : rs1_opa_in = 32'b0; 
         endcase
         if (opa_select == OPA_IS_RS1) begin //If inst is R type
-            if (mt_to_rs_tag1[5:1] == 5'b0) begin //Tag is zero
+            if (mt_to_rs_tag1[6:1] == 6'b0) begin //Tag is zero
                 rs1_opa_in = rs1_value; //Read value from regfile
                 rs1_opa_valid = 1; 
-            end if (!mt_to_rs_tag1[0]) begin //Rs1 is not ready in ROB
-                rs1_opa_in = {27'b0, mt_to_rs_tag1[5:1]};
+            end else if (!mt_to_rs_tag1[0]) begin //rs1 is not ready in ROB
+                rs1_opa_in = {27'b0, mt_to_rs_tag1[6:1]};
                 rs1_opa_valid = 0; //Clear valid bit
-            end else begin
+            end else begin //rs1 is ready in ROB
                 rob_to_rs_read1 = 1; //Read value from ROB
-                rob_read_tag1 = mt_to_rs_tag1[5:1]; 
+                rob_read_tag1 = mt_to_rs_tag1[6:1]; 
                 rs1_opa_in = rob_to_rs_value1; 
                 rs1_opa_valid = 1;
             end
@@ -325,15 +322,15 @@ module stage_id (
             OPB_IS_J_IMM  : rs1_opb_in = `RV32_signext_Jimm(if_id_reg.inst);
         endcase
         if (opb_select == OPB_IS_RS2) begin //If inst is R type
-            if (mt_to_rs_tag2[5:1] == 5'b0) begin //Tag is zero
+            if (mt_to_rs_tag2[6:1] == 6'b0) begin //Tag is zero
                 rs1_opb_in = rs2_value; //Read value from regfile
                 rs1_opb_valid = 1; 
-            end if (!mt_to_rs_tag2[0]) begin //Rs2 is not ready in ROB
-                rs1_opb_in = {27'b0, mt_to_rs_tag2[5:1]};
+            end else if (!mt_to_rs_tag2[0]) begin //rs2 is not ready in ROB
+                rs1_opb_in = {27'b0, mt_to_rs_tag2[6:1]};
                 rs1_opb_valid = 0; //Clear valid bit
-            end else begin
+            end else begin //rs2 is ready in ROB
                 rob_to_rs_read2 = 1; //Read value from ROB
-                rob_read_tag2 = mt_to_rs_tag2[5:1]; 
+                rob_read_tag2 = mt_to_rs_tag2[6:1]; 
                 rs1_opb_in = rob_to_rs_value2; 
                 rs1_opb_valid = 1;
             end
@@ -384,7 +381,9 @@ module stage_id (
         .rs_opa_out (opA),
         .rs_opb_out (opB),
         .rs_tag_out (output_tag),
-        .rs_avail_out (rs1_available)
+        .rs_avail_out (rs1_available),
+
+        .rs_debug(rs_debug)
     );
     
     //Instantiate the reorder buffer

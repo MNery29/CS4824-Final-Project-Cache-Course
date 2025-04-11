@@ -1,0 +1,221 @@
+Info: [VCS_SAVE_RESTORE_INFO] ASLR (Address Space Layout Randomization) is detected on the machine. To enable $save functionality, ASLR will be switched off and simv re-executed.
+Please use '-no_save' simv switch to avoid re-execution or '-suppress=ASLR_DETECTED_INFO' to suppress this message.
+Chronologic VCS simulator copyright 1991-2023
+Contains Synopsys proprietary information.
+Compiler version U-2023.03-SP2-1_Full64; Runtime version U-2023.03-SP2-1_Full64;  Apr 11 16:10 2025
+Time:   0 clock:0 reset:1 read_cdb:0 load_entry:0 retire_entry: 0 retire_addr: xxxxx rs1_addr:00000 rs2_addr:00000 r_dest:00000 tag_in:000000 cdb_tag_in:000000 rs1_tag:xxxxxxx rs2_tag:xxxxxxx
+Time:   1 clock:1 reset:1 read_cdb:0 load_entry:0 retire_entry: 0 retire_addr: xxxxx rs1_addr:00000 rs2_addr:00000 r_dest:00000 tag_in:000000 cdb_tag_in:000000 rs1_tag:0000000 rs2_tag:0000000
+MT contents:
+Register:00000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Time:   1 clock:0 reset:0 read_cdb:0 load_entry:1 retire_entry: 0 retire_addr: xxxxx rs1_addr:00001 rs2_addr:00010 r_dest:00011 tag_in:000001 cdb_tag_in:000000 rs1_tag:0000000 rs2_tag:0000000
+Time:   2 clock:1 reset:0 read_cdb:0 load_entry:1 retire_entry: 0 retire_addr: xxxxx rs1_addr:00001 rs2_addr:00010 r_dest:00011 tag_in:000001 cdb_tag_in:000000 rs1_tag:0000000 rs2_tag:0000000
+MT contents:
+Register:00000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00011 Tag:000001 Ready_in_ROB:0 Has_tag:1
+Register:00100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Time:   2 clock:0 reset:0 read_cdb:0 load_entry:0 retire_entry: 0 retire_addr: xxxxx rs1_addr:00010 rs2_addr:00011 r_dest:00000 tag_in:000000 cdb_tag_in:000000 rs1_tag:0000000 rs2_tag:0000010
+Time:   3 clock:1 reset:0 read_cdb:0 load_entry:0 retire_entry: 0 retire_addr: xxxxx rs1_addr:00010 rs2_addr:00011 r_dest:00000 tag_in:000000 cdb_tag_in:000000 rs1_tag:0000000 rs2_tag:0000010
+MT contents:
+Register:00000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00011 Tag:000001 Ready_in_ROB:0 Has_tag:1
+Register:00100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Time:   3 clock:0 reset:0 read_cdb:1 load_entry:0 retire_entry: 0 retire_addr: xxxxx rs1_addr:00010 rs2_addr:00011 r_dest:00000 tag_in:000000 cdb_tag_in:000001 rs1_tag:0000000 rs2_tag:0000010
+Time:   4 clock:1 reset:0 read_cdb:1 load_entry:0 retire_entry: 0 retire_addr: xxxxx rs1_addr:00010 rs2_addr:00011 r_dest:00000 tag_in:000000 cdb_tag_in:000001 rs1_tag:0000000 rs2_tag:0000011
+MT contents:
+Register:00000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00011 Tag:000001 Ready_in_ROB:1 Has_tag:1
+Register:00100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Time:   4 clock:0 reset:0 read_cdb:0 load_entry:0 retire_entry: 1 retire_addr: 00011 rs1_addr:00010 rs2_addr:00011 r_dest:00011 tag_in:000010 cdb_tag_in:000001 rs1_tag:0000000 rs2_tag:0000011
+Time:   5 clock:1 reset:0 read_cdb:0 load_entry:0 retire_entry: 1 retire_addr: 00011 rs1_addr:00010 rs2_addr:00011 r_dest:00011 tag_in:000010 cdb_tag_in:000001 rs1_tag:0000000 rs2_tag:0000000
+MT contents:
+Register:00000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Time:   5 clock:0 reset:0 read_cdb:0 load_entry:1 retire_entry: 0 retire_addr: 00000 rs1_addr:00001 rs2_addr:00010 r_dest:00011 tag_in:000010 cdb_tag_in:000000 rs1_tag:0000000 rs2_tag:0000000
+Time:   6 clock:1 reset:0 read_cdb:0 load_entry:1 retire_entry: 0 retire_addr: 00000 rs1_addr:00001 rs2_addr:00010 r_dest:00011 tag_in:000010 cdb_tag_in:000000 rs1_tag:0000000 rs2_tag:0000000
+MT contents:
+Register:00000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00011 Tag:000010 Ready_in_ROB:0 Has_tag:1
+Register:00100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:00111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:01111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:10111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11000 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11001 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11010 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11011 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11100 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11101 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11110 Tag:000000 Ready_in_ROB:0 Has_tag:1
+Register:11111 Tag:000000 Ready_in_ROB:0 Has_tag:1
+$finish called from file "test/map_table_test.sv", line 119.
+$finish at simulation time                 6000
+           V C S   S i m u l a t i o n   R e p o r t 
+Time: 6000 ps
+CPU Time:      0.310 seconds;       Data structure size:   0.0Mb
+Fri Apr 11 16:10:36 2025

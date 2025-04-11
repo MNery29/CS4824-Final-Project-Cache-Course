@@ -2,41 +2,41 @@ Info: [VCS_SAVE_RESTORE_INFO] ASLR (Address Space Layout Randomization) is detec
 Please use '-no_save' simv switch to avoid re-execution or '-suppress=ASLR_DETECTED_INFO' to suppress this message.
 Chronologic VCS simulator copyright 1991-2023
 Contains Synopsys proprietary information.
-Compiler version U-2023.03-SP2-1_Full64; Runtime version U-2023.03-SP2-1_Full64;  Apr  9 17:17 2025
-|Inst| instruction:00a08113 valid:0 opA:00 opB:0000 has_dest_reg:0 idx:xxxxx |CDB| cdb_broadcast:0 cdb_tag:00000 cdb_value:00000000 |Control| mt_retire:0 rob_retire:0 rob_clear:0 rs1_issue:0 rs1_clear:0
+Compiler version U-2023.03-SP2-1_Full64; Runtime version U-2023.03-SP2-1_Full64;  Apr 11 16:04 2025
+Time:   0 clock:1 |Inst| instruction:00a08113 valid:0 opA:00 opB:0000 has_dest_reg:0 idx:00000 |CDB| cdb_broadcast:0 cdb_tag:000000 cdb_value:00000000 |Control| mt_retire:0 rob_retire:0 rob_clear:0 rs1_issue:0 rs1_clear:0
 mt contents:
-register:00000 tag:00000 ready_in_rob:0 has_tag:1
-register:00001 tag:00000 ready_in_rob:0 has_tag:1
-register:00010 tag:00000 ready_in_rob:0 has_tag:1
-register:00011 tag:00000 ready_in_rob:0 has_tag:1
-register:00100 tag:00000 ready_in_rob:0 has_tag:1
-register:00101 tag:00000 ready_in_rob:0 has_tag:1
-register:00110 tag:00000 ready_in_rob:0 has_tag:1
-register:00111 tag:00000 ready_in_rob:0 has_tag:1
-register:01000 tag:00000 ready_in_rob:0 has_tag:1
-register:01001 tag:00000 ready_in_rob:0 has_tag:1
-register:01010 tag:00000 ready_in_rob:0 has_tag:1
-register:01011 tag:00000 ready_in_rob:0 has_tag:1
-register:01100 tag:00000 ready_in_rob:0 has_tag:1
-register:01101 tag:00000 ready_in_rob:0 has_tag:1
-register:01110 tag:00000 ready_in_rob:0 has_tag:1
-register:01111 tag:00000 ready_in_rob:0 has_tag:1
-register:10000 tag:00000 ready_in_rob:0 has_tag:1
-register:10001 tag:00000 ready_in_rob:0 has_tag:1
-register:10010 tag:00000 ready_in_rob:0 has_tag:1
-register:10011 tag:00000 ready_in_rob:0 has_tag:1
-register:10100 tag:00000 ready_in_rob:0 has_tag:1
-register:10101 tag:00000 ready_in_rob:0 has_tag:1
-register:10110 tag:00000 ready_in_rob:0 has_tag:1
-register:10111 tag:00000 ready_in_rob:0 has_tag:1
-register:11000 tag:00000 ready_in_rob:0 has_tag:1
-register:11001 tag:00000 ready_in_rob:0 has_tag:1
-register:11010 tag:00000 ready_in_rob:0 has_tag:1
-register:11011 tag:00000 ready_in_rob:0 has_tag:1
-register:11100 tag:00000 ready_in_rob:0 has_tag:1
-register:11101 tag:00000 ready_in_rob:0 has_tag:1
-register:11110 tag:00000 ready_in_rob:0 has_tag:1
-register:11111 tag:00000 ready_in_rob:0 has_tag:1
+register:00000 tag:000000 ready_in_rob:0 has_tag:1
+register:00001 tag:000000 ready_in_rob:0 has_tag:1
+register:00010 tag:000000 ready_in_rob:0 has_tag:1
+register:00011 tag:000000 ready_in_rob:0 has_tag:1
+register:00100 tag:000000 ready_in_rob:0 has_tag:1
+register:00101 tag:000000 ready_in_rob:0 has_tag:1
+register:00110 tag:000000 ready_in_rob:0 has_tag:1
+register:00111 tag:000000 ready_in_rob:0 has_tag:1
+register:01000 tag:000000 ready_in_rob:0 has_tag:1
+register:01001 tag:000000 ready_in_rob:0 has_tag:1
+register:01010 tag:000000 ready_in_rob:0 has_tag:1
+register:01011 tag:000000 ready_in_rob:0 has_tag:1
+register:01100 tag:000000 ready_in_rob:0 has_tag:1
+register:01101 tag:000000 ready_in_rob:0 has_tag:1
+register:01110 tag:000000 ready_in_rob:0 has_tag:1
+register:01111 tag:000000 ready_in_rob:0 has_tag:1
+register:10000 tag:000000 ready_in_rob:0 has_tag:1
+register:10001 tag:000000 ready_in_rob:0 has_tag:1
+register:10010 tag:000000 ready_in_rob:0 has_tag:1
+register:10011 tag:000000 ready_in_rob:0 has_tag:1
+register:10100 tag:000000 ready_in_rob:0 has_tag:1
+register:10101 tag:000000 ready_in_rob:0 has_tag:1
+register:10110 tag:000000 ready_in_rob:0 has_tag:1
+register:10111 tag:000000 ready_in_rob:0 has_tag:1
+register:11000 tag:000000 ready_in_rob:0 has_tag:1
+register:11001 tag:000000 ready_in_rob:0 has_tag:1
+register:11010 tag:000000 ready_in_rob:0 has_tag:1
+register:11011 tag:000000 ready_in_rob:0 has_tag:1
+register:11100 tag:000000 ready_in_rob:0 has_tag:1
+register:11101 tag:000000 ready_in_rob:0 has_tag:1
+register:11110 tag:000000 ready_in_rob:0 has_tag:1
+register:11111 tag:000000 ready_in_rob:0 has_tag:1
 rob contents:
 status:00 opcode:0000000 dest:00000 value:00000000
 status:00 opcode:0000000 dest:00000 value:00000000
@@ -72,42 +72,46 @@ status:00 opcode:0000000 dest:00000 value:00000000
 status:00 opcode:0000000 dest:00000 value:00000000
 h/t pointers:
 head:000000 tail:000000
-|Inst| instruction:00a08113 valid:1 opA:00 opB:0001 has_dest_reg:1 idx:00010 |CDB| cdb_broadcast:0 cdb_tag:00000 cdb_value:00000000 |Control| mt_retire:0 rob_retire:0 rob_clear:0 rs1_issue:0 rs1_clear:0
+rs contents:
+opA:00000000 opA_valid:0 opB:00000000 opB_valid:0 dest_tag:000000 in_use:0 ready:0 available:1
+=======================================================================
+Time:   1 clock:0 |Inst| instruction:12300093 valid:1 opA:00 opB:0001 has_dest_reg:1 idx:00001 |CDB| cdb_broadcast:0 cdb_tag:000000 cdb_value:00000000 |Control| mt_retire:0 rob_retire:0 rob_clear:0 rs1_issue:0 rs1_clear:0
+Time:   1 clock:1 |Inst| instruction:12300093 valid:1 opA:00 opB:0001 has_dest_reg:1 idx:00001 |CDB| cdb_broadcast:0 cdb_tag:000000 cdb_value:00000000 |Control| mt_retire:0 rob_retire:0 rob_clear:0 rs1_issue:0 rs1_clear:0
 mt contents:
-register:00000 tag:00000 ready_in_rob:0 has_tag:1
-register:00001 tag:00000 ready_in_rob:0 has_tag:1
-register:00010 tag:00000 ready_in_rob:0 has_tag:1
-register:00011 tag:00000 ready_in_rob:0 has_tag:1
-register:00100 tag:00000 ready_in_rob:0 has_tag:1
-register:00101 tag:00000 ready_in_rob:0 has_tag:1
-register:00110 tag:00000 ready_in_rob:0 has_tag:1
-register:00111 tag:00000 ready_in_rob:0 has_tag:1
-register:01000 tag:00000 ready_in_rob:0 has_tag:1
-register:01001 tag:00000 ready_in_rob:0 has_tag:1
-register:01010 tag:00000 ready_in_rob:0 has_tag:1
-register:01011 tag:00000 ready_in_rob:0 has_tag:1
-register:01100 tag:00000 ready_in_rob:0 has_tag:1
-register:01101 tag:00000 ready_in_rob:0 has_tag:1
-register:01110 tag:00000 ready_in_rob:0 has_tag:1
-register:01111 tag:00000 ready_in_rob:0 has_tag:1
-register:10000 tag:00000 ready_in_rob:0 has_tag:1
-register:10001 tag:00000 ready_in_rob:0 has_tag:1
-register:10010 tag:00000 ready_in_rob:0 has_tag:1
-register:10011 tag:00000 ready_in_rob:0 has_tag:1
-register:10100 tag:00000 ready_in_rob:0 has_tag:1
-register:10101 tag:00000 ready_in_rob:0 has_tag:1
-register:10110 tag:00000 ready_in_rob:0 has_tag:1
-register:10111 tag:00000 ready_in_rob:0 has_tag:1
-register:11000 tag:00000 ready_in_rob:0 has_tag:1
-register:11001 tag:00000 ready_in_rob:0 has_tag:1
-register:11010 tag:00000 ready_in_rob:0 has_tag:1
-register:11011 tag:00000 ready_in_rob:0 has_tag:1
-register:11100 tag:00000 ready_in_rob:0 has_tag:1
-register:11101 tag:00000 ready_in_rob:0 has_tag:1
-register:11110 tag:00000 ready_in_rob:0 has_tag:1
-register:11111 tag:00000 ready_in_rob:0 has_tag:1
+register:00000 tag:000000 ready_in_rob:0 has_tag:1
+register:00001 tag:000001 ready_in_rob:0 has_tag:1
+register:00010 tag:000000 ready_in_rob:0 has_tag:1
+register:00011 tag:000000 ready_in_rob:0 has_tag:1
+register:00100 tag:000000 ready_in_rob:0 has_tag:1
+register:00101 tag:000000 ready_in_rob:0 has_tag:1
+register:00110 tag:000000 ready_in_rob:0 has_tag:1
+register:00111 tag:000000 ready_in_rob:0 has_tag:1
+register:01000 tag:000000 ready_in_rob:0 has_tag:1
+register:01001 tag:000000 ready_in_rob:0 has_tag:1
+register:01010 tag:000000 ready_in_rob:0 has_tag:1
+register:01011 tag:000000 ready_in_rob:0 has_tag:1
+register:01100 tag:000000 ready_in_rob:0 has_tag:1
+register:01101 tag:000000 ready_in_rob:0 has_tag:1
+register:01110 tag:000000 ready_in_rob:0 has_tag:1
+register:01111 tag:000000 ready_in_rob:0 has_tag:1
+register:10000 tag:000000 ready_in_rob:0 has_tag:1
+register:10001 tag:000000 ready_in_rob:0 has_tag:1
+register:10010 tag:000000 ready_in_rob:0 has_tag:1
+register:10011 tag:000000 ready_in_rob:0 has_tag:1
+register:10100 tag:000000 ready_in_rob:0 has_tag:1
+register:10101 tag:000000 ready_in_rob:0 has_tag:1
+register:10110 tag:000000 ready_in_rob:0 has_tag:1
+register:10111 tag:000000 ready_in_rob:0 has_tag:1
+register:11000 tag:000000 ready_in_rob:0 has_tag:1
+register:11001 tag:000000 ready_in_rob:0 has_tag:1
+register:11010 tag:000000 ready_in_rob:0 has_tag:1
+register:11011 tag:000000 ready_in_rob:0 has_tag:1
+register:11100 tag:000000 ready_in_rob:0 has_tag:1
+register:11101 tag:000000 ready_in_rob:0 has_tag:1
+register:11110 tag:000000 ready_in_rob:0 has_tag:1
+register:11111 tag:000000 ready_in_rob:0 has_tag:1
 rob contents:
-status:01 opcode:0010011 dest:xxxxx value:00000000
+status:01 opcode:0010011 dest:00001 value:00000000
 status:00 opcode:0000000 dest:00000 value:00000000
 status:00 opcode:0000000 dest:00000 value:00000000
 status:00 opcode:0000000 dest:00000 value:00000000
@@ -141,9 +145,231 @@ status:00 opcode:0000000 dest:00000 value:00000000
 status:00 opcode:0000000 dest:00000 value:00000000
 h/t pointers:
 head:000000 tail:000001
-$finish called from file "test/stage_id_test.sv", line 159.
-$finish at simulation time                 1000
+rs contents:
+opA:00000000 opA_valid:1 opB:00000123 opB_valid:1 dest_tag:000001 in_use:1 ready:1 available:0
+=======================================================================
+Time:   2 clock:0 |Inst| instruction:12300093 valid:0 opA:00 opB:0000 has_dest_reg:0 idx:00000 |CDB| cdb_broadcast:1 cdb_tag:000001 cdb_value:00000123 |Control| mt_retire:0 rob_retire:0 rob_clear:0 rs1_issue:0 rs1_clear:0
+Time:   2 clock:1 |Inst| instruction:12300093 valid:0 opA:00 opB:0000 has_dest_reg:0 idx:00000 |CDB| cdb_broadcast:1 cdb_tag:000001 cdb_value:00000123 |Control| mt_retire:0 rob_retire:0 rob_clear:0 rs1_issue:0 rs1_clear:0
+mt contents:
+register:00000 tag:000000 ready_in_rob:0 has_tag:1
+register:00001 tag:000001 ready_in_rob:1 has_tag:1
+register:00010 tag:000000 ready_in_rob:0 has_tag:1
+register:00011 tag:000000 ready_in_rob:0 has_tag:1
+register:00100 tag:000000 ready_in_rob:0 has_tag:1
+register:00101 tag:000000 ready_in_rob:0 has_tag:1
+register:00110 tag:000000 ready_in_rob:0 has_tag:1
+register:00111 tag:000000 ready_in_rob:0 has_tag:1
+register:01000 tag:000000 ready_in_rob:0 has_tag:1
+register:01001 tag:000000 ready_in_rob:0 has_tag:1
+register:01010 tag:000000 ready_in_rob:0 has_tag:1
+register:01011 tag:000000 ready_in_rob:0 has_tag:1
+register:01100 tag:000000 ready_in_rob:0 has_tag:1
+register:01101 tag:000000 ready_in_rob:0 has_tag:1
+register:01110 tag:000000 ready_in_rob:0 has_tag:1
+register:01111 tag:000000 ready_in_rob:0 has_tag:1
+register:10000 tag:000000 ready_in_rob:0 has_tag:1
+register:10001 tag:000000 ready_in_rob:0 has_tag:1
+register:10010 tag:000000 ready_in_rob:0 has_tag:1
+register:10011 tag:000000 ready_in_rob:0 has_tag:1
+register:10100 tag:000000 ready_in_rob:0 has_tag:1
+register:10101 tag:000000 ready_in_rob:0 has_tag:1
+register:10110 tag:000000 ready_in_rob:0 has_tag:1
+register:10111 tag:000000 ready_in_rob:0 has_tag:1
+register:11000 tag:000000 ready_in_rob:0 has_tag:1
+register:11001 tag:000000 ready_in_rob:0 has_tag:1
+register:11010 tag:000000 ready_in_rob:0 has_tag:1
+register:11011 tag:000000 ready_in_rob:0 has_tag:1
+register:11100 tag:000000 ready_in_rob:0 has_tag:1
+register:11101 tag:000000 ready_in_rob:0 has_tag:1
+register:11110 tag:000000 ready_in_rob:0 has_tag:1
+register:11111 tag:000000 ready_in_rob:0 has_tag:1
+rob contents:
+status:10 opcode:0010011 dest:00001 value:00000123
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+h/t pointers:
+head:000000 tail:000001
+rs contents:
+opA:00000000 opA_valid:1 opB:00000123 opB_valid:1 dest_tag:000001 in_use:1 ready:1 available:0
+=======================================================================
+Time:   3 clock:0 |Inst| instruction:12300093 valid:0 opA:00 opB:0000 has_dest_reg:0 idx:00000 |CDB| cdb_broadcast:0 cdb_tag:000000 cdb_value:00000000 |Control| mt_retire:1 rob_retire:1 rob_clear:0 rs1_issue:0 rs1_clear:0
+Time:   3 clock:1 |Inst| instruction:12300093 valid:0 opA:00 opB:0000 has_dest_reg:0 idx:00000 |CDB| cdb_broadcast:0 cdb_tag:000000 cdb_value:00000000 |Control| mt_retire:1 rob_retire:1 rob_clear:0 rs1_issue:0 rs1_clear:0
+mt contents:
+register:00000 tag:000000 ready_in_rob:0 has_tag:1
+register:00001 tag:000001 ready_in_rob:1 has_tag:1
+register:00010 tag:000000 ready_in_rob:0 has_tag:1
+register:00011 tag:000000 ready_in_rob:0 has_tag:1
+register:00100 tag:000000 ready_in_rob:0 has_tag:1
+register:00101 tag:000000 ready_in_rob:0 has_tag:1
+register:00110 tag:000000 ready_in_rob:0 has_tag:1
+register:00111 tag:000000 ready_in_rob:0 has_tag:1
+register:01000 tag:000000 ready_in_rob:0 has_tag:1
+register:01001 tag:000000 ready_in_rob:0 has_tag:1
+register:01010 tag:000000 ready_in_rob:0 has_tag:1
+register:01011 tag:000000 ready_in_rob:0 has_tag:1
+register:01100 tag:000000 ready_in_rob:0 has_tag:1
+register:01101 tag:000000 ready_in_rob:0 has_tag:1
+register:01110 tag:000000 ready_in_rob:0 has_tag:1
+register:01111 tag:000000 ready_in_rob:0 has_tag:1
+register:10000 tag:000000 ready_in_rob:0 has_tag:1
+register:10001 tag:000000 ready_in_rob:0 has_tag:1
+register:10010 tag:000000 ready_in_rob:0 has_tag:1
+register:10011 tag:000000 ready_in_rob:0 has_tag:1
+register:10100 tag:000000 ready_in_rob:0 has_tag:1
+register:10101 tag:000000 ready_in_rob:0 has_tag:1
+register:10110 tag:000000 ready_in_rob:0 has_tag:1
+register:10111 tag:000000 ready_in_rob:0 has_tag:1
+register:11000 tag:000000 ready_in_rob:0 has_tag:1
+register:11001 tag:000000 ready_in_rob:0 has_tag:1
+register:11010 tag:000000 ready_in_rob:0 has_tag:1
+register:11011 tag:000000 ready_in_rob:0 has_tag:1
+register:11100 tag:000000 ready_in_rob:0 has_tag:1
+register:11101 tag:000000 ready_in_rob:0 has_tag:1
+register:11110 tag:000000 ready_in_rob:0 has_tag:1
+register:11111 tag:000000 ready_in_rob:0 has_tag:1
+rob contents:
+status:10 opcode:0010011 dest:00001 value:00000123
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+h/t pointers:
+head:000001 tail:000001
+rs contents:
+opA:00000000 opA_valid:1 opB:00000123 opB_valid:1 dest_tag:000001 in_use:1 ready:1 available:0
+=======================================================================
+Time:   4 clock:0 |Inst| instruction:abc00113 valid:1 opA:00 opB:0001 has_dest_reg:1 idx:00010 |CDB| cdb_broadcast:0 cdb_tag:000000 cdb_value:00000000 |Control| mt_retire:0 rob_retire:0 rob_clear:0 rs1_issue:0 rs1_clear:0
+Time:   4 clock:1 |Inst| instruction:abc00113 valid:1 opA:00 opB:0001 has_dest_reg:1 idx:00010 |CDB| cdb_broadcast:0 cdb_tag:000000 cdb_value:00000000 |Control| mt_retire:0 rob_retire:0 rob_clear:0 rs1_issue:0 rs1_clear:0
+mt contents:
+register:00000 tag:000000 ready_in_rob:0 has_tag:1
+register:00001 tag:000001 ready_in_rob:1 has_tag:1
+register:00010 tag:000010 ready_in_rob:0 has_tag:1
+register:00011 tag:000000 ready_in_rob:0 has_tag:1
+register:00100 tag:000000 ready_in_rob:0 has_tag:1
+register:00101 tag:000000 ready_in_rob:0 has_tag:1
+register:00110 tag:000000 ready_in_rob:0 has_tag:1
+register:00111 tag:000000 ready_in_rob:0 has_tag:1
+register:01000 tag:000000 ready_in_rob:0 has_tag:1
+register:01001 tag:000000 ready_in_rob:0 has_tag:1
+register:01010 tag:000000 ready_in_rob:0 has_tag:1
+register:01011 tag:000000 ready_in_rob:0 has_tag:1
+register:01100 tag:000000 ready_in_rob:0 has_tag:1
+register:01101 tag:000000 ready_in_rob:0 has_tag:1
+register:01110 tag:000000 ready_in_rob:0 has_tag:1
+register:01111 tag:000000 ready_in_rob:0 has_tag:1
+register:10000 tag:000000 ready_in_rob:0 has_tag:1
+register:10001 tag:000000 ready_in_rob:0 has_tag:1
+register:10010 tag:000000 ready_in_rob:0 has_tag:1
+register:10011 tag:000000 ready_in_rob:0 has_tag:1
+register:10100 tag:000000 ready_in_rob:0 has_tag:1
+register:10101 tag:000000 ready_in_rob:0 has_tag:1
+register:10110 tag:000000 ready_in_rob:0 has_tag:1
+register:10111 tag:000000 ready_in_rob:0 has_tag:1
+register:11000 tag:000000 ready_in_rob:0 has_tag:1
+register:11001 tag:000000 ready_in_rob:0 has_tag:1
+register:11010 tag:000000 ready_in_rob:0 has_tag:1
+register:11011 tag:000000 ready_in_rob:0 has_tag:1
+register:11100 tag:000000 ready_in_rob:0 has_tag:1
+register:11101 tag:000000 ready_in_rob:0 has_tag:1
+register:11110 tag:000000 ready_in_rob:0 has_tag:1
+register:11111 tag:000000 ready_in_rob:0 has_tag:1
+rob contents:
+status:10 opcode:0010011 dest:00001 value:00000123
+status:01 opcode:0010011 dest:00010 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+status:00 opcode:0000000 dest:00000 value:00000000
+h/t pointers:
+head:000001 tail:000010
+rs contents:
+opA:00000000 opA_valid:1 opB:00000123 opB_valid:1 dest_tag:000001 in_use:1 ready:1 available:0
+=======================================================================
+$finish called from file "test/stage_id_test.sv", line 213.
+$finish at simulation time                 4500
            V C S   S i m u l a t i o n   R e p o r t 
-Time: 1000 ps
-CPU Time:      0.310 seconds;       Data structure size:   0.0Mb
-Wed Apr  9 17:17:50 2025
+Time: 4500 ps
+CPU Time:      0.350 seconds;       Data structure size:   0.0Mb
+Fri Apr 11 16:04:17 2025

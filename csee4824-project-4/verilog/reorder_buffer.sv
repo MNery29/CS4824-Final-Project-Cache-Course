@@ -24,12 +24,12 @@ module reorder_buffer(
     input load_entry,
     //If RS needs to read value ready in ROB
     input rob_to_rs_read1,
-    input [4:0]rob_read_tag1,
+    input [5:0] rob_read_tag1,
     input rob_to_rs_read2,
-    input [4:0]rob_read_tag2,
+    input [5:0] rob_read_tag2,
 
     //input signals from execute stage 
-    input [4:0] cdb_tag, //cdb - common data bus
+    input [5:0] cdb_tag, //cdb - common data bus
     input [31:0] cdb_value,
     input cdb_valid,
 
@@ -43,7 +43,7 @@ module reorder_buffer(
     output logic reg_valid,
 
     //output for reservation station/map table: Tag for latest dispatch 
-    output [4:0] rob_tag_out,
+    output [5:0] rob_tag_out,
     output [31:0] rob_to_rs_value1,
     output [31:0] rob_to_rs_value2,
     output logic rob_out_valid,
@@ -139,8 +139,8 @@ module reorder_buffer(
 
             //execute stage logic, to handle incoming CDB update.
             if (cdb_valid) begin
-                rob_values[cdb_tag] <= cdb_value;
-                rob_status[cdb_tag] <= READY; // set status to ready, as value is now available for retirement
+                rob_values[cdb_tag - 1] <= cdb_value;
+                rob_status[cdb_tag - 1] <= READY; // set status to ready, as value is now available for retirement
             end
 
             // retire stage logic to commit ready instructions. Check if an instruction is ready to retire.  
@@ -180,8 +180,6 @@ module reorder_buffer(
         end
     end
 endmodule
-
-
 
 // valid bit needed for ROB
 
