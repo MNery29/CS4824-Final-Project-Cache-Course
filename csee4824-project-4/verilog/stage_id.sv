@@ -245,6 +245,7 @@ module stage_id (
     //Map table signals
 
     logic [5:0] rob_tag_out; //Tag output from ROB (tail pointer)
+    logic [5:0] rob_retire_tag_out; //Retire tag output from ROB (head pointer)
     logic [6:0] mt_to_rs_tag1, mt_to_rs_tag2; //MT output tags
     logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2, mt_to_regfile_rd;
 
@@ -352,6 +353,7 @@ module stage_id (
         .read_cdb (cdb_valid),
         .retire_addr (rob_dest_reg),
         .retire_entry (mt_retire_entry),
+        .retire_tag(rob_retire_tag_out),
 
         .rs1_tag (mt_to_rs_tag1),
         .rs2_tag (mt_to_rs_tag2),
@@ -407,6 +409,7 @@ module stage_id (
         .reg_value(rob_to_regfile_value),
         .reg_valid(rob_regfile_valid),
         .rob_tag_out(rob_tag_out),
+        .rob_retire_tag_out(rob_retire_tag_out),
         .rob_to_rs_value1(rob_to_rs_value1),
         .rob_to_rs_value2(rob_to_rs_value2),
         //.rob_out_valid(),

@@ -18,8 +18,8 @@ module testbench;
 
     //Control inputs
     logic mt_retire_entry;
-    logic rs1_issue;
     logic rs1_clear;
+    logic rs1_issue;
     logic rob_retire_entry;
     logic rob_clear;
 
@@ -108,8 +108,8 @@ module testbench;
     endtask
 
     initial begin
-        $monitor("Time:%4.0f clock:%b |Inst| instruction:%h valid:%b opA:%b opB:%b has_dest_reg:%b idx:%b |CDB| cdb_broadcast:%b cdb_tag:%b cdb_value:%h |Control| mt_retire:%b rob_retire:%b rob_clear:%b rs1_issue:%b rs1_clear:%b", 
-                $time, clock, if_id_packet.inst, if_id_packet.valid, opa_select, opb_select, has_dest_reg, dest_reg_idx, cdb_valid, cdb_tag, cdb_value, mt_retire_entry, rob_retire_entry, rob_clear, rs1_issue, rs1_clear);
+        $monitor("Time:%4.0f clock:%b |Inst| instruction:%h valid:%b |CDB| cdb_broadcast:%b cdb_tag:%b cdb_value:%h |Control| mt_retire:%b rob_retire:%b rob_clear:%b rs1_issue:%b rs1_clear:%b || Outputs: opA:%h opB:%h output_tag:%b", 
+                $time, clock, if_id_packet.inst, if_id_packet.valid, cdb_valid, cdb_tag, cdb_value, mt_retire_entry, rob_retire_entry, rob_clear, rs1_issue, rs1_clear, opA, opB, output_tag);
         //Reset 
         clock = 1;
         reset = 1; //Pull reset high
@@ -135,9 +135,9 @@ module testbench;
         rs1_clear = 1'b0;
 
         @(negedge clock)
-        print_MT(mt_tags_debug);
-        print_ROB(rob_debug, rob_pointers_debug);
-        print_RS(rs_debug);
+        //print_MT(mt_tags_debug);
+        //print_ROB(rob_debug, rob_pointers_debug);
+        //print_RS(rs_debug);
         reset = 0; //Pull reset low
         //Test instruction to load: addi r1 r0 123
         if_id_packet.inst.i.imm = 12'h123;
@@ -165,31 +165,134 @@ module testbench;
         print_ROB(rob_debug, rob_pointers_debug);
         print_RS(rs_debug);
         if_id_packet.valid = 1'b0; //Stall dispatch
+
         cdb_valid = 1'b1; //Simulate CDB broadcast
         cdb_tag = 6'b000001;
         cdb_value = 32'h0000_0123;
 
+        mt_retire_entry = 1'b0;
+        rob_retire_entry = 1'b0;
+        rob_clear = 1'b0;
+        rs1_issue = 1'b0;
+        rs1_clear = 1'b0;
+
         @(negedge clock)
-        print_MT(mt_tags_debug);
-        print_ROB(rob_debug, rob_pointers_debug);
-        print_RS(rs_debug);
+        //print_MT(mt_tags_debug);
+        //print_ROB(rob_debug, rob_pointers_debug);
+        //print_RS(rs_debug);
         if_id_packet.valid = 1'b0; //Stall dispatch
+
         cdb_valid = 1'b0; //Stop CDB broadcast
         cdb_tag = 6'b000000;
         cdb_value = 32'h0000_0000;
+
         mt_retire_entry = 1'b1; //Retire instruction
         rob_retire_entry = 1'b1;
+        rob_clear = 1'b0;
+        rs1_issue = 1'b0;
+        rs1_clear = 1'b1; //Clear RS for next inst - In reality, this would happen when inst has proceeded to execute
 
         @(negedge clock)
-        print_MT(mt_tags_debug);
-        print_ROB(rob_debug, rob_pointers_debug);
-        print_RS(rs_debug);
+        //print_MT(mt_tags_debug);
+        //print_ROB(rob_debug, rob_pointers_debug);
+        //print_RS(rs_debug);
         //Test instruction to load: addi r2 r0 ABC
         if_id_packet.inst.i.imm = 12'hABC;
         if_id_packet.inst.i.rs1 = 5'b00000;
         if_id_packet.inst.i.funct3 = 3'b000;
         if_id_packet.inst.i.rd = 5'b00010;
         if_id_packet.inst.i.opcode = `RV32_OP_IMM;
+        //Other packet parameters
+        if_id_packet.PC = 32'h0000_0000;
+        if_id_packet.NPC = 32'h0000_0004;
+        if_id_packet.valid = 1'b1;
+        //CDB
+        cdb_valid = 1'b0;
+        cdb_tag = 6'b00000;
+        cdb_value = 32'h0000_0000;
+        //Control signals
+        mt_retire_entry = 1'b0;
+        rob_retire_entry = 1'b0;
+        rob_clear = 1'b0;
+        rs1_issue = 1'b0;
+        rs1_clear = 1'b0;
+
+        @(negedge clock)
+        print_MT(mt_tags_debug);
+        print_ROB(rob_debug, rob_pointers_debug);
+        print_RS(rs_debug);
+        if_id_packet.valid = 1'b0; //Stall dispatch
+
+        cdb_valid = 1'b1; //Simulate CDB broadcast
+        cdb_tag = 6'b000010;
+        cdb_value = 32'hFFFF_FABC;
+
+        mt_retire_entry = 1'b0;
+        rob_retire_entry = 1'b0;
+        rob_clear = 1'b0;
+        rs1_issue = 1'b0;
+        rs1_clear = 1'b0;
+
+        @(negedge clock)
+        //print_MT(mt_tags_debug);
+        //print_ROB(rob_debug, rob_pointers_debug);
+        //print_RS(rs_debug);
+        if_id_packet.valid = 1'b0; //Stall dispatch
+
+        cdb_valid = 1'b0; //Stop CDB broadcast
+        cdb_tag = 6'b000000;
+        cdb_value = 32'h0000_0000;
+
+        mt_retire_entry = 1'b1; //Retire instruction 
+        rob_retire_entry = 1'b1;
+        rob_clear = 1'b0;
+        rs1_issue = 1'b0;
+        rs1_clear = 1'b1; //Clear RS for next inst - In reality, this would happen when inst has proceeded to execute
+
+        @(negedge clock)
+        //print_MT(mt_tags_debug);
+        //print_ROB(rob_debug, rob_pointers_debug);
+        //print_RS(rs_debug);
+        //Test instruction to load: add r3 r1 r2 <- previously retired values for r1 and r2 should show up in RS operands!
+        if_id_packet.inst.r.funct7 = 7'b0;
+        if_id_packet.inst.r.rs1 = 5'b00001;
+        if_id_packet.inst.r.rs2 = 5'b00010;
+        if_id_packet.inst.r.funct3 = 3'b000;
+        if_id_packet.inst.r.rd = 5'b00011;
+        if_id_packet.inst.r.opcode = `RV32_OP;
+        //Other packet parameters
+        if_id_packet.PC = 32'h0000_0000;
+        if_id_packet.NPC = 32'h0000_0004;
+        if_id_packet.valid = 1'b1;
+        //CDB
+        cdb_valid = 1'b0;
+        cdb_tag = 6'b00000;
+        cdb_value = 32'h0000_0000;
+        //Control signals
+        mt_retire_entry = 1'b0;
+        rob_retire_entry = 1'b0;
+        rob_clear = 1'b0;
+        rs1_issue = 1'b0;
+        rs1_clear = 1'b0;
+
+        @(negedge clock)
+        print_MT(mt_tags_debug);
+        print_ROB(rob_debug, rob_pointers_debug);
+        print_RS(rs_debug);
+        if_id_packet.valid = 1'b0;
+        rs1_clear = 1'b1; //clear RS for next test
+
+        @(negedge clock)
+        //print_MT(mt_tags_debug);
+        //print_ROB(rob_debug, rob_pointers_debug);
+        //print_RS(rs_debug);
+        //Test instruction to load: add r4 r2 r3 <- previously retired values for r2 should show up in RS operand, r3 should be a tag!
+        if_id_packet.inst.r.funct7 = 7'b0;
+        if_id_packet.inst.r.rs1 = 5'b00010;
+        if_id_packet.inst.r.rs2 = 5'b00011;
+        if_id_packet.inst.r.funct3 = 3'b000;
+        if_id_packet.inst.r.rd = 5'b00100;
+        if_id_packet.inst.r.opcode = `RV32_OP;
         //Other packet parameters
         if_id_packet.PC = 32'h0000_0000;
         if_id_packet.NPC = 32'h0000_0004;

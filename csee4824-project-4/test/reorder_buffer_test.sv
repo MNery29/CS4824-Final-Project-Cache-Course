@@ -7,7 +7,7 @@ module testbench;
 
     logic clock, reset, load_entry, rob_to_rs_read1, rob_to_rs_read2, cdb_valid, retire_entry, rob_clear, rob_full, rob_out_valid, reg_valid;
     logic [4:0] dispatch_dest_reg, reg_dest;
-    logic [5:0] rob_read_tag1, rob_read_tag2, cdb_tag, rob_tag_out;
+    logic [5:0] rob_read_tag1, rob_read_tag2, cdb_tag, rob_tag_out, rob_retire_tag_out;
     logic [6:0] dispatch_opcode;
     logic [11:0] rob_pointers;
     logic [31:0] cdb_value, reg_value, rob_to_rs_value1, rob_to_rs_value2;
@@ -31,6 +31,7 @@ module testbench;
         .cdb_tag(cdb_tag),
         .reg_dest(reg_dest),
         .rob_tag_out(rob_tag_out),
+        .rob_retire_tag_out(rob_retire_tag_out),
         .dispatch_opcode(dispatch_opcode),
         .cdb_value(cdb_value),
         .reg_value(reg_value),
@@ -64,9 +65,9 @@ module testbench;
     initial begin
         $monitor("Time:%4.0f clock:%b reset:%b\
                  |Inputs| cdb_valid:%b cdb_tag:%b cdb_value:%h load_entry:%b dispatch_dest_reg:%b dispatch_opcode:%b read1:%b read2:%b read_tag1:%b read_tag2:%b retire_entry:%b rob_clear:%b\
-                 |Outputs| reg_dest:%b reg_value:%h reg_valid:%b rob_out_valid:%b rob_tag_out:%b read_value1:%h read_value2:%h rob_full:%b",
+                 |Outputs| reg_dest:%b reg_value:%h reg_valid:%b rob_out_valid:%b rob_tag_out:%b rob_retire_tag_out:%b read_value1:%h read_value2:%h rob_full:%b",
                  $time, clock, reset, cdb_valid, cdb_tag, cdb_value, load_entry, dispatch_dest_reg, dispatch_opcode, rob_to_rs_read1, rob_to_rs_read2, 
-                 rob_read_tag1, rob_read_tag2, retire_entry, rob_clear, reg_dest, reg_value, reg_valid, rob_out_valid, rob_tag_out, rob_to_rs_value1, rob_to_rs_value2, rob_full);
+                 rob_read_tag1, rob_read_tag2, retire_entry, rob_clear, reg_dest, reg_value, reg_valid, rob_out_valid, rob_tag_out, rob_retire_tag_out, rob_to_rs_value1, rob_to_rs_value2, rob_full);
 
         //Reset 
         clock = 1;
@@ -85,7 +86,7 @@ module testbench;
         cdb_tag = 5'b00000;
         cdb_value = 32'h0000_0000;
 
-        load_entry = 1;
+        load_entry = 1; //Dispatch an instruction 
         dispatch_dest_reg = 5'b00001;
         dispatch_opcode = `RV32_ADD;
 
@@ -101,7 +102,7 @@ module testbench;
         cdb_tag = 5'b00000;
         cdb_value = 32'h0000_0000;
 
-        load_entry = 1; //Dispatch an instruction 
+        load_entry = 1; //Dispatch another instruction 
         dispatch_dest_reg = 5'b00010;
         dispatch_opcode = `RV32_ADD;
 
@@ -130,7 +131,7 @@ module testbench;
         @(negedge clock);
         print_contents(rob_debug, rob_pointers); 
         cdb_valid = 1; //CDB broadcast with tag 0
-        cdb_tag = 5'b00000; 
+        cdb_tag = 5'b00001; 
         cdb_value = 32'hFFFF_FFFF;
 
         load_entry = 0; //Don't dispatch

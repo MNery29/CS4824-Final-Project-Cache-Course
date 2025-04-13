@@ -12,6 +12,7 @@ module map_table(
     input [5:0] cdb_tag_in, //Read CDB tag broadcast 
     input read_cdb, //CDB broadcast?
     input [4:0] retire_addr, //Read address of register retired to
+    input [5:0] retire_tag,
     input retire_entry, //ROB retire?
 
     output logic [6:0] rs1_tag, //Tag output to RS opA, w/ ready in ROB bit
@@ -63,7 +64,7 @@ module map_table(
                     end
                 end
             end
-            if (retire_entry) begin
+            if ((retire_entry) && (retire_tag == tags[retire_addr])) begin
                 tags[retire_addr] <= 6'b0; //Clear tag at destination register on retire
                 ready_in_rob[retire_addr] <= 0;
             end

@@ -44,6 +44,7 @@ module reorder_buffer(
 
     //output for reservation station/map table: Tag for latest dispatch 
     output [5:0] rob_tag_out,
+    output [5:0] rob_retire_tag_out,
     output [31:0] rob_to_rs_value1,
     output [31:0] rob_to_rs_value2,
     output logic rob_out_valid,
@@ -72,6 +73,24 @@ module reorder_buffer(
     logic [5:0] head, tail;
 
     assign rob_full = ((head[4:0] == tail[4:0]) && (head[5] != tail[5]));
+
+    always_comb begin
+        if ((retire_entry && rob_status[head[4:0]] == READY) && (!rob_clear)) begin
+            reg_dest = regfile_retire(rob_opcode[head[4:0]]) ? rob_dest[head[4:0]] : `ZERO_REG;
+            reg_value = regfile_retire(rob_opcode[head[4:0]]) ? rob_values[head[4:0]] : 32'b0;
+            reg_valid = regfile_retire(rob_opcode[head[4:0]]) ? 1'b1 : 1'b0;
+
+            mem_valid = memory_retire(rob_opcode[head[4:0]]) ? 1'b1 : 1'b0;
+            mem_addr = memory_retire(rob_opcode[head[4:0]]) ? rob_values[head[4:0]] : 32'b0;
+        end
+        else begin 
+            reg_dest = 5'b0;
+            reg_value = 32'b0;
+            reg_valid = 1'b0;
+            mem_valid = 1'b0;
+            mem_addr = 32'b0;
+        end
+    end
     
     function  logic memory_retire(input [6:0] opcode);
         return (opcode == `RV32_STORE); //Store opcodes, like SB, SH, SW, SD, write to mem. 
@@ -91,6 +110,7 @@ module reorder_buffer(
 
     //Outputs to RS
     assign rob_tag_out = tail[4:0] + 1'b1;
+    assign rob_retire_tag_out = head[4:0] + 1'b1;
 
     assign rob_to_rs_value1 = rob_to_rs_read1 ? rob_values[rob_read_tag1] : 32'b0;
     assign rob_to_rs_value2 = rob_to_rs_read2 ? rob_values[rob_read_tag2] : 32'b0;
@@ -113,11 +133,6 @@ module reorder_buffer(
             end
             head <= 6'b0;
             tail <= 6'b0;
-            reg_dest <= 5'b0;
-            reg_value <= 32'b0;
-            reg_valid <= 1'b0;
-            mem_valid <= 1'b0;
-            mem_addr <= 32'b0;
             rob_out_valid <= 0;
 
         end
@@ -148,34 +163,20 @@ module reorder_buffer(
                 if (rob_clear) begin
                     //mispred or interrupt
                     for (int i = 0; i < 32; i++) begin
-                        rob_values[i] <= 64'b0;
+                        rob_values[i] <= 32'b0;
                         rob_dest[i] <= 0;
                         rob_opcode[i] <= 0;
                         rob_status[i] <= EMPTY;
-
-                        reg_dest <= 5'b0;
-                        reg_value <= 32'b0;
-                        reg_valid <= 1'b0;
-                        mem_valid <= 1'b0;
-                        mem_addr <= 32'b0;
                     end
                     head <= tail; //reset head to tail to discard instructions. 
                 end else begin
                     //update head pointer
-                    reg_dest <= regfile_retire(rob_opcode[head[4:0]]) ? rob_dest[head[4:0]] : `ZERO_REG;
-                    reg_value <= regfile_retire(rob_opcode[head[4:0]]) ? rob_values[head[4:0]] : 32'b0;
-                    reg_valid <= regfile_retire(rob_opcode[head[4:0]]) ? 1'b1 : 1'b0;
-
-                    mem_valid <= memory_retire(rob_opcode[head[4:0]]) ? 1'b1 : 1'b0;
-                    mem_addr <= memory_retire(rob_opcode[head[4:0]]) ? rob_values[head[4:0]] : 32'b0;
+                    rob_values[head] <= 32'b0;
+                    rob_dest[head] <= 5'b0;
+                    rob_opcode[head] <= 7'b0;
+                    rob_status[head] <= EMPTY;
                     head <= head + 1;
                 end
-            end else begin
-                reg_dest <= 5'b0;
-                reg_value <= 32'b0;
-                reg_valid <= 1'b0;
-                mem_valid <= 1'b0;
-                mem_addr <= 32'b0;
             end
         end
     end

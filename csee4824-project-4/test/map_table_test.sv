@@ -5,7 +5,7 @@ module testbench;
 
     logic clock, reset, read_cdb, load_entry, retire_entry;
     logic [4:0] rs1_addr, rs2_addr, r_dest, regfile_rs1_addr, regfile_rs2_addr, retire_addr;
-    logic [5:0] tag_in, cdb_tag_in;
+    logic [5:0] tag_in, cdb_tag_in, retire_tag;
     logic [6:0] rs1_tag, rs2_tag;
     logic [7:0] tags_debug[31:0];
 
@@ -21,6 +21,7 @@ module testbench;
         .tag_in(tag_in),
         .cdb_tag_in(cdb_tag_in),
         .retire_addr(retire_addr),
+        .retire_tag(retire_tag),
         .rs1_tag(rs1_tag),
         .rs2_tag(rs2_tag),
         .regfile_rs1_addr(regfile_rs1_addr),
@@ -46,8 +47,8 @@ module testbench;
     endtask
 
     initial begin
-        $monitor("Time:%4.0f clock:%b reset:%b read_cdb:%b load_entry:%b retire_entry: %b retire_addr: %b rs1_addr:%b rs2_addr:%b r_dest:%b tag_in:%b cdb_tag_in:%b rs1_tag:%b rs2_tag:%b",
-                 $time, clock, reset, read_cdb, load_entry, retire_entry, retire_addr, rs1_addr, rs2_addr, r_dest, tag_in, cdb_tag_in, rs1_tag, rs2_tag);
+        $monitor("Time:%4.0f clock:%b reset:%b read_cdb:%b load_entry:%b retire_entry:%b retire_addr:%b retire_tag:%b rs1_addr:%b rs2_addr:%b r_dest:%b tag_in:%b cdb_tag_in:%b rs1_tag:%b rs2_tag:%b",
+                 $time, clock, reset, read_cdb, load_entry, retire_entry, retire_addr, retire_tag, rs1_addr, rs2_addr, r_dest, tag_in, cdb_tag_in, rs1_tag, rs2_tag);
 
         //Reset 
         clock = 1'b0;
@@ -55,6 +56,8 @@ module testbench;
         read_cdb = 1'b0; //Do not read from CDB
         load_entry = 1'b0; //Do not load tag from RS
         retire_entry = 1'b0; //Do not retire entry 
+        retire_tag = 6'b0;
+        retire_addr = 5'b0;
         rs1_addr = 5'b0; //Set RS inputs to zero 
         rs2_addr = 5'b0;
         r_dest = 5'b0;
@@ -66,42 +69,46 @@ module testbench;
         read_cdb = 1'b0; //Do not read from CDB
         load_entry = 1'b1; //Load a tag from RS
         retire_entry = 1'b0; //Do not retire entry 
+        retire_tag = 6'b0;
         rs1_addr = 5'b00001; //Get tags for these registers
         rs2_addr = 5'b00010;
-        r_dest = 5'b00011; //Set tag at r_dest to 1
+        r_dest = 5'b00001; //Set tag at r_dest to 1
         tag_in = 6'b00001; 
         cdb_tag_in = 6'b0; //Set CDB tag input to zero 
         @(negedge clock);
         print_contents(tags_debug);
         read_cdb = 1'b0; //Do not read from CDB
-        load_entry = 1'b0; //Do not load tag from RS
+        load_entry = 1'b1; //Do not load tag from RS
         retire_entry = 1'b0; //Do not retire entry 
+        retire_tag = 6'b0;
         rs1_addr = 5'b00010; //Get tags for these registers 
-        rs2_addr = 5'b00011; //rs2 tag should be the tag we just fed in + 0 for the ready in ROB bit!
-        r_dest = 5'b00000; 
-        tag_in = 6'b00000; 
+        rs2_addr = 5'b00001; //rs2 tag should be the tag we just fed in + 0 for the ready in ROB bit!
+        r_dest = 5'b00010; 
+        tag_in = 6'b00010; 
         cdb_tag_in = 6'b0; //Set CDB tag input to zero 
         @(negedge clock);
         print_contents(tags_debug);
         read_cdb = 1'b1; //Read from CDB
         load_entry = 1'b0; //Do not load tag from RS
         retire_entry = 1'b0; //Do not retire entry 
+        retire_tag = 6'b0;
         rs1_addr = 5'b00010; //Get tags for these registers 
-        rs2_addr = 5'b00011; //rs2 tag should be the same tag + 1 for the ready in ROB bit
+        rs2_addr = 5'b00001; //rs2 tag should be the same tag + 1 for the ready in ROB bit
         r_dest = 5'b00000; 
         tag_in = 6'b00000; 
-        cdb_tag_in = 6'b00001; //Set CDB tag input to the tag at rs2
+        cdb_tag_in = 6'b000001; //Set CDB tag input to the tag at rs2
         @(negedge clock);
         print_contents(tags_debug);
         read_cdb = 1'b0; //Do not read from CDB
         load_entry = 1'b0; //Do not load tag from RS
         retire_entry = 1'b1; //Retire entry 
-        retire_addr = 5'b00011; //Retire entry at rs2 
+        retire_tag = 6'b000001;
+        retire_addr = 5'b00001; //Retire entry at rs2 
         rs1_addr = 5'b00010; //Get tags for these registers 
         rs2_addr = 5'b00011; //rs2 tag should be cleared!
         r_dest = 5'b00011; //These should be ignored
-        tag_in = 6'b00010; 
-        cdb_tag_in = 6'b00001; 
+        tag_in = 6'b000001; 
+        cdb_tag_in = 6'b000001; 
         @(negedge clock);
         print_contents(tags_debug);
         read_cdb = 1'b0; //Do not read from CDB
@@ -111,8 +118,8 @@ module testbench;
         rs1_addr = 5'b00001; //Get tags for these registers 
         rs2_addr = 5'b00010; //rs2 tag should be cleared!
         r_dest = 5'b00011; //These should be ignored
-        tag_in = 6'b00010; 
-        cdb_tag_in = 6'b00000; 
+        tag_in = 6'b000010; 
+        cdb_tag_in = 6'b0; 
         @(negedge clock);
         print_contents(tags_debug);
 
