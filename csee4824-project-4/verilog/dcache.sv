@@ -26,6 +26,7 @@ module dcache
     input logic reset,
 
     input logic [`XLEN-1:0] proc2Dcache_addr,
+    input logic [1:0] proc2Dcache_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
 
     input logic [3:0]  mem2proc_response, // 0 = can't accept, other=tag of transaction
     input logic [63:0] mem2proc_data,     // data resulting from a load
@@ -39,7 +40,12 @@ module dcache
     output logic [63:0] hit_data, // data resulting from a load
     output logic hit, // 1 if hit, 0 if miss
     output logic [3:0] data_tag,
-    output logic [3:0] data_response
+    output logic [3:0] data_response,
+
+    output logic next_state, //for debugging 
+    output logic state, //for debugging 
+    output logic [3:0] number_of_waits, //for debugging
+    output logic [3:0] next_number_of_waits //for debugging
     /* 
     so the way this module works is that,
     when a miss occurs, we will send you a data_response,
@@ -73,13 +79,16 @@ module dcache
     logic cache_valid [0:63]; // 64 lines of valid bits
     // this is for storing the tag -> addr from mem module
     logic [`XLEN-1:0] tag_addr [3:0]; 
+    logic tag_addr_valid [3:0]; // 4 lines of tag bits
 
-    logic state;
-    logic [1:0] next_state;
+    logic [3:0] prev_tag; //we dont need this if we can guarentee the mem module's tag is only HIGH for ONE CYCLE
 
-    // this is so we can gauge how many addresses we are waiting for a response with
-    logic [3:0] number_of_waits;
-    logic [3:0] next_number_of_waits;
+    // logic state;
+    // logic next_state;
+
+    // // this is so we can gauge how many addresses we are waiting for a response with
+    // logic [3:0] number_of_waits;
+    // logic [3:0] next_number_of_waits;
     logic [`XLEN-1:0] saved_addr; //used for misses, saves the address of the missed lookup
 
     logic next_hit;
@@ -88,32 +97,37 @@ module dcache
     
     always_comb begin
         next_hit_data = cache_data[addr_index]; //hit_data only valid if hit is high
-        next_hit = (cache_tag[addr_index] == addr_tag) && cache_valid[addr_index];
+        next_hit = (cache_tag[addr_index] == addr_tag) && cache_valid[addr_index] && 
+                    (proc2Dcache_command == BUS_LOAD || proc2Dcache_command == BUS_STORE);
         proc2mem_command = BUS_NONE;
         proc2mem_addr = 32'b0;
         proc2mem_data = 64'b0;
         proc2mem_size = 1'b1;
         next_number_of_waits = number_of_waits;
         next_state = state;
+        next_tag = 0;
         //ok so the reason i have an idle and miss state, is because when we send a request to memory,
         // im assuming we will get the tag ONLY 
         case (state)
-            `IDLE: if (!next_hit) begin
+            `IDLE: begin
+                if (!next_hit && (proc2Dcache_command == BUS_LOAD || proc2Dcache_command == BUS_STORE) ) begin
                 next_state = `MISS;
                 proc2mem_command = BUS_LOAD;
                 proc2mem_addr = {proc2Dcache_addr[`XLEN-1:OFFSET_BITS]};
-                
+                end
+                else begin
+                end
             end
             `MISS: begin
                 if (mem2proc_response != 0) begin
                     tag_addr[mem2proc_response] = saved_addr;
+                    tag_addr_valid[mem2proc_response] = 1'b1;
                     next_tag = mem2proc_response;
                     next_state = `IDLE;
                     next_number_of_waits = number_of_waits + 1;
                     
                 end
                 else begin
-                    next_hit = 0;
                 end
             end
         endcase
@@ -123,8 +137,10 @@ module dcache
             end
             default begin
                 if (mem2proc_tag != 0) begin
-                    next_number_of_waits = number_of_waits - 1;
-                    proc2mem_command = BUS_NONE;
+                    if (mem2proc_tag != prev_tag) begin
+                        next_number_of_waits = number_of_waits - 1;
+                        proc2mem_command = BUS_NONE;
+                    end
                 end
                 else begin 
                 end
@@ -145,6 +161,9 @@ module dcache
             end
             state       <= `IDLE;
             saved_addr  <= 32'b0;
+            number_of_waits <= `NONE;
+            prev_tag <= 0;
+
         end
         else begin
             state <= next_state;
@@ -159,11 +178,12 @@ module dcache
                 // therefore, this is returned. 
                 saved_addr <= proc2Dcache_addr;
                 // okay we need to make sure to only set this saved_addr once!
-                data_response <= 0;
-                hit <= 0;
+            end
+            else begin 
             end
             // this can happen regardless of miss or hit, so we will check for it here
             if (mem2proc_tag != 0 && number_of_waits != `NONE) begin
+                prev_tag <= mem2proc_tag;
                 cache_data[tag_addr[mem2proc_tag][INDEX_BITS + OFFSET_BITS - 1 : OFFSET_BITS]]  <= mem2proc_data;
                 cache_tag[tag_addr[mem2proc_tag][INDEX_BITS + OFFSET_BITS - 1 : OFFSET_BITS]]   <= tag_addr[mem2proc_tag][`XLEN-1 : INDEX_BITS + OFFSET_BITS];
                 cache_valid[tag_addr[mem2proc_tag][INDEX_BITS + OFFSET_BITS - 1 : OFFSET_BITS]] <= 1'b1;
