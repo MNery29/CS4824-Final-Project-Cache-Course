@@ -15,12 +15,7 @@
 
 // ALU: computes the result of FUNC applied with operands A and B
 // This module is purely combinational
-module alu #(
-    NUM_ADDERS = 4, // Number of adders
-    NUM_MULTS  = 2  // Number of multipliers
-    
-
-)
+module alu 
 (
     input [`XLEN-1:0] opa,
     input [`XLEN-1:0] opb,

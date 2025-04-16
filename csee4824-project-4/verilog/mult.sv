@@ -10,6 +10,15 @@
 //          in mult_stage. See the original ALU and it's different behavior for
 //          different multiply functions.
 
+// 3 types of multiplication support
+// where 
+// logic signed [`XLEN-1:0]   signed_opa, signed_opb;
+// logic signed [2*`XLEN-1:0] signed_mul, mixed_mul;
+// logic        [2*`XLEN-1:0] unsigned_mul;
+// assign signed_mul   = signed_opa * signed_opb;
+// assign unsigned_mul = opa * opb;
+// assign mixed_mul    = signed_opa * opb;
+
 module mult (
     input clock, reset,
     input [63:0] mcand, mplier,
