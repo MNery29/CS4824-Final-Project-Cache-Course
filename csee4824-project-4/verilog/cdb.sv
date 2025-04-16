@@ -17,10 +17,8 @@ module cdb (
     input logic reset,
 
     //input signals 
-
-    input logic [4:0] fu_tag, // functional unit tag to be broadcast
-    input logic [63:0] fu_result, // data from functional unit
-    input logic fu_valid, // is the data valid?
+    //input of FU signals from complete stage
+    input CDB_PACKET cdb_in,
 
     //output signals
 
@@ -37,9 +35,9 @@ always_ff @(posedge clock or posedge reset) begin
         cdb_valid <= 0;
     end else begin
         if (fu_valid) begin //if fu_data is valid, broadcast
-            cdb_data <= fu_result;
-            cdb_tag <= fu_tag;
-            cdb_valid <= fu_valid
+            cdb_data <= cdb_in.value;
+            cdb_tag <= cdb_in.tag;
+            cdb_valid <= cdb_in.valid;
         end else begin
             cdb_valid <= 1'b0; //no broadcasts if no asserted valid data
         end

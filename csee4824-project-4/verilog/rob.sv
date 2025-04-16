@@ -21,7 +21,7 @@ module rob(
     input [6:0] dispatch_opcode,
     input dispatch_valid,
 
-    //input signals from execute stage 
+    //input signals from complete stage from CDB
     input [4:0] cdb_tag, //cdb - commnon data bus
     input [63:0] cdb_value,
     input cdb_valid,

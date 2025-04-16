@@ -8,6 +8,9 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
+`include "verilog/sys_defs.svh"
+`include "verilog/ISA.svh"
+
 module stage_rt (
 
 input logic clock, 
@@ -63,3 +66,4 @@ always_ff @(posedge clock) begin
         end
     end
 end
+endmodule

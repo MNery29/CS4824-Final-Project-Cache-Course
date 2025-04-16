@@ -361,7 +361,21 @@ typedef struct packed {
 
 //
 
+//packet from EX to complete
+// This is used to send the result of an instruction to the commit stage
+typedef struct packed {
+    logic [4:0]  rob_tag;   // Where in the ROB the result belongs
+    logic [63:0] value;     // Result to commit
+    logic        done;      // Result is ready
+} EX_CP_PACKET;
 
 
+
+//CDB packet: to be sent to CDB
+typedef struct packed {
+    logic [4:0]  tag;     // ROB tag
+    logic [63:0] value;   // Result value
+    logic        valid;   // Valid signal
+} CDB_PACKET;
 
 `endif // __SYS_DEFS_SVH__
