@@ -1,3 +1,5 @@
 *.daidir
 
 csrc/
+output/
+dcache.simv

@@ -177,7 +177,7 @@ GREP = grep -E --color=auto
 # - with dependencies: 'rob.simv', 'rob.cov', and 'synth/rob.vg'
 
 # TODO: add more modules here
-TESTED_MODULES = mult rob map_table reservation_station reorder_buffer stage_id
+TESTED_MODULES = mult rob map_table reservation_station reorder_buffer stage_id dcache
 
 MODULE = pipeline
 
@@ -320,15 +320,15 @@ HEADERS = verilog/sys_defs.svh \
 
 TESTBENCH = test/pipeline_test.sv \
             test/pipeline_print.c \
-            test/mem.sv
+            test/mem.sv 
 
 # you could simplify this line with $(wildcard verilog/*.sv) - but the manual way is more explicit
 SOURCES = verilog/pipeline.sv \
           verilog/regfile.sv \
           verilog/icache.sv \
           verilog/mult.sv \
-          verilog/mult_stage.sv \
-
+          verilog/mult_stage.sv 
+		  
 SYNTH_FILES = synth/pipeline.vg
 
 # the normal simulation executable will run your testbench on the original modules
