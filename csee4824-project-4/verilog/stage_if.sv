@@ -21,10 +21,12 @@ module stage_if (
 
     output IF_ID_PACKET      if_packet,
     output logic [`XLEN-1:0] proc2Icache_addr // address sent to icache
+    output logic stall_if // stall signal from IF to pass down pipeline
 );
 
     logic [`XLEN-1:0] PC_reg; // PC we are currently fetching
 
+    assign stall_if = ~Icache_valid_out;
 
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
@@ -32,13 +34,15 @@ module stage_if (
             PC_reg <= 0;             // initial PC value is 0 (the memory address where our program starts)
         end else if (take_branch) begin
             PC_reg <= branch_target; // update to a taken branch (does not depend on valid bit)
-        end else if (if_valid) begin
+        end else if (if_valid && ~stall_if) begin //only update if valid and not told to stall
             PC_reg <= PC_reg + 4;    // or transition to next PC if valid
         end
     end
 
     //i think icache alr ignores the lower 3 bits
     assign proc2Icache_addr = PC_reg;
+
+    //assign stall to whether icache is valid
 
     // this mux is because the Icache gives us 64 bits not 32 bits
     assign if_packet.inst = (if_valid && Icache_valid_out)
@@ -48,6 +52,6 @@ module stage_if (
     assign if_packet.PC  = PC_reg;
     assign if_packet.NPC = PC_reg + 4; // pass PC+4 down pipeline w/instruction
 
-    assign if_packet.valid = if_valid;
+    assign if_packet.valid = if_valid && Icache_valid_out;
 
 endmodule // stage_if
