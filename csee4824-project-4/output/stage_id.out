@@ -2,7 +2,7 @@ Info: [VCS_SAVE_RESTORE_INFO] ASLR (Address Space Layout Randomization) is detec
 Please use '-no_save' simv switch to avoid re-execution or '-suppress=ASLR_DETECTED_INFO' to suppress this message.
 Chronologic VCS simulator copyright 1991-2023
 Contains Synopsys proprietary information.
-Compiler version U-2023.03-SP2-1_Full64; Runtime version U-2023.03-SP2-1_Full64;  Apr 13 17:51 2025
+Compiler version U-2023.03-SP2-1_Full64; Runtime version U-2023.03-SP2-1_Full64;  Apr 16 02:24 2025
 Time:   0 clock:1 |Inst| instruction:00a08113 valid:0 |CDB| cdb_broadcast:0 cdb_tag:000000 cdb_value:00000000 |Control| mt_retire:0 rob_retire:0 rob_clear:0 rs1_issue:0 rs1_clear:0 || Outputs: opA:00000000 opB:00000000 output_tag:000000
 Time:   1 clock:0 |Inst| instruction:12300093 valid:1 |CDB| cdb_broadcast:0 cdb_tag:000000 cdb_value:00000000 |Control| mt_retire:0 rob_retire:0 rob_clear:0 rs1_issue:0 rs1_clear:0 || Outputs: opA:00000000 opB:00000000 output_tag:000000
 Time:   1 clock:1 |Inst| instruction:12300093 valid:1 |CDB| cdb_broadcast:0 cdb_tag:000000 cdb_value:00000000 |Control| mt_retire:0 rob_retire:0 rob_clear:0 rs1_issue:0 rs1_clear:0 || Outputs: opA:00000000 opB:00000000 output_tag:000000
@@ -310,5 +310,5 @@ $finish called from file "test/stage_id_test.sv", line 316.
 $finish at simulation time                 9500
            V C S   S i m u l a t i o n   R e p o r t 
 Time: 9500 ps
-CPU Time:      0.300 seconds;       Data structure size:   0.0Mb
-Sun Apr 13 17:51:21 2025
+CPU Time:      0.200 seconds;       Data structure size:   0.0Mb
+Wed Apr 16 02:24:34 2025

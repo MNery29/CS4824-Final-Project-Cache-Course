@@ -19,7 +19,6 @@ module cdb (
     //input signals 
     //input of FU signals from complete stage
     input CDB_PACKET cdb_in,
-
     //output signals
 
     output logic [63:0] cdb_data, // data to be sent to broadcast

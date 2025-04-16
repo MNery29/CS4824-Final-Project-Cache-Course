@@ -1,0 +1,459 @@
+Information: Updating design information... (UID-85)
+ 
+****************************************
+Report : design
+Design : cdb
+Version: U-2022.12-SP7
+Date   : Sun Apr 13 14:56:39 2025
+****************************************
+
+Design allows ideal nets on clock nets.
+
+Library(s) Used:
+
+    asap7sc7p5t_merged_RVT_FF_nldm_211120 (File: /homes/user/fac/tk3070/tmp/synthesis/asap7sc7p5t_merged_RVT_FF_nldm_211120.db)
+
+Local Link Library:
+
+    {asap7sc7p5t_merged_RVT_FF_nldm_211120.db}
+
+Flip-Flop Types:
+
+    No flip-flop types specified.
+
+Latch Types:
+
+    No latch types specified.
+
+Operating Conditions:
+
+
+    Operating Condition Name : PVT_0P77V_0C
+    Library : asap7sc7p5t_merged_RVT_FF_nldm_211120
+    Process :   1.00
+    Temperature :   0.00
+    Voltage :   0.77
+
+Wire Loading Model:
+
+    No wire loading specified.
+
+
+Wire Loading Model Mode: top.
+
+Timing Ranges:
+
+    No timing ranges specified.
+
+Pin Input Delays:
+
+    None specified.
+
+Pin Output Delays:
+
+    None specified.
+
+Disabled Timing Arcs:
+
+    No arcs disabled.
+
+Required Licenses:
+
+    None Required
+
+Design Parameters:
+
+    None specified.
+1
+ 
+****************************************
+Report : area
+Design : cdb
+Version: U-2022.12-SP7
+Date   : Sun Apr 13 14:56:39 2025
+****************************************
+
+Library(s) Used:
+
+    asap7sc7p5t_merged_RVT_FF_nldm_211120 (File: /homes/user/fac/tk3070/tmp/synthesis/asap7sc7p5t_merged_RVT_FF_nldm_211120.db)
+
+Number of ports:                          142
+Number of nets:                           291
+Number of cells:                          219
+Number of combinational cells:            149
+Number of sequential cells:                70
+Number of macros/black boxes:               0
+Number of buf/inv:                         79
+Number of references:                       5
+
+Combinational area:                 10.657980
+Buf/Inv area:                        4.578120
+Noncombinational area:              26.535600
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                    37.193580
+Total area:                 undefined
+1
+ 
+****************************************
+Report : timing
+        -path full
+        -delay max
+        -input_pins
+        -nets
+        -max_paths 2
+        -transition_time
+Design : cdb
+Version: U-2022.12-SP7
+Date   : Sun Apr 13 14:56:39 2025
+****************************************
+
+ * Some/all delay information is back-annotated.
+
+Operating Conditions: PVT_0P77V_0C   Library: asap7sc7p5t_merged_RVT_FF_nldm_211120
+Wire Load Model Mode: top
+
+  Startpoint: cdb_data_reg[1]
+              (rising edge-triggered flip-flop clocked by clock)
+  Endpoint: cdb_data_reg[1]
+            (rising edge-triggered flip-flop clocked by clock)
+  Path Group: clock
+  Path Type: max
+
+  Point                                  Fanout     Trans      Incr       Path
+  -------------------------------------------------------------------------------
+  clock clock (rise edge)                                      0.00       0.00
+  clock network delay (ideal)                                  0.00       0.00
+  cdb_data_reg[1]/CLK (DFFASRHQNx1_ASAP7_75t_R)      0.00      0.00       0.00 r
+  cdb_data_reg[1]/QN (DFFASRHQNx1_ASAP7_75t_R)      13.09     33.92      33.92 f
+  cdb_data[1] (net)                        2                   0.00      33.92 f
+  U17/B1 (OAI22xp33_ASAP7_75t_R)                    13.09      0.00      33.92 f
+  U17/Y (OAI22xp33_ASAP7_75t_R)                     39.09     11.76      45.69 r
+  n13 (net)                                1                   0.00      45.69 r
+  U201/A (HB1xp67_ASAP7_75t_R)                      39.09      0.00      45.69 r
+  U201/Y (HB1xp67_ASAP7_75t_R)                       9.88     19.97      65.65 r
+  n198 (net)                               1                   0.00      65.65 r
+  cdb_data_reg[1]/D (DFFASRHQNx1_ASAP7_75t_R)        9.88      0.00      65.65 r
+  data arrival time                                                      65.65
+
+  clock clock (rise edge)                                   1000.00    1000.00
+  clock network delay (ideal)                                  0.00    1000.00
+  clock uncertainty                                           -0.10     999.90
+  cdb_data_reg[1]/CLK (DFFASRHQNx1_ASAP7_75t_R)                0.00     999.90 r
+  library setup time                                         -14.95     984.95
+  data required time                                                    984.95
+  -------------------------------------------------------------------------------
+  data required time                                                    984.95
+  data arrival time                                                     -65.65
+  -------------------------------------------------------------------------------
+  slack (MET)                                                           919.30
+
+
+  Startpoint: cdb_data_reg[0]
+              (rising edge-triggered flip-flop clocked by clock)
+  Endpoint: cdb_data_reg[0]
+            (rising edge-triggered flip-flop clocked by clock)
+  Path Group: clock
+  Path Type: max
+
+  Point                                  Fanout     Trans      Incr       Path
+  -------------------------------------------------------------------------------
+  clock clock (rise edge)                                      0.00       0.00
+  clock network delay (ideal)                                  0.00       0.00
+  cdb_data_reg[0]/CLK (DFFASRHQNx1_ASAP7_75t_R)      0.00      0.00       0.00 r
+  cdb_data_reg[0]/QN (DFFASRHQNx1_ASAP7_75t_R)      13.09     33.92      33.92 f
+  cdb_data[0] (net)                        2                   0.00      33.92 f
+  U16/B1 (OAI22xp33_ASAP7_75t_R)                    13.09      0.00      33.92 f
+  U16/Y (OAI22xp33_ASAP7_75t_R)                     39.09     11.76      45.69 r
+  n11 (net)                                1                   0.00      45.69 r
+  U202/A (HB1xp67_ASAP7_75t_R)                      39.09      0.00      45.69 r
+  U202/Y (HB1xp67_ASAP7_75t_R)                       9.88     19.97      65.65 r
+  n199 (net)                               1                   0.00      65.65 r
+  cdb_data_reg[0]/D (DFFASRHQNx1_ASAP7_75t_R)        9.88      0.00      65.65 r
+  data arrival time                                                      65.65
+
+  clock clock (rise edge)                                   1000.00    1000.00
+  clock network delay (ideal)                                  0.00    1000.00
+  clock uncertainty                                           -0.10     999.90
+  cdb_data_reg[0]/CLK (DFFASRHQNx1_ASAP7_75t_R)                0.00     999.90 r
+  library setup time                                         -14.95     984.95
+  data required time                                                    984.95
+  -------------------------------------------------------------------------------
+  data required time                                                    984.95
+  data arrival time                                                     -65.65
+  -------------------------------------------------------------------------------
+  slack (MET)                                                           919.30
+
+
+  Startpoint: fu_valid (input port clocked by clock)
+  Endpoint: cdb_data_reg[1]
+            (rising edge-triggered flip-flop clocked by clock)
+  Path Group: input_grp
+  Path Type: max
+
+  Point                                Fanout     Trans      Incr       Path
+  -----------------------------------------------------------------------------
+  clock clock (rise edge)                                    0.00       0.00
+  clock network delay (ideal)                                0.00       0.00
+  input external delay                                       0.10       0.10 r
+  fu_valid (in)                                    0.00      0.00       0.10 r
+  N3 (net)                              70                   0.00       0.10 r
+  U222/A (INVx1_ASAP7_75t_R)                       0.00      0.00       0.10 r
+  U222/Y (INVx1_ASAP7_75t_R)                     168.55     80.88      80.98 f
+  n212 (net)                            70                   0.00      80.98 f
+  U17/A2 (OAI22xp33_ASAP7_75t_R)                 168.55      0.00      80.98 f
+  U17/Y (OAI22xp33_ASAP7_75t_R)                   39.09     28.95     109.93 r
+  n13 (net)                              1                   0.00     109.93 r
+  U201/A (HB1xp67_ASAP7_75t_R)                    39.09      0.00     109.93 r
+  U201/Y (HB1xp67_ASAP7_75t_R)                     9.88     19.97     129.90 r
+  n198 (net)                             1                   0.00     129.90 r
+  cdb_data_reg[1]/D (DFFASRHQNx1_ASAP7_75t_R)      9.88      0.00     129.90 r
+  data arrival time                                                   129.90
+
+  clock clock (rise edge)                                 1000.00    1000.00
+  clock network delay (ideal)                                0.00    1000.00
+  clock uncertainty                                         -0.10     999.90
+  cdb_data_reg[1]/CLK (DFFASRHQNx1_ASAP7_75t_R)              0.00     999.90 r
+  library setup time                                       -14.95     984.95
+  data required time                                                  984.95
+  -----------------------------------------------------------------------------
+  data required time                                                  984.95
+  data arrival time                                                  -129.90
+  -----------------------------------------------------------------------------
+  slack (MET)                                                         855.05
+
+
+  Startpoint: fu_valid (input port clocked by clock)
+  Endpoint: cdb_data_reg[0]
+            (rising edge-triggered flip-flop clocked by clock)
+  Path Group: input_grp
+  Path Type: max
+
+  Point                                Fanout     Trans      Incr       Path
+  -----------------------------------------------------------------------------
+  clock clock (rise edge)                                    0.00       0.00
+  clock network delay (ideal)                                0.00       0.00
+  input external delay                                       0.10       0.10 r
+  fu_valid (in)                                    0.00      0.00       0.10 r
+  N3 (net)                              70                   0.00       0.10 r
+  U222/A (INVx1_ASAP7_75t_R)                       0.00      0.00       0.10 r
+  U222/Y (INVx1_ASAP7_75t_R)                     168.55     80.88      80.98 f
+  n212 (net)                            70                   0.00      80.98 f
+  U16/A2 (OAI22xp33_ASAP7_75t_R)                 168.55      0.00      80.98 f
+  U16/Y (OAI22xp33_ASAP7_75t_R)                   39.09     28.95     109.93 r
+  n11 (net)                              1                   0.00     109.93 r
+  U202/A (HB1xp67_ASAP7_75t_R)                    39.09      0.00     109.93 r
+  U202/Y (HB1xp67_ASAP7_75t_R)                     9.88     19.97     129.90 r
+  n199 (net)                             1                   0.00     129.90 r
+  cdb_data_reg[0]/D (DFFASRHQNx1_ASAP7_75t_R)      9.88      0.00     129.90 r
+  data arrival time                                                   129.90
+
+  clock clock (rise edge)                                 1000.00    1000.00
+  clock network delay (ideal)                                0.00    1000.00
+  clock uncertainty                                         -0.10     999.90
+  cdb_data_reg[0]/CLK (DFFASRHQNx1_ASAP7_75t_R)              0.00     999.90 r
+  library setup time                                       -14.95     984.95
+  data required time                                                  984.95
+  -----------------------------------------------------------------------------
+  data required time                                                  984.95
+  data arrival time                                                  -129.90
+  -----------------------------------------------------------------------------
+  slack (MET)                                                         855.05
+
+
+  Startpoint: cdb_data_reg[1]
+              (rising edge-triggered flip-flop clocked by clock)
+  Endpoint: cdb_data[1]
+            (output port clocked by clock)
+  Path Group: output_grp
+  Path Type: max
+
+  Point                                  Fanout     Trans      Incr       Path
+  -------------------------------------------------------------------------------
+  cdb_data_reg[1]/CLK (DFFASRHQNx1_ASAP7_75t_R)      0.00      0.00       0.00 r
+  cdb_data_reg[1]/QN (DFFASRHQNx1_ASAP7_75t_R)      12.08     34.47      34.47 r
+  cdb_data[1] (net)                        2                   0.00      34.47 r
+  cdb_data[1] (out)                                 12.08      0.00      34.47 r
+  data arrival time                                                      34.47
+
+  max_delay                                                 1000.00    1000.00
+  clock uncertainty                                           -0.10     999.90
+  output external delay                                       -0.10     999.80
+  data required time                                                    999.80
+  -------------------------------------------------------------------------------
+  data required time                                                    999.80
+  data arrival time                                                     -34.47
+  -------------------------------------------------------------------------------
+  slack (MET)                                                           965.33
+
+
+  Startpoint: cdb_data_reg[0]
+              (rising edge-triggered flip-flop clocked by clock)
+  Endpoint: cdb_data[0]
+            (output port clocked by clock)
+  Path Group: output_grp
+  Path Type: max
+
+  Point                                  Fanout     Trans      Incr       Path
+  -------------------------------------------------------------------------------
+  cdb_data_reg[0]/CLK (DFFASRHQNx1_ASAP7_75t_R)      0.00      0.00       0.00 r
+  cdb_data_reg[0]/QN (DFFASRHQNx1_ASAP7_75t_R)      12.08     34.47      34.47 r
+  cdb_data[0] (net)                        2                   0.00      34.47 r
+  cdb_data[0] (out)                                 12.08      0.00      34.47 r
+  data arrival time                                                      34.47
+
+  max_delay                                                 1000.00    1000.00
+  clock uncertainty                                           -0.10     999.90
+  output external delay                                       -0.10     999.80
+  data required time                                                    999.80
+  -------------------------------------------------------------------------------
+  data required time                                                    999.80
+  data arrival time                                                     -34.47
+  -------------------------------------------------------------------------------
+  slack (MET)                                                           965.33
+
+
+1
+ 
+****************************************
+Report : constraint
+        -verbose
+        -max_delay
+Design : cdb
+Version: U-2022.12-SP7
+Date   : Sun Apr 13 14:56:39 2025
+****************************************
+
+
+  Startpoint: cdb_data_reg[0]
+              (rising edge-triggered flip-flop clocked by clock)
+  Endpoint: cdb_data_reg[0]
+            (rising edge-triggered flip-flop clocked by clock)
+  Path Group: clock
+  Path Type: max
+
+  Point                                              Incr       Path
+  ---------------------------------------------------------------------
+  clock clock (rise edge)                            0.00       0.00
+  clock network delay (ideal)                        0.00       0.00
+  cdb_data_reg[0]/CLK (DFFASRHQNx1_ASAP7_75t_R)      0.00       0.00 r
+  cdb_data_reg[0]/QN (DFFASRHQNx1_ASAP7_75t_R)      33.92      33.92 f
+  U16/Y (OAI22xp33_ASAP7_75t_R)                     11.76      45.69 r
+  U202/Y (HB1xp67_ASAP7_75t_R)                      19.97      65.65 r
+  cdb_data_reg[0]/D (DFFASRHQNx1_ASAP7_75t_R)        0.00      65.65 r
+  data arrival time                                            65.65
+
+  clock clock (rise edge)                         1000.00    1000.00
+  clock network delay (ideal)                        0.00    1000.00
+  clock uncertainty                                 -0.10     999.90
+  cdb_data_reg[0]/CLK (DFFASRHQNx1_ASAP7_75t_R)      0.00     999.90 r
+  library setup time                               -14.95     984.95
+  data required time                                          984.95
+  ---------------------------------------------------------------------
+  data required time                                          984.95
+  data arrival time                                           -65.65
+  ---------------------------------------------------------------------
+  slack (MET)                                                 919.30
+
+
+  Startpoint: fu_valid (input port clocked by clock)
+  Endpoint: cdb_data_reg[0]
+            (rising edge-triggered flip-flop clocked by clock)
+  Path Group: input_grp
+  Path Type: max
+
+  Point                                            Incr       Path
+  -------------------------------------------------------------------
+  clock clock (rise edge)                          0.00       0.00
+  clock network delay (ideal)                      0.00       0.00
+  input external delay                             0.10       0.10 r
+  fu_valid (in)                                    0.00       0.10 r
+  U222/Y (INVx1_ASAP7_75t_R)                      80.88      80.98 f
+  U16/Y (OAI22xp33_ASAP7_75t_R)                   28.95     109.93 r
+  U202/Y (HB1xp67_ASAP7_75t_R)                    19.97     129.90 r
+  cdb_data_reg[0]/D (DFFASRHQNx1_ASAP7_75t_R)      0.00     129.90 r
+  data arrival time                                         129.90
+
+  clock clock (rise edge)                       1000.00    1000.00
+  clock network delay (ideal)                      0.00    1000.00
+  clock uncertainty                               -0.10     999.90
+  cdb_data_reg[0]/CLK (DFFASRHQNx1_ASAP7_75t_R)     0.00    999.90 r
+  library setup time                             -14.95     984.95
+  data required time                                        984.95
+  -------------------------------------------------------------------
+  data required time                                        984.95
+  data arrival time                                        -129.90
+  -------------------------------------------------------------------
+  slack (MET)                                               855.05
+
+
+  Startpoint: cdb_data_reg[0]
+              (rising edge-triggered flip-flop clocked by clock)
+  Endpoint: cdb_data[0]
+            (output port clocked by clock)
+  Path Group: output_grp
+  Path Type: max
+
+  Point                                              Incr       Path
+  ---------------------------------------------------------------------
+  cdb_data_reg[0]/CLK (DFFASRHQNx1_ASAP7_75t_R)      0.00       0.00 r
+  cdb_data_reg[0]/QN (DFFASRHQNx1_ASAP7_75t_R)      34.47      34.47 r
+  cdb_data[0] (out)                                  0.00      34.47 r
+  data arrival time                                            34.47
+
+  max_delay                                       1000.00    1000.00
+  clock uncertainty                                 -0.10     999.90
+  output external delay                             -0.10     999.80
+  data required time                                          999.80
+  ---------------------------------------------------------------------
+  data required time                                          999.80
+  data arrival time                                           -34.47
+  ---------------------------------------------------------------------
+  slack (MET)                                                 965.33
+
+
+1
+ 
+****************************************
+Report : resources
+Design : cdb
+Version: U-2022.12-SP7
+Date   : Sun Apr 13 14:56:39 2025
+****************************************
+
+
+No resource sharing information to report.
+
+No implementations to report
+1
+Information: Updating graph... (UID-83)
+ 
+****************************************
+Report : reference
+Design : cdb
+Version: U-2022.12-SP7
+Date   : Sun Apr 13 14:56:40 2025
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+DFFASRHQNx1_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.379080      70    26.535600 n
+HB1xp67_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.058320      77     4.490640
+INVx1_ASAP7_75t_R  asap7sc7p5t_merged_RVT_FF_nldm_211120     0.043740       2     0.087480
+OAI22xp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.087480      69     6.036120
+TIEHIx1_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.043740       1     0.043740
+-----------------------------------------------------------------------------
+Total 5 references                                     37.193580
+1

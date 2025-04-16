@@ -67,9 +67,9 @@ module pipeline (
     logic             Icache_valid_out;
     logic [1:0]       proc2Imem_command;
     logic [`XLEN-1:0] proc2Imem_addr;
-    logic [3:0]  Imem2proc_response, // Should be zero unless there is a response
-    logic [63:0] Imem2proc_data,
-    logic [3:0]  Imem2proc_tag,
+    logic [3:0]  Imem2proc_response; // Should be zero unless there is a response
+    logic [63:0] Imem2proc_data;
+    logic [3:0]  Imem2proc_tag;
 
     always_comb begin
         if (proc2Dmem_command != BUS_NONE) begin // read or write DATA from memory
