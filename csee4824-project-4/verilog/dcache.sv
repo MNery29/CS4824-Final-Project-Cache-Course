@@ -137,6 +137,8 @@ module dcache
             end
             default begin
                 if (mem2proc_tag != 0) begin
+                    // this if statement is to check if the tag we are waiting for is the same as the one we are getting
+                    // this is caused if the mem module is sending us a tag for more than one cycle
                     if (mem2proc_tag != prev_tag) begin
                         next_number_of_waits = number_of_waits - 1;
                         proc2mem_command = BUS_NONE;
