@@ -19,10 +19,11 @@
 
 // so the product sum is actually {AC, QR} 
 
-//actually we will assume this only takes one STEP
-// so basically one sc step
 
-module mult_stage (
+module mult_stage #(
+    parameter int STEPS_PER_CYCLE  = 4     // # micro‑shifts to do in one clk
+)
+(
     input clock, reset, start,
     input [`XLEN*2-1:0] prev_sum, // this is {AC, QR}
     input [`XLEN-1:0] mcand, // This is BR
@@ -33,50 +34,51 @@ module mult_stage (
     output logic done
 );
 
-    logic [`XLEN-1:0] ac, qr;
+    logic [1:0] qn;
+
+    logic signed [`XLEN-1:0] ac, qr;
 
     always_comb begin
         qr = prev_sum[`XLEN-1:0];
         ac = prev_sum[(2*`XLEN)-1:`XLEN];
     end
-    logic [`XLEN-1:0] next_ac;
+    logic signed [`XLEN-1:0] next_ac;
 
-    assign out_phantom_bit = qr[0];
-    logic [`XLEN*2-1:0] shifted_product_sum;
+    logic signed [`XLEN*2-1:0] shifted_product_sum;
 
+    localparam int TRIPLE_W = 2*`XLEN + 1;
+    logic signed [TRIPLE_W-1:0] work;          // {AC, QR, q‑1}
+    int k;
+
+    logic [2*XLEN-1:0] product_sum_next = work[TRIPLE_W-1:1];
+    logic phantom_next = work[0];
+
+    integer i;
     always_comb begin
-        shifted_product_sum = {ac, qr} >> 1;
-        next_ac = ac;
-        if (qr[0] == 1'b0 && phantom_bit == 1'b0) begin
-            // do nothing
-            shifted_product_sum = {ac, qr} >> 1;
-        end else if (qr[0] == 1'b1 && phantom_bit == 1'b0) begin
-            // add BR to AC
-            next_ac = ac + mcand;
-            shifted_product_sum = {next_ac, qr} >> 1;
-        end else if (qr[0] == 1'b0 && phantom_bit == 1'b1) begin
-            // subtract BR from AC
-            next_ac = ac + (~mcand + 1);
-            shifted_product_sum = {next_ac, qr} >> 1;
-        end else if (qr[0] == 1'b1 && phantom_bit == 1'b1) begin
-            // do nothing
-            shifted_product_sum = {ac, qr} >> 1;
-        end
-        else begin
-            // do nothing
-            shifted_product_sum = {ac, qr} >> 1;
+        work = {prev_sum, phantom_bit};
+
+        for (i=0; i < STEPS_PER_CYCLE; i = i+1 ) begin
+            unique case (work[1:0])
+                2'b01: work[TRIPLE_W-1:XLEN] = work[TRIPLE_W-1:XLEN] - $signed(mcand);
+                2'b10: work[TRIPLE_W-1:XLEN] = work[TRIPLE_W-1:XLEN] + $signed(mcand);
+                default: ;
+            endcase
+            work = work >>> 1;
         end
     end
 
-    always_ff @(posedge clock) begin
-        product_sum <= shifted_product_sum;
-    end
 
-    always_ff @(posedge clock) begin
+     always_ff @(posedge clock or posedge reset) begin
         if (reset) begin
+            product_sum <= '0;
+            out_phantom_bit <= 1'b0;
             done <= 1'b0;
+        end else if (start) begin
+            product_sum <= product_sum_next;
+            out_phantom_bit <= phantom_next;
+            done <= 1'b1;
         end else begin
-            done <= start;
+            done <= 1'b0;
         end
     end
 
