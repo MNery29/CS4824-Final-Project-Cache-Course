@@ -2,7 +2,7 @@ Info: [VCS_SAVE_RESTORE_INFO] ASLR (Address Space Layout Randomization) is detec
 Please use '-no_save' simv switch to avoid re-execution or '-suppress=ASLR_DETECTED_INFO' to suppress this message.
 Chronologic VCS simulator copyright 1991-2023
 Contains Synopsys proprietary information.
-Compiler version U-2023.03-SP2-1_Full64; Runtime version U-2023.03-SP2-1_Full64;  Apr 13 17:02 2025
+Compiler version U-2023.03-SP2-1_Full64; Runtime version U-2023.03-SP2-1_Full64;  Apr 16 02:23 2025
 Time:   0 clock:1 reset:1                 |Inputs| cdb_valid:0 cdb_tag:xxxxxx cdb_value:xxxxxxxx load_entry:0 dispatch_dest_reg:xxxxx dispatch_opcode:xxxxxxx read1:0 read2:0 read_tag1:xxxxxx read_tag2:xxxxxx retire_entry:0 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:0 rob_tag_out:000001 rob_retire_tag_out:000001 read_value1:00000000 read_value2:00000000 rob_full:0
 Time:   1 clock:0 reset:0                 |Inputs| cdb_valid:0 cdb_tag:000000 cdb_value:00000000 load_entry:1 dispatch_dest_reg:00001 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:000000 read_tag2:000000 retire_entry:0 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:0 rob_tag_out:000001 rob_retire_tag_out:000001 read_value1:00000000 read_value2:00000000 rob_full:0
 Time:   1 clock:1 reset:0                 |Inputs| cdb_valid:0 cdb_tag:000000 cdb_value:00000000 load_entry:1 dispatch_dest_reg:00001 dispatch_opcode:0110011 read1:0 read2:0 read_tag1:000000 read_tag2:000000 retire_entry:0 rob_clear:0                 |Outputs| reg_dest:00000 reg_value:00000000 reg_valid:0 rob_out_valid:1 rob_tag_out:000010 rob_retire_tag_out:000001 read_value1:00000000 read_value2:00000000 rob_full:0
@@ -267,5 +267,5 @@ $finish called from file "test/reorder_buffer_test.sv", line 202.
 $finish at simulation time                 7500
            V C S   S i m u l a t i o n   R e p o r t 
 Time: 7500 ps
-CPU Time:      0.320 seconds;       Data structure size:   0.0Mb
-Sun Apr 13 17:02:43 2025
+CPU Time:      0.200 seconds;       Data structure size:   0.0Mb
+Wed Apr 16 02:23:45 2025

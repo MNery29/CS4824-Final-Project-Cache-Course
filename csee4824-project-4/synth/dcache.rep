@@ -1,0 +1,609 @@
+Information: Updating design information... (UID-85)
+Warning: Design 'dcache' contains 2 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
+ 
+****************************************
+Report : design
+Design : dcache
+Version: U-2022.12-SP7
+Date   : Wed Apr 16 02:43:32 2025
+****************************************
+
+Design allows ideal nets on clock nets.
+
+Library(s) Used:
+
+    asap7sc7p5t_merged_RVT_FF_nldm_211120 (File: /homes/user/fac/tk3070/tmp/synthesis/asap7sc7p5t_merged_RVT_FF_nldm_211120.db)
+
+Local Link Library:
+
+    {asap7sc7p5t_merged_RVT_FF_nldm_211120.db}
+
+Flip-Flop Types:
+
+    No flip-flop types specified.
+
+Latch Types:
+
+    No latch types specified.
+
+Operating Conditions:
+
+
+    Operating Condition Name : PVT_0P77V_0C
+    Library : asap7sc7p5t_merged_RVT_FF_nldm_211120
+    Process :   1.00
+    Temperature :   0.00
+    Voltage :   0.77
+
+Wire Loading Model:
+
+    No wire loading specified.
+
+
+Wire Loading Model Mode: top.
+
+Timing Ranges:
+
+    No timing ranges specified.
+
+Pin Input Delays:
+
+    None specified.
+
+Pin Output Delays:
+
+    None specified.
+
+Disabled Timing Arcs:
+
+    No arcs disabled.
+
+Required Licenses:
+
+    None Required
+
+Design Parameters:
+
+    None specified.
+1
+ 
+****************************************
+Report : area
+Design : dcache
+Version: U-2022.12-SP7
+Date   : Wed Apr 16 02:43:32 2025
+****************************************
+
+Library(s) Used:
+
+    asap7sc7p5t_merged_RVT_FF_nldm_211120 (File: /homes/user/fac/tk3070/tmp/synthesis/asap7sc7p5t_merged_RVT_FF_nldm_211120.db)
+
+Number of ports:                          291
+Number of nets:                         17787
+Number of cells:                        17679
+Number of combinational cells:          11613
+Number of sequential cells:              6066
+Number of macros/black boxes:               0
+Number of buf/inv:                       1553
+Number of references:                      42
+
+Combinational area:                981.569349
+Buf/Inv area:                       87.815341
+Noncombinational area:            2187.072819
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  3168.642168
+Total area:                 undefined
+1
+ 
+****************************************
+Report : timing
+        -path full
+        -delay max
+        -input_pins
+        -nets
+        -max_paths 2
+        -transition_time
+Design : dcache
+Version: U-2022.12-SP7
+Date   : Wed Apr 16 02:43:32 2025
+****************************************
+
+ * Some/all delay information is back-annotated.
+
+ # A fanout number of 1000 was used for high fanout net computations.
+
+Operating Conditions: PVT_0P77V_0C   Library: asap7sc7p5t_merged_RVT_FF_nldm_211120
+Wire Load Model Mode: top
+
+  Startpoint: proc2Dcache_addr[1]
+              (input port)
+  Endpoint: proc2mem_addr[3]
+            (output port)
+  Path Group: input_grp
+  Path Type: max
+
+  Point                        Fanout     Trans      Incr       Path
+  ---------------------------------------------------------------------
+  input external delay                               0.00       0.00 r
+  proc2Dcache_addr[1] (in)                 0.00      0.00       0.00 r
+  N21 (net)                      3                   0.00       0.00 r
+  U17688/A (INVx1_ASAP7_75t_R)             0.00      0.00       0.00 r
+  U17688/Y (INVx1_ASAP7_75t_R)            11.52      6.59       6.59 f
+  n16025 (net)                   5                   0.00       6.59 f
+  U13848/A (NOR2xp33_ASAP7_75t_R)         11.52      0.00       6.59 f
+  U13848/Y (NOR2xp33_ASAP7_75t_R)         19.30     13.80      20.39 r
+  n12275 (net)                   2                   0.00      20.39 r
+  U13849/A (NAND2xp33_ASAP7_75t_R)        19.30      0.00      20.39 r
+  U13849/Y (NAND2xp33_ASAP7_75t_R)        10.55      9.37      29.76 f
+  n16009 (net)                   1                   0.00      29.76 f
+  U13488/A (HB1xp67_ASAP7_75t_R)          10.55      0.00      29.76 f
+  U13488/Y (HB1xp67_ASAP7_75t_R)           8.35     15.30      45.05 f
+  n16472 (net)                   2                   0.00      45.05 f
+  U13242/A (HB1xp67_ASAP7_75t_R)           8.35      0.00      45.05 f
+  U13242/Y (HB1xp67_ASAP7_75t_R)          10.67     15.96      61.01 f
+  n16395 (net)                   3                   0.00      61.01 f
+  U12928/A (HB1xp67_ASAP7_75t_R)          10.67      0.00      61.01 f
+  U12928/Y (HB1xp67_ASAP7_75t_R)          10.70     16.70      77.71 f
+  n16396 (net)                   3                   0.00      77.71 f
+  U12587/A (HB1xp67_ASAP7_75t_R)          10.70      0.00      77.71 f
+  U12587/Y (HB1xp67_ASAP7_75t_R)          10.70     16.71      94.42 f
+  n16418 (net)                   3                   0.00      94.42 f
+  U12269/A (HB1xp67_ASAP7_75t_R)          10.70      0.00      94.42 f
+  U12269/Y (HB1xp67_ASAP7_75t_R)          51.81     37.22     131.64 f
+  n16422 (net)                  14                   0.00     131.64 f
+  U14997/A2 (OAI221xp5_ASAP7_75t_R)       51.81      0.00     131.64 f
+  U14997/Y (OAI221xp5_ASAP7_75t_R)        30.41     24.81     156.46 r
+  n13378 (net)                   1                   0.00     156.46 r
+  U15001/A (NOR4xp25_ASAP7_75t_R)         30.41      0.00     156.46 r
+  U15001/Y (NOR4xp25_ASAP7_75t_R)         16.87     13.70     170.16 f
+  n13379 (net)                   1                   0.00     170.16 f
+  U15002/D (OR4x1_ASAP7_75t_R)            16.87      0.00     170.16 f
+  U15002/Y (OR4x1_ASAP7_75t_R)            10.35     31.77     201.92 f
+  n13383 (net)                   1                   0.00     201.92 f
+  U12203/E (NOR5xp2_ASAP7_75t_R)          10.35      0.00     201.92 f
+  U12203/Y (NOR5xp2_ASAP7_75t_R)          52.98     33.97     235.89 r
+  n12162 (net)                   2                   0.00     235.89 r
+  U17695/A (NOR2xp33_ASAP7_75t_R)         52.98      0.00     235.89 r
+  U17695/Y (NOR2xp33_ASAP7_75t_R)         29.04     26.20     262.10 f
+  n17417 (net)                   2                   0.00     262.10 f
+  U17696/B1 (OAI22xp33_ASAP7_75t_R)       29.04      0.00     262.10 f
+  U17696/Y (OAI22xp33_ASAP7_75t_R)        21.59     16.20     278.30 r
+  n17424 (net)                   1                   0.00     278.30 r
+  U17703/C (NAND5xp2_ASAP7_75t_R)         21.59      0.00     278.30 r
+  U17703/Y (NAND5xp2_ASAP7_75t_R)         30.12     21.35     299.65 f
+  n17452 (net)                   1                   0.00     299.65 f
+  U17729/A (NOR4xp25_ASAP7_75t_R)         30.12      0.00     299.65 f
+  U17729/Y (NOR4xp25_ASAP7_75t_R)         34.01     22.30     321.94 r
+  N55 (net)                      1                   0.00     321.94 r
+  U6192/A (NAND2xp5_ASAP7_75t_R)          34.01      0.00     321.94 r
+  U6192/Y (NAND2xp5_ASAP7_75t_R)          18.92     15.29     337.24 f
+  n201 (net)                     2                   0.00     337.24 f
+  U6189/A (NAND3xp33_ASAP7_75t_R)         18.92      0.00     337.24 f
+  U6189/Y (NAND3xp33_ASAP7_75t_R)         26.59     10.51     347.74 r
+  n6 (net)                       1                   0.00     347.74 r
+  U13489/A (HB1xp67_ASAP7_75t_R)          26.59      0.00     347.74 r
+  U13489/Y (HB1xp67_ASAP7_75t_R)          12.71     19.67     367.42 r
+  n17194 (net)                   3                   0.00     367.42 r
+  U13243/A (HB1xp67_ASAP7_75t_R)          12.71      0.00     367.42 r
+  U13243/Y (HB1xp67_ASAP7_75t_R)          43.36     31.18     398.60 r
+  n17195 (net)                  13                   0.00     398.60 r
+  U13612/A (NOR2xp33_ASAP7_75t_R)         43.36      0.00     398.60 r
+  U13612/Y (NOR2xp33_ASAP7_75t_R)         14.52     14.77     413.37 f
+  proc2mem_addr[3] (net)         1                   0.00     413.37 f
+  proc2mem_addr[3] (out)                  14.52      0.00     413.37 f
+  data arrival time                                           413.37
+
+  max_delay                                       1000.00    1000.00
+  output external delay                              0.00    1000.00
+  data required time                                         1000.00
+  ---------------------------------------------------------------------
+  data required time                                         1000.00
+  data arrival time                                          -413.37
+  ---------------------------------------------------------------------
+  slack (MET)                                                 586.63
+
+
+  Startpoint: proc2Dcache_addr[1]
+              (input port)
+  Endpoint: proc2mem_addr[2]
+            (output port)
+  Path Group: input_grp
+  Path Type: max
+
+  Point                        Fanout     Trans      Incr       Path
+  ---------------------------------------------------------------------
+  input external delay                               0.00       0.00 r
+  proc2Dcache_addr[1] (in)                 0.00      0.00       0.00 r
+  N21 (net)                      3                   0.00       0.00 r
+  U17688/A (INVx1_ASAP7_75t_R)             0.00      0.00       0.00 r
+  U17688/Y (INVx1_ASAP7_75t_R)            11.52      6.59       6.59 f
+  n16025 (net)                   5                   0.00       6.59 f
+  U13848/A (NOR2xp33_ASAP7_75t_R)         11.52      0.00       6.59 f
+  U13848/Y (NOR2xp33_ASAP7_75t_R)         19.30     13.80      20.39 r
+  n12275 (net)                   2                   0.00      20.39 r
+  U13849/A (NAND2xp33_ASAP7_75t_R)        19.30      0.00      20.39 r
+  U13849/Y (NAND2xp33_ASAP7_75t_R)        10.55      9.37      29.76 f
+  n16009 (net)                   1                   0.00      29.76 f
+  U13488/A (HB1xp67_ASAP7_75t_R)          10.55      0.00      29.76 f
+  U13488/Y (HB1xp67_ASAP7_75t_R)           8.35     15.30      45.05 f
+  n16472 (net)                   2                   0.00      45.05 f
+  U13242/A (HB1xp67_ASAP7_75t_R)           8.35      0.00      45.05 f
+  U13242/Y (HB1xp67_ASAP7_75t_R)          10.67     15.96      61.01 f
+  n16395 (net)                   3                   0.00      61.01 f
+  U12928/A (HB1xp67_ASAP7_75t_R)          10.67      0.00      61.01 f
+  U12928/Y (HB1xp67_ASAP7_75t_R)          10.70     16.70      77.71 f
+  n16396 (net)                   3                   0.00      77.71 f
+  U12587/A (HB1xp67_ASAP7_75t_R)          10.70      0.00      77.71 f
+  U12587/Y (HB1xp67_ASAP7_75t_R)          10.70     16.71      94.42 f
+  n16418 (net)                   3                   0.00      94.42 f
+  U12269/A (HB1xp67_ASAP7_75t_R)          10.70      0.00      94.42 f
+  U12269/Y (HB1xp67_ASAP7_75t_R)          51.81     37.22     131.64 f
+  n16422 (net)                  14                   0.00     131.64 f
+  U14997/A2 (OAI221xp5_ASAP7_75t_R)       51.81      0.00     131.64 f
+  U14997/Y (OAI221xp5_ASAP7_75t_R)        30.41     24.81     156.46 r
+  n13378 (net)                   1                   0.00     156.46 r
+  U15001/A (NOR4xp25_ASAP7_75t_R)         30.41      0.00     156.46 r
+  U15001/Y (NOR4xp25_ASAP7_75t_R)         16.87     13.70     170.16 f
+  n13379 (net)                   1                   0.00     170.16 f
+  U15002/D (OR4x1_ASAP7_75t_R)            16.87      0.00     170.16 f
+  U15002/Y (OR4x1_ASAP7_75t_R)            10.35     31.77     201.92 f
+  n13383 (net)                   1                   0.00     201.92 f
+  U12203/E (NOR5xp2_ASAP7_75t_R)          10.35      0.00     201.92 f
+  U12203/Y (NOR5xp2_ASAP7_75t_R)          52.98     33.97     235.89 r
+  n12162 (net)                   2                   0.00     235.89 r
+  U17695/A (NOR2xp33_ASAP7_75t_R)         52.98      0.00     235.89 r
+  U17695/Y (NOR2xp33_ASAP7_75t_R)         29.04     26.20     262.10 f
+  n17417 (net)                   2                   0.00     262.10 f
+  U17696/B1 (OAI22xp33_ASAP7_75t_R)       29.04      0.00     262.10 f
+  U17696/Y (OAI22xp33_ASAP7_75t_R)        21.59     16.20     278.30 r
+  n17424 (net)                   1                   0.00     278.30 r
+  U17703/C (NAND5xp2_ASAP7_75t_R)         21.59      0.00     278.30 r
+  U17703/Y (NAND5xp2_ASAP7_75t_R)         30.12     21.35     299.65 f
+  n17452 (net)                   1                   0.00     299.65 f
+  U17729/A (NOR4xp25_ASAP7_75t_R)         30.12      0.00     299.65 f
+  U17729/Y (NOR4xp25_ASAP7_75t_R)         34.01     22.30     321.94 r
+  N55 (net)                      1                   0.00     321.94 r
+  U6192/A (NAND2xp5_ASAP7_75t_R)          34.01      0.00     321.94 r
+  U6192/Y (NAND2xp5_ASAP7_75t_R)          18.92     15.29     337.24 f
+  n201 (net)                     2                   0.00     337.24 f
+  U6189/A (NAND3xp33_ASAP7_75t_R)         18.92      0.00     337.24 f
+  U6189/Y (NAND3xp33_ASAP7_75t_R)         26.59     10.51     347.74 r
+  n6 (net)                       1                   0.00     347.74 r
+  U13489/A (HB1xp67_ASAP7_75t_R)          26.59      0.00     347.74 r
+  U13489/Y (HB1xp67_ASAP7_75t_R)          12.71     19.67     367.42 r
+  n17194 (net)                   3                   0.00     367.42 r
+  U13243/A (HB1xp67_ASAP7_75t_R)          12.71      0.00     367.42 r
+  U13243/Y (HB1xp67_ASAP7_75t_R)          43.36     31.18     398.60 r
+  n17195 (net)                  13                   0.00     398.60 r
+  U13611/A (NOR2xp33_ASAP7_75t_R)         43.36      0.00     398.60 r
+  U13611/Y (NOR2xp33_ASAP7_75t_R)         14.52     14.77     413.37 f
+  proc2mem_addr[2] (net)         1                   0.00     413.37 f
+  proc2mem_addr[2] (out)                  14.52      0.00     413.37 f
+  data arrival time                                           413.37
+
+  max_delay                                       1000.00    1000.00
+  output external delay                              0.00    1000.00
+  data required time                                         1000.00
+  ---------------------------------------------------------------------
+  data required time                                         1000.00
+  data arrival time                                          -413.37
+  ---------------------------------------------------------------------
+  slack (MET)                                                 586.63
+
+
+  Startpoint: cache_tag_reg[34][0]
+              (rising edge-triggered flip-flop)
+  Endpoint: proc2mem_addr[3]
+            (output port)
+  Path Group: output_grp
+  Path Type: max
+
+  Point                                  Fanout     Trans      Incr       Path
+  -------------------------------------------------------------------------------
+  cache_tag_reg[34][0]/CLK (SDFHx1_ASAP7_75t_R)      0.00      0.00 #     0.00 r
+  cache_tag_reg[34][0]/QN (SDFHx1_ASAP7_75t_R)      15.55     33.85      33.85 f
+  cache_tag[34][0] (net)                   2                   0.00      33.85 f
+  U14997/A1 (OAI221xp5_ASAP7_75t_R)                 15.55      0.00      33.85 f
+  U14997/Y (OAI221xp5_ASAP7_75t_R)                  30.41     18.56      52.40 r
+  n13378 (net)                             1                   0.00      52.40 r
+  U15001/A (NOR4xp25_ASAP7_75t_R)                   30.41      0.00      52.40 r
+  U15001/Y (NOR4xp25_ASAP7_75t_R)                   16.87     13.70      66.10 f
+  n13379 (net)                             1                   0.00      66.10 f
+  U15002/D (OR4x1_ASAP7_75t_R)                      16.87      0.00      66.10 f
+  U15002/Y (OR4x1_ASAP7_75t_R)                      10.35     31.77      97.87 f
+  n13383 (net)                             1                   0.00      97.87 f
+  U12203/E (NOR5xp2_ASAP7_75t_R)                    10.35      0.00      97.87 f
+  U12203/Y (NOR5xp2_ASAP7_75t_R)                    52.98     33.97     131.84 r
+  n12162 (net)                             2                   0.00     131.84 r
+  U17695/A (NOR2xp33_ASAP7_75t_R)                   52.98      0.00     131.84 r
+  U17695/Y (NOR2xp33_ASAP7_75t_R)                   29.04     26.20     158.05 f
+  n17417 (net)                             2                   0.00     158.05 f
+  U17696/B1 (OAI22xp33_ASAP7_75t_R)                 29.04      0.00     158.05 f
+  U17696/Y (OAI22xp33_ASAP7_75t_R)                  21.59     16.20     174.24 r
+  n17424 (net)                             1                   0.00     174.24 r
+  U17703/C (NAND5xp2_ASAP7_75t_R)                   21.59      0.00     174.24 r
+  U17703/Y (NAND5xp2_ASAP7_75t_R)                   30.12     21.35     195.60 f
+  n17452 (net)                             1                   0.00     195.60 f
+  U17729/A (NOR4xp25_ASAP7_75t_R)                   30.12      0.00     195.60 f
+  U17729/Y (NOR4xp25_ASAP7_75t_R)                   34.01     22.30     217.89 r
+  N55 (net)                                1                   0.00     217.89 r
+  U6192/A (NAND2xp5_ASAP7_75t_R)                    34.01      0.00     217.89 r
+  U6192/Y (NAND2xp5_ASAP7_75t_R)                    18.92     15.29     233.19 f
+  n201 (net)                               2                   0.00     233.19 f
+  U6189/A (NAND3xp33_ASAP7_75t_R)                   18.92      0.00     233.19 f
+  U6189/Y (NAND3xp33_ASAP7_75t_R)                   26.59     10.51     243.69 r
+  n6 (net)                                 1                   0.00     243.69 r
+  U13489/A (HB1xp67_ASAP7_75t_R)                    26.59      0.00     243.69 r
+  U13489/Y (HB1xp67_ASAP7_75t_R)                    12.71     19.67     263.36 r
+  n17194 (net)                             3                   0.00     263.36 r
+  U13243/A (HB1xp67_ASAP7_75t_R)                    12.71      0.00     263.36 r
+  U13243/Y (HB1xp67_ASAP7_75t_R)                    43.36     31.18     294.54 r
+  n17195 (net)                            13                   0.00     294.54 r
+  U13612/A (NOR2xp33_ASAP7_75t_R)                   43.36      0.00     294.54 r
+  U13612/Y (NOR2xp33_ASAP7_75t_R)                   14.52     14.77     309.31 f
+  proc2mem_addr[3] (net)                   1                   0.00     309.31 f
+  proc2mem_addr[3] (out)                            14.52      0.00     309.31 f
+  data arrival time                                                     309.31
+
+  max_delay                                                 1000.00    1000.00
+  output external delay                                        0.00    1000.00
+  data required time                                                   1000.00
+  -------------------------------------------------------------------------------
+  data required time                                                   1000.00
+  data arrival time                                                    -309.31
+  -------------------------------------------------------------------------------
+  slack (MET)                                                           690.69
+
+
+  Startpoint: cache_tag_reg[34][0]
+              (rising edge-triggered flip-flop)
+  Endpoint: proc2mem_addr[2]
+            (output port)
+  Path Group: output_grp
+  Path Type: max
+
+  Point                                  Fanout     Trans      Incr       Path
+  -------------------------------------------------------------------------------
+  cache_tag_reg[34][0]/CLK (SDFHx1_ASAP7_75t_R)      0.00      0.00 #     0.00 r
+  cache_tag_reg[34][0]/QN (SDFHx1_ASAP7_75t_R)      15.55     33.85      33.85 f
+  cache_tag[34][0] (net)                   2                   0.00      33.85 f
+  U14997/A1 (OAI221xp5_ASAP7_75t_R)                 15.55      0.00      33.85 f
+  U14997/Y (OAI221xp5_ASAP7_75t_R)                  30.41     18.56      52.40 r
+  n13378 (net)                             1                   0.00      52.40 r
+  U15001/A (NOR4xp25_ASAP7_75t_R)                   30.41      0.00      52.40 r
+  U15001/Y (NOR4xp25_ASAP7_75t_R)                   16.87     13.70      66.10 f
+  n13379 (net)                             1                   0.00      66.10 f
+  U15002/D (OR4x1_ASAP7_75t_R)                      16.87      0.00      66.10 f
+  U15002/Y (OR4x1_ASAP7_75t_R)                      10.35     31.77      97.87 f
+  n13383 (net)                             1                   0.00      97.87 f
+  U12203/E (NOR5xp2_ASAP7_75t_R)                    10.35      0.00      97.87 f
+  U12203/Y (NOR5xp2_ASAP7_75t_R)                    52.98     33.97     131.84 r
+  n12162 (net)                             2                   0.00     131.84 r
+  U17695/A (NOR2xp33_ASAP7_75t_R)                   52.98      0.00     131.84 r
+  U17695/Y (NOR2xp33_ASAP7_75t_R)                   29.04     26.20     158.05 f
+  n17417 (net)                             2                   0.00     158.05 f
+  U17696/B1 (OAI22xp33_ASAP7_75t_R)                 29.04      0.00     158.05 f
+  U17696/Y (OAI22xp33_ASAP7_75t_R)                  21.59     16.20     174.24 r
+  n17424 (net)                             1                   0.00     174.24 r
+  U17703/C (NAND5xp2_ASAP7_75t_R)                   21.59      0.00     174.24 r
+  U17703/Y (NAND5xp2_ASAP7_75t_R)                   30.12     21.35     195.60 f
+  n17452 (net)                             1                   0.00     195.60 f
+  U17729/A (NOR4xp25_ASAP7_75t_R)                   30.12      0.00     195.60 f
+  U17729/Y (NOR4xp25_ASAP7_75t_R)                   34.01     22.30     217.89 r
+  N55 (net)                                1                   0.00     217.89 r
+  U6192/A (NAND2xp5_ASAP7_75t_R)                    34.01      0.00     217.89 r
+  U6192/Y (NAND2xp5_ASAP7_75t_R)                    18.92     15.29     233.19 f
+  n201 (net)                               2                   0.00     233.19 f
+  U6189/A (NAND3xp33_ASAP7_75t_R)                   18.92      0.00     233.19 f
+  U6189/Y (NAND3xp33_ASAP7_75t_R)                   26.59     10.51     243.69 r
+  n6 (net)                                 1                   0.00     243.69 r
+  U13489/A (HB1xp67_ASAP7_75t_R)                    26.59      0.00     243.69 r
+  U13489/Y (HB1xp67_ASAP7_75t_R)                    12.71     19.67     263.36 r
+  n17194 (net)                             3                   0.00     263.36 r
+  U13243/A (HB1xp67_ASAP7_75t_R)                    12.71      0.00     263.36 r
+  U13243/Y (HB1xp67_ASAP7_75t_R)                    43.36     31.18     294.54 r
+  n17195 (net)                            13                   0.00     294.54 r
+  U13611/A (NOR2xp33_ASAP7_75t_R)                   43.36      0.00     294.54 r
+  U13611/Y (NOR2xp33_ASAP7_75t_R)                   14.52     14.77     309.31 f
+  proc2mem_addr[2] (net)                   1                   0.00     309.31 f
+  proc2mem_addr[2] (out)                            14.52      0.00     309.31 f
+  data arrival time                                                     309.31
+
+  max_delay                                                 1000.00    1000.00
+  output external delay                                        0.00    1000.00
+  data required time                                                   1000.00
+  -------------------------------------------------------------------------------
+  data required time                                                   1000.00
+  data arrival time                                                    -309.31
+  -------------------------------------------------------------------------------
+  slack (MET)                                                           690.69
+
+
+1
+ 
+****************************************
+Report : constraint
+        -verbose
+        -max_delay
+Design : dcache
+Version: U-2022.12-SP7
+Date   : Wed Apr 16 02:43:32 2025
+****************************************
+
+
+  Startpoint: proc2Dcache_addr[1]
+              (input port)
+  Endpoint: proc2mem_addr[2]
+            (output port)
+  Path Group: input_grp
+  Path Type: max
+
+  Point                                    Incr       Path
+  -----------------------------------------------------------
+  input external delay                     0.00       0.00 r
+  proc2Dcache_addr[1] (in)                 0.00       0.00 r
+  U17688/Y (INVx1_ASAP7_75t_R)             6.59       6.59 f
+  U13848/Y (NOR2xp33_ASAP7_75t_R)         13.80      20.39 r
+  U13849/Y (NAND2xp33_ASAP7_75t_R)         9.37      29.76 f
+  U13488/Y (HB1xp67_ASAP7_75t_R)          15.30      45.05 f
+  U13242/Y (HB1xp67_ASAP7_75t_R)          15.96      61.01 f
+  U12928/Y (HB1xp67_ASAP7_75t_R)          16.70      77.71 f
+  U12587/Y (HB1xp67_ASAP7_75t_R)          16.71      94.42 f
+  U12269/Y (HB1xp67_ASAP7_75t_R)          37.22     131.64 f
+  U14997/Y (OAI221xp5_ASAP7_75t_R)        24.81     156.46 r
+  U15001/Y (NOR4xp25_ASAP7_75t_R)         13.70     170.16 f
+  U15002/Y (OR4x1_ASAP7_75t_R)            31.77     201.92 f
+  U12203/Y (NOR5xp2_ASAP7_75t_R)          33.97     235.89 r
+  U17695/Y (NOR2xp33_ASAP7_75t_R)         26.20     262.10 f
+  U17696/Y (OAI22xp33_ASAP7_75t_R)        16.20     278.30 r
+  U17703/Y (NAND5xp2_ASAP7_75t_R)         21.35     299.65 f
+  U17729/Y (NOR4xp25_ASAP7_75t_R)         22.30     321.94 r
+  U6192/Y (NAND2xp5_ASAP7_75t_R)          15.29     337.24 f
+  U6189/Y (NAND3xp33_ASAP7_75t_R)         10.51     347.74 r
+  U13489/Y (HB1xp67_ASAP7_75t_R)          19.67     367.42 r
+  U13243/Y (HB1xp67_ASAP7_75t_R)          31.18     398.60 r
+  U13611/Y (NOR2xp33_ASAP7_75t_R)         14.77     413.37 f
+  proc2mem_addr[2] (out)                   0.00     413.37 f
+  data arrival time                                 413.37
+
+  max_delay                             1000.00    1000.00
+  output external delay                    0.00    1000.00
+  data required time                               1000.00
+  -----------------------------------------------------------
+  data required time                               1000.00
+  data arrival time                                -413.37
+  -----------------------------------------------------------
+  slack (MET)                                       586.63
+
+
+  Startpoint: cache_tag_reg[34][0]
+              (rising edge-triggered flip-flop)
+  Endpoint: proc2mem_addr[2]
+            (output port)
+  Path Group: output_grp
+  Path Type: max
+
+  Point                                              Incr       Path
+  ---------------------------------------------------------------------
+  cache_tag_reg[34][0]/CLK (SDFHx1_ASAP7_75t_R)      0.00 #     0.00 r
+  cache_tag_reg[34][0]/QN (SDFHx1_ASAP7_75t_R)      33.85      33.85 f
+  U14997/Y (OAI221xp5_ASAP7_75t_R)                  18.56      52.40 r
+  U15001/Y (NOR4xp25_ASAP7_75t_R)                   13.70      66.10 f
+  U15002/Y (OR4x1_ASAP7_75t_R)                      31.77      97.87 f
+  U12203/Y (NOR5xp2_ASAP7_75t_R)                    33.97     131.84 r
+  U17695/Y (NOR2xp33_ASAP7_75t_R)                   26.20     158.05 f
+  U17696/Y (OAI22xp33_ASAP7_75t_R)                  16.20     174.24 r
+  U17703/Y (NAND5xp2_ASAP7_75t_R)                   21.35     195.60 f
+  U17729/Y (NOR4xp25_ASAP7_75t_R)                   22.30     217.89 r
+  U6192/Y (NAND2xp5_ASAP7_75t_R)                    15.29     233.19 f
+  U6189/Y (NAND3xp33_ASAP7_75t_R)                   10.51     243.69 r
+  U13489/Y (HB1xp67_ASAP7_75t_R)                    19.67     263.36 r
+  U13243/Y (HB1xp67_ASAP7_75t_R)                    31.18     294.54 r
+  U13611/Y (NOR2xp33_ASAP7_75t_R)                   14.77     309.31 f
+  proc2mem_addr[2] (out)                             0.00     309.31 f
+  data arrival time                                           309.31
+
+  max_delay                                       1000.00    1000.00
+  output external delay                              0.00    1000.00
+  data required time                                         1000.00
+  ---------------------------------------------------------------------
+  data required time                                         1000.00
+  data arrival time                                          -309.31
+  ---------------------------------------------------------------------
+  slack (MET)                                                 690.69
+
+
+1
+ 
+****************************************
+Report : resources
+Design : dcache
+Version: U-2022.12-SP7
+Date   : Wed Apr 16 02:43:32 2025
+****************************************
+
+Resource Sharing Report for design dcache in file ../verilog/dcache.sv
+
+===============================================================================
+|          |              |            | Contained     |                      |
+| Resource | Module       | Parameters | Resources     | Contained Operations |
+===============================================================================
+| r87      | DW01_cmp6    | width=26   |               | eq_100               |
+| r89      | DW01_inc     | width=4    |               | add_127              |
+| r91      | DW01_cmp6    | width=4    |               | ne_140               |
+| r93      | DW01_dec     | width=4    |               | sub_141              |
+===============================================================================
+
+
+No implementations to report
+1
+Information: Updating graph... (UID-83)
+Warning: Design 'dcache' contains 3 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
+ 
+****************************************
+Report : reference
+Design : dcache
+Version: U-2022.12-SP7
+Date   : Wed Apr 16 02:43:33 2025
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+A2O1A1Ixp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.087480       1     0.087480
+AND2x2_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.087480       7     0.612360
+AND3x1_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.087480       4     0.349920
+AND4x1_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.102060       4     0.408240
+AOI21xp5_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.072900       1     0.072900
+AOI22xp5_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.087480       1     0.087480
+AOI22xp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.087480      64     5.598720
+BUFx2_ASAP7_75t_R  asap7sc7p5t_merged_RVT_FF_nldm_211120     0.072900      64     4.665600
+DFFHQNx1_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.291600      73    21.286799 n
+DHLx1_ASAP7_75t_R  asap7sc7p5t_merged_RVT_FF_nldm_211120     0.218700     128    27.993601 n
+HB1xp67_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.058320    1236    72.083521
+INVx1_ASAP7_75t_R  asap7sc7p5t_merged_RVT_FF_nldm_211120     0.043740     186     8.135640
+INVxp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.043740      67     2.930580
+NAND2xp5_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.058320      70     4.082400
+NAND2xp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.058320      38     2.216160
+NAND3xp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.072900       7     0.510300
+NAND4xp25_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.087480       4     0.349920
+NAND5xp2_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.102060       2     0.204120
+NOR2xp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.058320     110     6.415200
+NOR3xp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.072900      11     0.801900
+NOR4xp25_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.087480     727    63.597961
+NOR5xp2_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.102060       1     0.102060
+OA21x2_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.102060       4     0.408240
+OA222x2_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.174960       3     0.524880
+OAI21xp5_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.072900       4     0.291600
+OAI21xp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.072900       5     0.364500
+OAI22xp5_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.087480    5796   507.034087
+OAI22xp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.087480    2172   190.006563
+OAI31xp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.087480       1     0.087480
+OAI32xp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.102060       1     0.102060
+OAI33xp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.116640       3     0.349920
+OAI211xp5_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.087480       2     0.174960
+OAI221xp5_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.102060     734    74.912038
+OAI222xp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.145800      69    10.060200
+OAI322xp33_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.131220       1     0.131220
+OR4x1_ASAP7_75t_R  asap7sc7p5t_merged_RVT_FF_nldm_211120     0.102060      91     9.287460
+OR5x1_ASAP7_75t_R  asap7sc7p5t_merged_RVT_FF_nldm_211120     0.116640      90    10.497600
+SDFHx1_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.364500    5865  2137.792419 n
+TIEHIx1_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.043740       1     0.043740
+TIELOx1_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.043740       1     0.043740
+XNOR2xp5_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.131220      15     1.968300
+XOR2xp5_ASAP7_75t_R asap7sc7p5t_merged_RVT_FF_nldm_211120     0.131220      15     1.968300
+-----------------------------------------------------------------------------
+Total 42 references                                  3168.642168
+1

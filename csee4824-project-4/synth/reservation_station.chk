@@ -1,0 +1,16 @@
+ 
+****************************************
+check_design summary:
+Version:     U-2022.12-SP7
+Date:        Wed Apr 16 02:36:51 2025
+****************************************
+
+                   Name                                            Total
+--------------------------------------------------------------------------------
+Inputs/Outputs                                                      2
+    Shorted outputs (LINT-31)                                       2
+--------------------------------------------------------------------------------
+
+Warning: In design 'reservation_station', output port 'rs_ready_out' is connected directly to output port 'rs_debug[1]'. (LINT-31)
+Warning: In design 'reservation_station', output port 'rs_avail_out' is connected directly to output port 'rs_debug[0]'. (LINT-31)
+1

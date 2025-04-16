@@ -1,0 +1,66 @@
+ 
+****************************************
+check_design summary:
+Version:     U-2022.12-SP7
+Date:        Wed Apr 16 02:41:34 2025
+****************************************
+
+                   Name                                            Total
+--------------------------------------------------------------------------------
+Inputs/Outputs                                                      1
+    Constant outputs (LINT-52)                                      1
+
+Nets                                                               48
+    Unloaded nets (LINT-2)                                         48
+--------------------------------------------------------------------------------
+
+Warning: In design 'stage_id', net 'decoder_0/alu_func[3]' driven by pin 'decoder_0/C991/Z_3' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'decoder_0/alu_func[2]' driven by pin 'decoder_0/C991/Z_2' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'decoder_0/alu_func[1]' driven by pin 'decoder_0/C991/Z_1' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'decoder_0/alu_func[0]' driven by pin 'decoder_0/C991/Z_0' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'decoder_0/rd_mem' driven by pin 'decoder_0/C989/Z_0' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'decoder_0/wr_mem' driven by pin 'decoder_0/C990/Z_0' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'decoder_0/cond_branch' driven by pin 'decoder_0/C988/Z_0' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'decoder_0/uncond_branch' driven by pin 'decoder_0/C987/Z_0' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'decoder_0/csr_op' driven by pin 'decoder_0/C981/Z_0' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'decoder_0/halt' driven by pin 'decoder_0/C982/Z_0' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'decoder_0/illegal' driven by pin 'decoder_0/C983/Z_0' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'regfile_0/*Logic1*' driven by pin 'regfile_0/U3/**logic_1**' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/rob_out_valid' driven by pin 'reorder_buffer_0/rob_out_valid_reg/QN' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[31]' driven by pin 'reorder_buffer_0/U4617/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[30]' driven by pin 'reorder_buffer_0/U4616/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[29]' driven by pin 'reorder_buffer_0/U4615/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[28]' driven by pin 'reorder_buffer_0/U4614/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[27]' driven by pin 'reorder_buffer_0/U4613/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[26]' driven by pin 'reorder_buffer_0/U4612/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[25]' driven by pin 'reorder_buffer_0/U4611/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[24]' driven by pin 'reorder_buffer_0/U4610/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[23]' driven by pin 'reorder_buffer_0/U4609/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[22]' driven by pin 'reorder_buffer_0/U4608/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[21]' driven by pin 'reorder_buffer_0/U4607/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[20]' driven by pin 'reorder_buffer_0/U4606/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[19]' driven by pin 'reorder_buffer_0/U4605/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[18]' driven by pin 'reorder_buffer_0/U4604/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[17]' driven by pin 'reorder_buffer_0/U4603/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[16]' driven by pin 'reorder_buffer_0/U4602/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[15]' driven by pin 'reorder_buffer_0/U4601/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[14]' driven by pin 'reorder_buffer_0/U4623/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[13]' driven by pin 'reorder_buffer_0/U4622/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[12]' driven by pin 'reorder_buffer_0/U4621/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[11]' driven by pin 'reorder_buffer_0/U4620/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[10]' driven by pin 'reorder_buffer_0/U4619/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[9]' driven by pin 'reorder_buffer_0/U4600/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[8]' driven by pin 'reorder_buffer_0/U4599/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[7]' driven by pin 'reorder_buffer_0/U4598/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[6]' driven by pin 'reorder_buffer_0/U4597/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[5]' driven by pin 'reorder_buffer_0/U4596/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[4]' driven by pin 'reorder_buffer_0/U4595/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[3]' driven by pin 'reorder_buffer_0/U4594/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[2]' driven by pin 'reorder_buffer_0/U4593/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[1]' driven by pin 'reorder_buffer_0/U4592/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_addr[0]' driven by pin 'reorder_buffer_0/U4618/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'reorder_buffer_0/mem_valid' driven by pin 'reorder_buffer_0/U4624/Y' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'rob_read_tag2[5]' driven by pin 'rob_read_tag2_reg[5]/Q' has no loads. (LINT-2)
+Warning: In design 'stage_id', net 'rob_read_tag1[5]' driven by pin 'rob_read_tag1_reg[5]/Q' has no loads. (LINT-2)
+Warning: In design 'stage_id', output port 'opb_select[3]' is connected directly to 'logic 0'. (LINT-52)
+1

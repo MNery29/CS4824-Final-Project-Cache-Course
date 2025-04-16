@@ -1,0 +1,22 @@
+ 
+****************************************
+check_design summary:
+Version:     U-2022.12-SP7
+Date:        Wed Apr 16 02:37:47 2025
+****************************************
+
+                   Name                                            Total
+--------------------------------------------------------------------------------
+Inputs/Outputs                                                      2
+    Unconnected ports (LINT-28)                                     2
+
+Cells                                                               3
+    Cells do not drive (LINT-1)                                     3
+--------------------------------------------------------------------------------
+
+Warning: In design 'reorder_buffer', cell 'C21049' does not drive any nets. (LINT-1)
+Warning: In design 'reorder_buffer', cell 'C21053' does not drive any nets. (LINT-1)
+Warning: In design 'reorder_buffer', cell 'C21093' does not drive any nets. (LINT-1)
+Warning: In design 'reorder_buffer', port 'rob_read_tag1[5]' is not connected to any nets. (LINT-28)
+Warning: In design 'reorder_buffer', port 'rob_read_tag2[5]' is not connected to any nets. (LINT-28)
+1

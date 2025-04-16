@@ -19,12 +19,11 @@ module cdb (
     //input signals 
     //input of FU signals from complete stage
     input CDB_PACKET cdb_in,
-
     //output signals
 
     output logic [63:0] cdb_data, // data to be sent to broadcast
     output logic [4:0] cdb_tag, // tag to be sent to broadcast
-    output logic cdb_valid, // is the data valid?
+    output logic cdb_valid // is the data valid?
 
 );
 
@@ -43,3 +42,5 @@ always_ff @(posedge clock or posedge reset) begin
         end
     end
 end
+
+endmodule
