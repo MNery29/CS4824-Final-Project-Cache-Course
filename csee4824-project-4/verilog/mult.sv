@@ -28,9 +28,17 @@ module mult (
     output done
 );
 
-    logic [`MULT_STAGES-2:0] internal_dones;
-    logic [(64*(`MULT_STAGES-1))-1:0] internal_product_sums, internal_mcands, internal_mpliers;
+    logic [`MULT_STAGES-2:0] internal_dones, internal_phantoms;
+    logic [(64*(`MULT_STAGES-1))-1:0] internal_mcands;
+    logic [(128*(`MULT_STAGES-1))-1:0] internal_product_sums;
+    logic [127:0] full_product;
     logic [63:0] mcand_out, mplier_out; // unused, just for wiring
+    logic [127:0] initial_product_sum; // this is the initial product sum, {AC, QR} = {0, mplier}
+    logic initial_phantom_bit; // this is the initial phantom bit, starts off as 0
+    logic out_phantom_bit; // this is the output phantom bit, used for the next stage
+
+    assign initial_product_sum = {64'h0, mplier};
+    assign initial_phantom_bit = 1'b0;
 
     // instantiate an array of mult_stage modules
     // this uses concatenation syntax for internal wiring, see lab 2 slides
@@ -38,13 +46,14 @@ module mult (
         .clock (clock),
         .reset (reset),
         .start       ({internal_dones,        start}), // forward prev done as next start
-        .prev_sum    ({internal_product_sums, 64'h0}), // start the sum at 0
-        .mplier      ({internal_mpliers,      mplier}),
+        .prev_sum    ({internal_product_sums, initial_product_sum}), // start the sum at 0
         .mcand       ({internal_mcands,       mcand}),
-        .product_sum ({product,    internal_product_sums}),
-        .next_mplier ({mplier_out, internal_mpliers}),
+        .phantom_bit ({internal_phantoms,      initial_phantom_bit}), // start the phantom bit at 0
+        .product_sum ({full_product,    internal_product_sums}),
+        .out_phantom_bit ({out_phantom_bit, internal_phantoms}), // phantom bit for next stage
         .next_mcand  ({mcand_out,  internal_mcands}),
         .done        ({done,       internal_dones}) // done when the final stage is done
     );
+    assign product = full_product[63:0]; // this is the final product
 
 endmodule
