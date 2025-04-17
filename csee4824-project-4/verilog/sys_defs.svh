@@ -381,7 +381,7 @@ typedef struct packed {
 typedef struct packed {
     logic [31:0] OPA;         // Operand A
     logic [31:0] OPB;         // Operand B
-    logic [5:0]  rob_tag;     // ROB tag for destination
+    logic [4:0]  rob_tag;     // ROB tag for destination
     logic [5:0]  RS_tag;      // Optional: ID of issuing RS
     ALU_FUNC alu_func;    // ALU operation selector
     logic [31:0] NPC;         // Next PC (for branch evaluation)
@@ -396,6 +396,7 @@ typedef struct packed {
     logic [4:0]  rob_tag;   // Where in the ROB the result belongs
     logic [63:0] value;     // Result to commit
     logic        done;      // Result is ready
+    logic valid; //whether this packet is valid yet
 } EX_CP_PACKET;
 
 

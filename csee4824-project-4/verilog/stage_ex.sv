@@ -36,21 +36,16 @@
 //     ALU_REMU    = 5'h11  // unused
 // } ALU_FUNC;
 
+
 // this mul_unit uses booth's algorithm to multiply two 64-bit integers
 module mul_unit (
     input  logic         clk,
     input  logic         rst,
     // Issue side
-    input logic valid,
-    input logic [4:0] op,
-    input logic [63:0] rs1,
-    input logic [63:0] rs2,
-    input logic [5:0] inst_tag,
+    input IS_EX_PACKET req,
 
     output logic         busy,
-    output logic [5:0] out_inst_tag,
-    output logic [63:0] value,
-    output logic out_valid
+    output EX_CP_PACKET out_packet,
 );
     // Right now, we are not using the op_codes, we are just doing
     // regular o' signed multiplication
@@ -75,7 +70,7 @@ module mul_unit (
         .reset  (rst),
         .mcand  (opa_q),
         .mplier (opb_q),
-        .start  (state == M_IDLE && valid),
+        .start  (state == M_IDLE && req.issue_valid),
         .product(mul_lo),
         .done   (mul_done)
     );
@@ -97,9 +92,9 @@ module mul_unit (
         end else begin
             state <= nstate;
             if (req.valid && state == M_IDLE) begin
-                opa_q <= rs1;
-                opb_q <= rs2;
-                tag_q <= inst_tag;
+                opa_q <= req.OPA;
+                opb_q <= req.OPB;
+                tag_q <= req.rob_tag;
             end
         end
     end
@@ -108,11 +103,88 @@ module mul_unit (
     //  Busy / response signals
     //--------------------------------------------------
     assign busy         = (state != M_IDLE);
-    assign out_valid    = (state == M_DONE);
-    assign out_inst_tag      = tag_q;
-    assign value    = mul_lo; // return lower 64 bits?
+    assign out_packet.valid    = (state == M_DONE);
+    assign out_packet.rob_tag     = tag_q[4:0];
+    assign out_packet.value   = mul_lo; // return lower 64 bits?
 endmodule
 
+//funcitonal unit cluster
+module fu_cluster #(
+    parameter int NUM_ADDERS = 2,
+    parameter int NUM_MULS   = 2
+)
+(
+    input logic clk,
+    input logic rst,
+    input IS_EX_PACKET in_packet,
+
+    // it is ready to accept new instructions
+    output logic issue_ready,
+    output EX_CP_PACKET out_packet
+);
+    logic adders_busy [NUM_ADDERS-1:0];
+    logic muls_busy  [NUM_MULS-1:0];
+
+    logic IS_EX_PACKET adders_request [NUM_ADDERS-1:0];
+    logic IS_EX_PACKET muls_request  [NUM_MULS-1:0];
+
+    logic EX_CP_PACKET add_resp [NUM_ADDERS-1:0];
+    logic EX_CP_PACKET mul_resp  [NUM_MULS-1:0];
+    genvar ai;
+    generate for (ai = 0; ai < NUM_ADDERS; ai++) begin : G_ADD
+        always_ff @(posedge clk or posedge rst) begin
+            if (rst) begin
+                adders_busy[ai] <= 1'b0;
+            end else begin
+                // accept new op if free and dispatcher fires
+                if (!adders_busy[ai] && in_packet.issue_valid && in_packet.alu_func==ALU_ADD && issue_ready && ai==0) begin
+                    adders_request[ai] <= in_packet;
+                    adders_busy[ai] <= 1'b1;
+                end else if (adders[ai].busy) begin
+                    adders_busy[ai] <= 1'b0; // done next cycle
+                end
+            end
+        end
+
+        assign add_resp[ai].valid = adders_busy[ai]; // finishes in 1‑cycle
+        assign add_resp[ai].rob_tag   = adders_request[ai].rob_tag;
+        assign add_resp[ai].value = {(adders_request[ai].OPA + adders_request[ai].OPB)}; // this is literally our adder
+    end endgenerate
+
+    genvar mi;
+    generate for (mi = 0; mi < NUM_MULS; mi++) begin : G_MUL
+        // Issue bus is one‑deep; only first free gets the op.
+        // ok we need to handle other cases of ALU_MUL 
+        assign muls_request[mi] = (in_packet.valid && (in_packet.alu_func==ALU_MUL || in_packet.alu_func==ALU_MULH || 
+                                    in_packet.alu_func==ALU_MULHSU || in_packet.alu_func==ALU_MULHU) &&
+                                    issue_ready && mi==0) ? issue_req : '{valid:0, op:FU_NOP, rs1:0, rs2:0, tag:0};
+
+        mul_unit MU (
+            .clk (clk),
+            .rst (rst),
+            .req (muls_request[mi]),
+            .busy(muls_busy[mi]),
+            .out_packet (mul_resp[mi])
+        );
+
+    end endgenerate
+
+    logic any_add_free, any_mul_free;
+    assign any_add_free = |(~{adders_busy}); // takes OR of all adders
+    assign any_mul_free = |(~(muls_busy)); // takes OR of all muls
+
+    always_comb begin
+        unique case(in_packet.alu_func)
+            ALU_ADD : issue_ready = in_packet.valid && any_add_free;
+            ALU_MUL : issue_ready = in_packet.valid && any_mul_free;
+            ALU_MULH: issue_ready = in_packet.valid && any_mul_free;
+            ALU_MULHSU: issue_ready = in_packet.valid && any_mul_free;
+            ALU_MULHU: issue_ready = in_packet.valid && any_mul_free;
+            default: issue_ready = 1'b1; // logical ops execute in regfile‑bypass ALU
+        endcase
+    end
+
+endmodule
 // ALU: computes the result of FUNC applied with operands A and B
 // This module is purely combinational
 module alu 
