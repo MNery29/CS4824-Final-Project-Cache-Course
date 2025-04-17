@@ -41,21 +41,21 @@ always_comb begin
     logic issued;
     issued = 0;
     issue_valid = 0;
-    issue_packet = '0;
+    is_packet = '0;
     rs_issue_enable = '0;
 
     if (fu_ready) begin
         for (int i = 0; i < `RS_SIZE; i++) begin
             if (!issued && rs_ready_out[i]) begin
                 issue_valid               = 1;
-                issue_packet.OPA          = rs_opa_out[i];
-                issue_packet.OPB          = rs_opb_out[i];
-                issue_packet.rob_tag      = rs_tag_out[i];
-                issue_packet.issue_valid  = 1;
-                issue_packet.alu_func     = rs_alu_func_out[i];
-                issue_packet.NPC          = rs_npc_out[i];
-                issue_packet.inst         = rs_inst_out[i];
-                issue_packet.RS_tag       = i;
+                is_packet.OPA          = rs_opa_out[i];
+                is_packet.OPB          = rs_opb_out[i];
+                is_packet.rob_tag      = rs_tag_out[i];
+                is_packet.issue_valid  = 1;
+                is_packet.alu_func     = rs_alu_func_out[i];
+                is_packet.NPC          = rs_npc_out[i];
+                is_packet.inst         = rs_inst_out[i];
+                is_packet.RS_tag       = i;
 
                 rs_issue_enable[i]        = 1;
                 issued = 1; 
@@ -64,3 +64,4 @@ always_comb begin
     end
 end
 
+endmodule
