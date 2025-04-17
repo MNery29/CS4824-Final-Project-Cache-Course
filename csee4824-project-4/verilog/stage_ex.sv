@@ -110,129 +110,77 @@ endmodule
 
 //funcitonal unit cluster
 module fu_cluster #(
-    parameter int NUM_ADDERS = 2,
-    parameter int NUM_MULS   = 2
-)
-(
-    input logic clk,
-    input logic rst,
-    input IS_EX_PACKET in_packet,
+    parameter int NUM_MULS = 2
+)(
+    input  logic        clk,
+    input  logic        rst,
+    input  IS_EX_PACKET in_pkt,
 
-    // it is ready to accept new instructions
-    output logic issue_ready,
-    output EX_CP_PACKET out_packet
+    output logic        issue_ready,
+    output EX_CP_PACKET out_pkt
 );
-    logic adders_busy [NUM_ADDERS-1:0];
-    logic muls_busy  [NUM_MULS-1:0];
 
-    logic IS_EX_PACKET adders_request [NUM_ADDERS-1:0];
-    logic IS_EX_PACKET muls_request  [NUM_MULS-1:0];
-
-    logic EX_CP_PACKET add_resp [NUM_ADDERS-1:0];
-    logic EX_CP_PACKET mul_resp  [NUM_MULS-1:0];
-    genvar ai;
-    generate for (ai = 0; ai < NUM_ADDERS; ai++) begin : G_ADD
-        always_ff @(posedge clk or posedge rst) begin
-            if (rst) begin
-                adders_busy[ai] <= 1'b0;
-            end else begin
-                // accept new op if free and dispatcher fires
-                if (!adders_busy[ai] && in_packet.issue_valid && in_packet.alu_func==ALU_ADD && issue_ready && ai==0) begin
-                    adders_request[ai] <= in_packet;
-                    adders_busy[ai] <= 1'b1;
-                end else if (adders[ai].busy) begin
-                    adders_busy[ai] <= 1'b0; // done next cycle
-                end
-            end
-        end
-
-        assign add_resp[ai].valid = adders_busy[ai]; // finishes in 1‑cycle
-        assign add_resp[ai].rob_tag   = adders_request[ai].rob_tag;
-        assign add_resp[ai].value = {(adders_request[ai].OPA + adders_request[ai].OPB)}; // this is literally our adder
-    end endgenerate
-
-    genvar mi;
-    generate for (mi = 0; mi < NUM_MULS; mi++) begin : G_MUL
-        // Issue bus is one‑deep; only first free gets the op.
-        // ok we need to handle other cases of ALU_MUL 
-        assign muls_request[mi] = (in_packet.valid && (in_packet.alu_func==ALU_MUL || in_packet.alu_func==ALU_MULH || 
-                                    in_packet.alu_func==ALU_MULHSU || in_packet.alu_func==ALU_MULHU) &&
-                                    issue_ready && mi==0) ? issue_req : '{valid:0, op:FU_NOP, rs1:0, rs2:0, tag:0};
-
-        mul_unit MU (
-            .clk (clk),
-            .rst (rst),
-            .req (muls_request[mi]),
-            .busy(muls_busy[mi]),
-            .out_packet (mul_resp[mi])
-        );
-
-    end endgenerate
-
-    logic any_add_free, any_mul_free;
-    assign any_add_free = |(~{adders_busy}); // takes OR of all adders
-    assign any_mul_free = |(~(muls_busy)); // takes OR of all muls
-
-    always_comb begin
-        unique case(in_packet.alu_func)
-            ALU_ADD : issue_ready = in_packet.valid && any_add_free;
-            ALU_MUL : issue_ready = in_packet.valid && any_mul_free;
-            ALU_MULH: issue_ready = in_packet.valid && any_mul_free;
-            ALU_MULHSU: issue_ready = in_packet.valid && any_mul_free;
-            ALU_MULHU: issue_ready = in_packet.valid && any_mul_free;
-            default: issue_ready = 1'b1; // logical ops execute in regfile‑bypass ALU
+    // ---------- Simple combinational ALU ----------
+    logic [63:0] simple_res;
+    logic signed [`XLEN-1:0] A,B;
+    begin
+        A = p.OPA; B = p.OPB;
+        unique case(p.alu_func)
+            ALU_ADD : simple_res = A + B;
+            ALU_SUB : simple_res = A - B;
+            ALU_AND : simple_res = A & B;
+            ALU_OR  : simple_res = A | B;
+            ALU_XOR : simple_res = A ^ B;
+            ALU_SLT : simple_res = (A < B);
+            ALU_SLTU: simple_res = (p.OPA < p.OPB);
+            ALU_SLL : simple_res = p.OPA << p.OPB[4:0];
+            ALU_SRL : simple_res = p.OPA >> p.OPB[4:0];
+            ALU_SRA : simple_res = A >>> p.OPB[4:0];
+            default : simple_res = `XLEN'hDEAD_BEEF;
         endcase
     end
 
+    logic is_mul = (in_pkt.alu_func == ALU_MUL || 
+                    in_pkt.alu_func == ALU_MULH ||
+                    in_pkt.alu_func == ALU_MULHSU ||
+                    in_pkt.alu_func == ALU_MULHU);
+
+    logic                mul_busy [NUM_MULS];
+    EX_CP_PACKET         mul_out  [NUM_MULS];
+    IS_EX_PACKET         mul_req;
+
+    assign mul_req = (in_pkt.valid && is_mul) ? in_pkt : '0;
+
+    genvar i;
+    generate
+        for(i=0;i<NUM_MULS;i++) begin : G_MUL
+            mul_unit MU(
+                .clk        (clk),
+                .rst        (rst),
+                .req        (mul_req),
+                .busy       (mul_busy[i]),
+                .out_packet (mul_out[i])
+            );
+        end
+    endgenerate
+
+    logic any_mul_free = |~mul_busy;
+
+    // ---------- Ready / result select ----------
+    assign issue_ready = in_pkt.valid && (is_mul ? any_mul_free : 1'b1);
+
+    always_comb begin
+        if (!is_mul) begin
+            out_pkt.valid   = in_pkt.valid;
+            out_pkt.rob_tag = in_pkt.rob_tag;
+            out_pkt.value   = simple_res;
+        end else begin
+            out_pkt = mul_out[0];                 // first MUL only
+        end
+    end
 endmodule
 // ALU: computes the result of FUNC applied with operands A and B
 // This module is purely combinational
-module alu 
-(
-    input [`XLEN-1:0] opa,
-    input [`XLEN-1:0] opb,
-    ALU_FUNC          func,
-
-    output logic [`XLEN-1:0] result
-);
-
-    logic signed [`XLEN-1:0]   signed_opa, signed_opb;
-    logic signed [2*`XLEN-1:0] signed_mul, mixed_mul;
-    logic        [2*`XLEN-1:0] unsigned_mul;
-
-    assign signed_opa   = opa;
-    assign signed_opb   = opb;
-
-    // We let verilog do the full 32-bit multiplication for us.
-    // This gives a large clock period.
-    // You will replace this with your pipelined multiplier in project 4.
-    assign signed_mul   = signed_opa * signed_opb;
-    assign unsigned_mul = opa * opb;
-    assign mixed_mul    = signed_opa * opb;
-
-    always_comb begin
-        case (func)
-            ALU_ADD:    result = opa + opb;
-            ALU_SUB:    result = opa - opb;
-            ALU_AND:    result = opa & opb;
-            ALU_SLT:    result = signed_opa < signed_opb;
-            ALU_SLTU:   result = opa < opb;
-            ALU_OR:     result = opa | opb;
-            ALU_XOR:    result = opa ^ opb;
-            ALU_SRL:    result = opa >> opb[4:0];
-            ALU_SLL:    result = opa << opb[4:0];
-            ALU_SRA:    result = signed_opa >>> opb[4:0]; // arithmetic from logical shift
-            ALU_MUL:    result = signed_mul[`XLEN-1:0];
-            ALU_MULH:   result = signed_mul[2*`XLEN-1:`XLEN];
-            ALU_MULHSU: result = mixed_mul[2*`XLEN-1:`XLEN];
-            ALU_MULHU:  result = unsigned_mul[2*`XLEN-1:`XLEN];
-
-            default:    result = `XLEN'hfacebeec;  // here to prevent latches
-        endcase
-    end
-
-endmodule // alu
-
 
 // Conditional branch module: compute whether to take conditional branches
 // This module is purely combinational
