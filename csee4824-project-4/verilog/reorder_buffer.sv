@@ -18,40 +18,35 @@ module reorder_buffer(
     input clock,
 
     //input signals from dispatch stage 
-    //opcode
-    input [4:0] dispatch_dest_reg,
-    input [6:0] dispatch_opcode,
-    input load_entry,
+    input DISPATCH_ROB_PACKET rob_dispatch_in,
+
+
     //If RS needs to read value ready in ROB
     input rob_to_rs_read1,
     input [5:0] rob_read_tag1,
     input rob_to_rs_read2,
     input [5:0] rob_read_tag2,
 
-    //input signals from execute stage 
-    input [5:0] cdb_tag, //cdb - common data bus
-    input [31:0] cdb_value,
-    input cdb_valid,
+    //input signals from CDB (execute) stage) 
+    input CDB_ROB_PACKET rob_cdb_in,
 
     //input signals from retire stage
     input retire_entry,
-    input rob_clear,
+    input rob_clear, //flush all entries 
 
-    //output signals to Regfile
-    output logic [4:0] reg_dest,
-    output logic [31:0] reg_value,
-    output logic reg_valid,
 
-    //output for reservation station/map table: Tag for latest dispatch 
-    output [5:0] rob_tag_out,
-    output [5:0] rob_retire_tag_out,
+    //output to send to Dispatch stage
+    output ROB_DISPATCH_PACKET rob_dispatch_out,
+
+
+    //output signals to retire and complete stage
+    output ROB_RETIRE_PACKET rob_retire_out,
+
+
+    //outputs to reservation station
     output [31:0] rob_to_rs_value1,
     output [31:0] rob_to_rs_value2,
-    output logic rob_out_valid,
     
-    //output signals to memory
-    output logic [31:0] mem_addr,
-    output logic mem_valid,
     //rob full signal, for stalling/hazards   
     output rob_full,
     //debug
@@ -72,109 +67,103 @@ module reorder_buffer(
     //head and tail pointers for queue FIFO structure
     logic [5:0] head, tail;
 
+    //check if ROB is full
     assign rob_full = ((head[4:0] == tail[4:0]) && (head[5] != tail[5]));
 
-    always_comb begin
-        if ((retire_entry && rob_status[head[4:0]] == READY) && (!rob_clear)) begin
-            reg_dest = regfile_retire(rob_opcode[head[4:0]]) ? rob_dest[head[4:0]] : `ZERO_REG;
-            reg_value = regfile_retire(rob_opcode[head[4:0]]) ? rob_values[head[4:0]] : 32'b0;
-            reg_valid = regfile_retire(rob_opcode[head[4:0]]) ? 1'b1 : 1'b0;
-
-            mem_valid = memory_retire(rob_opcode[head[4:0]]) ? 1'b1 : 1'b0;
-            mem_addr = memory_retire(rob_opcode[head[4:0]]) ? rob_values[head[4:0]] : 32'b0;
-        end
-        else begin 
-            reg_dest = 5'b0;
-            reg_value = 32'b0;
-            reg_valid = 1'b0;
-            mem_valid = 1'b0;
-            mem_addr = 32'b0;
-        end
-    end
-    
-    function  logic memory_retire(input [6:0] opcode);
-        return (opcode == `RV32_STORE); //Store opcodes, like SB, SH, SW, SD, write to mem. 
-    endfunction
-
-    function  logic regfile_retire(input [6:0] opcode);
-        return (
-        (opcode == `RV32_LOAD)    || //For ops: LB, LH, LW, LBU, LHU, LWU, LD
-        (opcode == `RV32_OP_IMM)  || //For ops: ADDI, SLTI, XORI, ORI, ANDI, SLLI, SRLI, SRAI
-        (opcode == `RV32_OP)      || //For ops: ADD, SUB, SLL, SLT, XOR, SRL, SRA, OR, AND
-        (opcode == `RV32_JALR_OP) || // JALR
-        (opcode == `RV32_JAL_OP)  || // JAL
-        (opcode == `RV32_LUI_OP)  || // LUI
-        (opcode == `RV32_AUIPC_OP)   // AUIPC
-    );
-    endfunction
-
-    //Outputs to RS
-    assign rob_tag_out = tail[4:0] + 1'b1;
-    assign rob_retire_tag_out = head[4:0] + 1'b1;
-
+    //Reservation station value checks
     assign rob_to_rs_value1 = rob_to_rs_read1 ? rob_values[rob_read_tag1] : 32'b0;
     assign rob_to_rs_value2 = rob_to_rs_read2 ? rob_values[rob_read_tag2] : 32'b0;
 
-    //Debug outputs
+
+    //DISPATCH OUTPUT
+    assign rob_dispatch_out.tag   = tail[4:0];
+    assign rob_dispatch_out.valid = (rob_dispatch_in.valid && !rob_full);
+
+    // RETIRE PACKET OUTPUT
+    always_comb begin
+        if ((retire_entry && rob_status[head[4:0]] == READY) && (!rob_clear)) begin
+            rob_retire_out.tag       = head[4:0];
+            rob_retire_out.dest_reg  = regfile_retire(rob_opcode[head[4:0]]) ? rob_dest[head[4:0]] : `ZERO_REG;
+            rob_retire_out.value     = rob_values[head[4:0]];
+            rob_retire_out.reg_valid = regfile_retire(rob_opcode[head[4:0]]);
+            rob_retire_out.mem_valid = memory_retire(rob_opcode[head[4:0]]);
+            rob_retire_out.mem_addr  = memory_retire(rob_opcode[head[4:0]]) ? rob_values[head[4:0]] : 32'b0;
+        end else begin
+            rob_retire_out = '{default: 0};
+        end
+    end
+
+    //HELPER FUNCTIONS  
+
+    function logic memory_retire(input [6:0] opcode);
+        return (opcode == `RV32_STORE);
+    endfunction
+
+    function logic regfile_retire(input [6:0] opcode);
+        return (
+            (opcode == `RV32_LOAD)    ||
+            (opcode == `RV32_OP_IMM)  ||
+            (opcode == `RV32_OP)      ||
+            (opcode == `RV32_JALR_OP) ||
+            (opcode == `RV32_JAL_OP)  ||
+            (opcode == `RV32_LUI_OP)  ||
+            (opcode == `RV32_AUIPC_OP)
+        );
+    endfunction
+
+
+    //DEBUGGING OUTPUTS
     assign rob_pointers = {head, tail};
+
     always_comb begin
         for (int i = 0; i < 32; i++) begin
             rob_debug[i] = {rob_status[i], rob_opcode[i], rob_dest[i], rob_values[i]};
         end
     end
 
-    always_ff @(posedge clock) begin
-        if(reset) begin
+    // ROB LOGIC 
+    always_ff @(posedge clock or posedge reset) begin
+        if (reset) begin
             for (int i = 0; i < 32; i++) begin
                 rob_values[i] <= 32'b0;
-                rob_dest[i] <= 0;
-                rob_opcode[i] <= 0;
+                rob_dest[i]   <= 5'b0;
+                rob_opcode[i] <= 7'b0;
                 rob_status[i] <= EMPTY;
             end
             head <= 6'b0;
             tail <= 6'b0;
-            rob_out_valid <= 0;
+        end else begin
+            // Dispatch new instruction if valid
+            if (rob_dispatch_in.valid && !rob_full) begin
+                rob_values[tail[4:0]] <= 32'b0;
+                rob_dest[tail[4:0]]   <= rob_dispatch_in.dest_reg;
+                rob_opcode[tail[4:0]] <= rob_dispatch_in.opcode;
+                rob_status[tail[4:0]] <= BUSY;
 
-        end
-        else begin
-            //set default values
-            rob_out_valid <= 0;
-
-            //dispatch stage logic, to handle incoming dispatch instruction. 
-            if (load_entry && !rob_full) begin
-                rob_values[tail[4:0]] <= 32'b0; //temporary placeholder, await cdb update. 
-                rob_dest[tail[4:0]] <= dispatch_dest_reg; // set destination register 
-                rob_opcode[tail[4:0]] <= dispatch_opcode; // set opcode
-                rob_status[tail[4:0]] <= BUSY; // set status to busy till CDB udpate. 
-                rob_out_valid <= 1'b1; // set valid bit for output to RS/MT
-                tail <= tail + 1; //increment tail pointer, circular buffer style
-            end else begin 
-                rob_out_valid <= 1'b0; //reset tag/value output valid if no dispatch. 
-            end 
-
-            //execute stage logic, to handle incoming CDB update.
-            if (cdb_valid) begin
-                rob_values[cdb_tag - 1] <= cdb_value;
-                rob_status[cdb_tag - 1] <= READY; // set status to ready, as value is now available for retirement
+                tail <= tail + 1;
             end
 
-            // retire stage logic to commit ready instructions. Check if an instruction is ready to retire.  
+            // CDB writeback
+            if (rob_cdb_in.valid) begin
+                rob_values[rob_cdb_in.tag - 1] <= rob_cdb_in.value;
+                rob_status[rob_cdb_in.tag - 1] <= READY;
+            end
+
+            // Retire stage
             if (retire_entry && rob_status[head[4:0]] == READY) begin
                 if (rob_clear) begin
-                    //mispred or interrupt
                     for (int i = 0; i < 32; i++) begin
                         rob_values[i] <= 32'b0;
-                        rob_dest[i] <= 0;
-                        rob_opcode[i] <= 0;
+                        rob_dest[i]   <= 5'b0;
+                        rob_opcode[i] <= 7'b0;
                         rob_status[i] <= EMPTY;
                     end
-                    head <= tail; //reset head to tail to discard instructions. 
+                    head <= tail;
                 end else begin
-                    //update head pointer
-                    rob_values[head] <= 32'b0;
-                    rob_dest[head] <= 5'b0;
-                    rob_opcode[head] <= 7'b0;
-                    rob_status[head] <= EMPTY;
+                    rob_values[head[4:0]] <= 32'b0;
+                    rob_dest[head[4:0]]   <= 5'b0;
+                    rob_opcode[head[4:0]] <= 7'b0;
+                    rob_status[head[4:0]] <= EMPTY;
                     head <= head + 1;
                 end
             end

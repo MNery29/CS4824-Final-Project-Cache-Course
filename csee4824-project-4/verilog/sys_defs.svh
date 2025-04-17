@@ -359,7 +359,16 @@ typedef struct packed {
 
  /// WORK IN PROGRESS PACKETS
 
-//
+
+//PIPELINE PACKETS 
+
+
+//packet from ID to Dispatch, to add new intstruction 
+typedef struct packed {
+    logic [4:0] dest_reg; // Destination register for the instruction
+    logic [6:0] opcode;     // Opcode for the instruction
+    logic       valid;    // Whether the instruction is valid
+} DISPATCH_ROB_PACKET;
 
 //packet from EX to complete
 // This is used to send the result of an instruction to the commit stage
@@ -370,6 +379,31 @@ typedef struct packed {
 } EX_CP_PACKET;
 
 
+//MODULE PACKETS: PACKETS FROM MODULES AS OUTPUT
+
+//ROB PACKETS: to be sent 
+
+//ROB OUTPUTS: 
+
+//ROB data to send to dispatch: 
+typedef struct packed {
+    logic [5:0] tag;     // ROB tag for the newly allocated entry
+    logic       valid;   // Whether the output is valid (i.e., we dispatched)
+} ROB_DISPATCH_PACKET;
+
+//ROB data to send to complete and retire
+
+typedef struct packed {
+    logic [5:0] tag;     // ROB tag for the newly allocated entry
+    logic [4:0]   dest_reg; // Destination register for the instruction
+    logic [31:0]  value;  // Value to write back to the register file
+    logic        reg_valid; // Whether the output is valid (i.e., we dispatched)
+    logic        mem_valid; 
+    logic [31:0] mem_addr; // Memory address to write back to the register file
+} ROB_RETIRE_PACKET;
+
+
+
 
 //CDB packet: to be sent to CDB
 typedef struct packed {
@@ -377,5 +411,15 @@ typedef struct packed {
     logic [63:0] value;   // Result value
     logic        valid;   // Valid signal
 } CDB_PACKET;
+
+//CDB_ROB_PACKET: to be sent from CDB to ROB
+typedef struct packed {
+    logic [5:0] tag;     // ROB tag for the entry being updated
+    logic [31:0] value;   // Value to write back to the register file
+    logic       valid;   // Whether the output is valid
+} CDB_ROB_PACKET;
+
+
+
 
 `endif // __SYS_DEFS_SVH__

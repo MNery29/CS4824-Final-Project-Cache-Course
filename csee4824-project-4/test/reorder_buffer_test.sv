@@ -5,40 +5,43 @@
 
 module testbench;
 
-    logic clock, reset, load_entry, rob_to_rs_read1, rob_to_rs_read2, cdb_valid, retire_entry, rob_clear, rob_full, rob_out_valid, reg_valid;
-    logic [4:0] dispatch_dest_reg, reg_dest;
-    logic [5:0] rob_read_tag1, rob_read_tag2, cdb_tag, rob_tag_out, rob_retire_tag_out;
-    logic [6:0] dispatch_opcode;
+    logic clock, reset;
+    logic rob_to_rs_read1, rob_to_rs_read2;
+    logic [5:0] rob_read_tag1, rob_read_tag2;
+    logic retire_entry, rob_clear;
+    logic rob_full;
+    logic [31:0] rob_to_rs_value1, rob_to_rs_value2;
     logic [11:0] rob_pointers;
-    logic [31:0] cdb_value, reg_value, rob_to_rs_value1, rob_to_rs_value2;
     logic [45:0] rob_debug[31:0];
 
-    reorder_buffer rob(
-        .clock(clock), 
+    DISPATCH_ROB_PACKET rob_dispatch_in;
+    CDB_ROB_PACKET cdb_rob_in;
+    ROB_DISPATCH_PACKET rob_dispatch_out;
+    ROB_RETIRE_PACKET rob_retire_out;
+
+
+    reorder_buffer rob (
+        .clock(clock),
         .reset(reset),
-        .load_entry(load_entry),
+
+        .rob_dispatch_in(rob_dispatch_in),
+        .rob_cdb_in(rob_cdb_in),
+
         .rob_to_rs_read1(rob_to_rs_read1),
+        .rob_read_tag1(rob_read_tag1),
         .rob_to_rs_read2(rob_to_rs_read2),
-        .cdb_valid(cdb_valid),
+        .rob_read_tag2(rob_read_tag2),
+
         .retire_entry(retire_entry),
         .rob_clear(rob_clear),
-        .rob_full(rob_full),
-        .rob_out_valid(rob_out_valid),
-        .reg_valid(reg_valid),
-        .dispatch_dest_reg(dispatch_dest_reg),
-        .rob_read_tag1(rob_read_tag1),
-        .rob_read_tag2(rob_read_tag2),
-        .cdb_tag(cdb_tag),
-        .reg_dest(reg_dest),
-        .rob_tag_out(rob_tag_out),
-        .rob_retire_tag_out(rob_retire_tag_out),
-        .dispatch_opcode(dispatch_opcode),
-        .cdb_value(cdb_value),
-        .reg_value(reg_value),
+
+        .rob_dispatch_out(rob_dispatch_out),
+        .rob_retire_out(rob_retire_out),
         .rob_to_rs_value1(rob_to_rs_value1),
         .rob_to_rs_value2(rob_to_rs_value2),
-        .rob_pointers(rob_pointers),
-        .rob_debug(rob_debug)
+        .rob_full(rob_full),
+        .rob_debug(rob_debug),
+        .rob_pointers(rob_pointers)
     );
 
     // CLOCK_PERIOD is defined on the commandline by the makefile
@@ -63,144 +66,81 @@ module testbench;
     endtask
 
     initial begin
-        $monitor("Time:%4.0f clock:%b reset:%b\
-                 |Inputs| cdb_valid:%b cdb_tag:%b cdb_value:%h load_entry:%b dispatch_dest_reg:%b dispatch_opcode:%b read1:%b read2:%b read_tag1:%b read_tag2:%b retire_entry:%b rob_clear:%b\
-                 |Outputs| reg_dest:%b reg_value:%h reg_valid:%b rob_out_valid:%b rob_tag_out:%b rob_retire_tag_out:%b read_value1:%h read_value2:%h rob_full:%b",
-                 $time, clock, reset, cdb_valid, cdb_tag, cdb_value, load_entry, dispatch_dest_reg, dispatch_opcode, rob_to_rs_read1, rob_to_rs_read2, 
-                 rob_read_tag1, rob_read_tag2, retire_entry, rob_clear, reg_dest, reg_value, reg_valid, rob_out_valid, rob_tag_out, rob_retire_tag_out, rob_to_rs_value1, rob_to_rs_value2, rob_full);
+        $monitor("Time:%4.0f | clk:%b rst:%b | Dispatch: valid=%b dest=%b opcode=%b | CDB: valid=%b tag=%b value=%h | Retire: tag=%b dest=%b value=%h valid=%b mem=%b | rob_full=%b",
+                 $time, clock, reset, 
+                 rob_dispatch_in.valid, rob_dispatch_in.dest_reg, rob_dispatch_in.opcode,
+                 rob_cdb_in.valid, rob_cdb_in.tag, rob_cdb_in.value,
+                 rob_retire_out.tag, rob_retire_out.dest_reg, rob_retire_out.value,
+                 rob_retire_out.reg_valid, rob_retire_out.mem_valid, rob_full);
 
-        //Reset 
+        // Initial Reset
         clock = 1;
-        reset = 1; //Pull reset high
-        load_entry = 0;
+        reset = 1;
         retire_entry = 0;
-        cdb_valid = 0;
         rob_clear = 0;
         rob_to_rs_read1 = 0;
         rob_to_rs_read2 = 0;
 
-        @(negedge clock);
-        reset = 0; //Initialize inputs
-
-        cdb_valid = 0;
-        cdb_tag = 5'b00000;
-        cdb_value = 32'h0000_0000;
-
-        load_entry = 1; //Dispatch an instruction 
-        dispatch_dest_reg = 5'b00001;
-        dispatch_opcode = `RV32_ADD;
-
-        rob_to_rs_read1 = 0;
-        rob_read_tag1 = 5'b00000;
-
-        rob_to_rs_read2 = 0;
-        rob_read_tag2 = 5'b00000;
+        rob_dispatch_in = '{default: 0};
+        rob_cdb_in      = '{default: 0};
 
         @(negedge clock);
-        print_contents(rob_debug, rob_pointers); 
-        cdb_valid = 0; //Don't CDB broadcast
-        cdb_tag = 5'b00000;
-        cdb_value = 32'h0000_0000;
+        reset = 0;
 
-        load_entry = 1; //Dispatch another instruction 
-        dispatch_dest_reg = 5'b00010;
-        dispatch_opcode = `RV32_ADD;
-
-        rob_to_rs_read1 = 0; 
-        rob_read_tag1 = 5'b00000;
-
-        rob_to_rs_read2 = 0;
-        rob_read_tag2 = 5'b00000;
+        // Cycle 1 
+        rob_dispatch_in.valid    = 1;
+        rob_dispatch_in.dest_reg = 5'b00001;
+        rob_dispatch_in.opcode   = `RV32_ADD;
 
         @(negedge clock);
-        print_contents(rob_debug, rob_pointers); 
-        cdb_valid = 0; //Don't CDB broadcast
-        cdb_tag = 5'b00000;
-        cdb_value = 32'h0000_0000;
+        print_contents(rob_debug, rob_pointers);
 
-        load_entry = 1; //Dispatch another instruction 
-        dispatch_dest_reg = 5'b01000;
-        dispatch_opcode = `RV32_SUB;
-
-        rob_to_rs_read1 = 0;
-        rob_read_tag1 = 5'b00000;
-
-        rob_to_rs_read2 = 0;
-        rob_read_tag2 = 5'b00000;
+        // Cycle 2 
+        rob_dispatch_in.dest_reg = 5'b00010;
 
         @(negedge clock);
-        print_contents(rob_debug, rob_pointers); 
-        cdb_valid = 1; //CDB broadcast with tag 0
-        cdb_tag = 5'b00001; 
-        cdb_value = 32'hFFFF_FFFF;
+        print_contents(rob_debug, rob_pointers);
 
-        load_entry = 0; //Don't dispatch
-        dispatch_dest_reg = 5'b01000; 
-        dispatch_opcode = `RV32_SUB;
-
-        rob_to_rs_read1 = 0;
-        rob_read_tag1 = 5'b00000;
-
-        rob_to_rs_read2 = 0;
-        rob_read_tag2 = 5'b00000;
+        // Cycle 3 
+        rob_dispatch_in.dest_reg = 5'b01000;
+        rob_dispatch_in.opcode   = `RV32_SUB;
 
         @(negedge clock);
-        print_contents(rob_debug, rob_pointers); 
-        cdb_valid = 0; //Don't CDB broadcast
-        cdb_tag = 5'b00000;
-        cdb_value = 32'h0000_0000;
+        print_contents(rob_debug, rob_pointers);
 
-        load_entry = 0; //Don't dispatch
-        dispatch_dest_reg = 5'b00000;
-        dispatch_opcode = 0;
-
-        retire_entry = 1; //Retire instruction! FFFF_FFFF should be stored to register 00001
-
-        rob_to_rs_read1 = 0;
-        rob_read_tag1 = 5'b00000;
-
-        rob_to_rs_read2 = 0;
-        rob_read_tag2 = 5'b00000;
+        // Cycle 4 
+        rob_dispatch_in.valid = 0;
+        rob_cdb_in.valid = 1;
+        rob_cdb_in.tag   = 6'd1;
+        rob_cdb_in.value = 32'hFFFF_FFFF;
 
         @(negedge clock);
-        print_contents(rob_debug, rob_pointers); 
-        cdb_valid = 0; 
-        cdb_tag = 5'b00000;
-        cdb_value = 32'h0000_0000;
+        print_contents(rob_debug, rob_pointers);
 
-        load_entry = 0;
-        dispatch_dest_reg = 5'b00000;
-        dispatch_opcode = 0;
-
-        retire_entry = 1; //Retire instruction again. Nothing should happen since entry and head pointer is not ready!
-
-        rob_to_rs_read1 = 0;
-        rob_read_tag1 = 5'b00000;
-
-        rob_to_rs_read2 = 0;
-        rob_read_tag2 = 5'b00000;
-        
-        @(negedge clock);
-        print_contents(rob_debug, rob_pointers); 
-        cdb_valid = 0; //Don't CDB broadcast
-        cdb_tag = 5'b00000; 
-        cdb_value = 32'h0000_0000;
-
-        load_entry = 1; //Dispatch another instruction 
-        dispatch_dest_reg = 5'b11111; 
-        dispatch_opcode = `RV32_SUB;
-
-        rob_to_rs_read1 = 0;
-        rob_read_tag1 = 5'b00000;
-
-        rob_to_rs_read2 = 0;
-        rob_read_tag2 = 5'b00000;
+        // Cycle 5 
+        rob_cdb_in.valid = 0;
+        retire_entry     = 1;
 
         @(negedge clock);
-        print_contents(rob_debug, rob_pointers); 
+        print_contents(rob_debug, rob_pointers);
+
+        // Cycle 6 
+        retire_entry = 1;
+
+        @(negedge clock);
+        print_contents(rob_debug, rob_pointers);
+
+        // Cycle 7
+        retire_entry = 0;
+        rob_dispatch_in.valid    = 1;
+        rob_dispatch_in.dest_reg = 5'b11111;
+        rob_dispatch_in.opcode   = `RV32_SUB;
+
+        @(negedge clock);
+        print_contents(rob_debug, rob_pointers);
 
         $finish;
-
     end
+
 
 endmodule
