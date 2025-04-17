@@ -20,7 +20,7 @@
 // so the product sum is actually {AC, QR} 
 
 
-module mult_stage #(
+module booth_mult_stage #(
     parameter int STEPS_PER_CYCLE  = 16, // # micro‑shifts to do in one clk
     parameter int data_length = 64
 )

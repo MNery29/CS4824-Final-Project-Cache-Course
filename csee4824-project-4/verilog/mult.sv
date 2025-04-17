@@ -19,7 +19,7 @@
 // assign unsigned_mul = opa * opb;
 // assign mixed_mul    = signed_opa * opb;
 
-module mult (
+module booth_mult (
     input clock, reset,
     input [63:0] mcand, mplier,
     input start,
@@ -42,7 +42,7 @@ module mult (
 
     // instantiate an array of mult_stage modules
     // this uses concatenation syntax for internal wiring, see lab 2 slides
-    mult_stage mstage [`MULT_STAGES-1:0] (
+    booth_mult_stage mstage [`MULT_STAGES-1:0] (
         .clock (clock),
         .reset (reset),
         .start       ({internal_dones,        start}), // forward prev done as next start
