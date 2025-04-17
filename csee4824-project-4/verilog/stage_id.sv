@@ -443,7 +443,7 @@ module stage_id (
         // Outputs
         .opa_select    (opa_select),
         .opb_select    (opb_select),
-        //.alu_func      (alu_func),
+        .alu_func      (alu_func),
         .has_dest      (has_dest_reg)
         //.rd_mem        (rd_mem),
         //.wr_mem        (wr_mem),

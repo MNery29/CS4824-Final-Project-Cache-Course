@@ -70,7 +70,7 @@ module tb_stage_if();
             $fatal("Mismatch @%0t: inst = 0x%h, expected = 0x%h", $time, if_packet.inst, expected_inst);
         end
 
-        $display("✔ Time %0t | PC=0x%h NPC=0x%h inst=0x%h valid=%b stall=%b",
+        $display("Time %0t | PC=0x%h NPC=0x%h inst=0x%h valid=%b stall=%b",
                  $time, if_packet.PC, if_packet.NPC, if_packet.inst, if_packet.valid, stall_if);
     end
 

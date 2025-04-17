@@ -41,6 +41,10 @@
 // number of mult stages (2, 4, or 8)
 `define MULT_STAGES 4
 
+// number of reservation stations: 
+
+`define RS_SIZE 4
+
 ///////////////////////////////
 // ---- Basic Constants ---- //
 ///////////////////////////////
@@ -363,12 +367,28 @@ typedef struct packed {
 //PIPELINE PACKETS 
 
 
-//packet from ID to Dispatch, to add new intstruction 
+
+
+//packet from ID to ROB, to add new intstruction 
 typedef struct packed {
     logic [4:0] dest_reg; // Destination register for the instruction
     logic [6:0] opcode;     // Opcode for the instruction
     logic       valid;    // Whether the instruction is valid
 } DISPATCH_ROB_PACKET;
+
+
+//packet from IS (issue stage) to EX (execute stage)
+typedef struct packed {
+    logic [31:0] OPA;         // Operand A
+    logic [31:0] OPB;         // Operand B
+    logic [5:0]  rob_tag;     // ROB tag for destination
+    logic [5:0]  RS_tag;      // Optional: ID of issuing RS
+    ALU_FUNC alu_func;    // ALU operation selector
+    logic [31:0] NPC;         // Next PC (for branch evaluation)
+    logic [31:0] inst;        // Raw instruction bits
+    logic        issue_valid; // This packet is valid to execute
+} IS_EX_PACKET;
+
 
 //packet from EX to complete
 // This is used to send the result of an instruction to the commit stage
