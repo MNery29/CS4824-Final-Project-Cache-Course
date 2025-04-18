@@ -8,9 +8,6 @@
 # "stage_cp" "stage_ex" "stage_mem" "stage_rt" "zcache"
 
 # ========= Results Post-test! =====================================================
-# failing simv - mult cdb
-# failing synth - map_table
-# failing synthesis test (port mismatch) - reorder_buffer, stage_id
 
 # UNITS PASSING ALL TESTS! <3 YAYY: "reorder_buffer" "cdb" "dcache" "map_table" "reservation_station"
 # STAGES PASSING ALL TEST!!! YAYYY: "stage_id" "stage_if" "stage_is"
