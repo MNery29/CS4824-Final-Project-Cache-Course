@@ -1,5 +1,11 @@
 *.daidir
 
+
 csrc/
 output/
-dcache.simv
+*.out
+simv_testing/
+*.syn.simv.daidir/
+*.simv_daidir/
+*.simv
+synth/
