@@ -69,6 +69,7 @@ module pipeline (
     //////////////////////////////////////////////////
     ID_EX_PACKET id_ex_reg;   // The ID to EX stage register
     EX_MEM_PACKET ex_packet;  // Output Packet
+    CDB_PACKET cdb_packet_ex;
 
     //////////////////////////////////////////////////
     //                CP Stage Wires                //
@@ -203,7 +204,7 @@ module pipeline (
     //     .state(state),
     //     .next_state(next_state),
     // )
-    
+
     // for now lets just do passthroughs:
     assign proc2Dcache_addr = dcache2mem_addr;
     assign proc2Dcache_command = dcache2mem_command;
@@ -296,8 +297,17 @@ module pipeline (
     //////////////////////////////////////////////////
     stage_ex stage_ex_0 (
         .id_ex_reg(is_ex_reg),
-        .ex_packet(ex_packet)
+        .ex_packet(ex_packet),
+
+        .cdb_out(cdb_packet_ex), // output packet to CDB
     );
+
+    //////////////////////////////////////////////////
+    //                LSQ Stage                     //
+    //////////////////////////////////////////////////
+    // so my idea for LSQ stage is the following:
+    // we will issue the instruction in the reservation station
+    // 
 
     //////////////////////////////////////////////////
     //           EX/CP Pipeline Register            //
@@ -494,6 +504,15 @@ module pipeline (
             default: begin
             end
         endcase
+    end
+
+    always_comb begin
+        stall_data = 1'b0;
+        //basically, if there's no new request, and we have an inflight request, we will make stall high
+        if ( (dcache_command != BUS_NONE)
+            || (owner_q == `OWN_D && mem2proc_data == 64'b0) ) begin
+            stall_data = 1'b1;
+        end
     end
 
     //////////////////////////////////////////////////
