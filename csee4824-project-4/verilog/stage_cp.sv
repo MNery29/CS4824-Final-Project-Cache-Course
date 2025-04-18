@@ -21,7 +21,7 @@ input logic reset,
 input EX_CP_PACKET ex_cp_packet,
 
 //output to ROB (CDB): defined in sys_defs.sv
-output CDB_PACKET cdb_packet_out,
+output CDB_PACKET cdb_packet_out
 );
 
 
@@ -36,6 +36,8 @@ always_ff @(posedge clock) begin
                 cdb_packet_out.tag   <= ex_cp_packet.rob_tag;
                 cdb_packet_out.valid <= 1'b1;
             end else begin
+                cdb_packet_out.value <= 64'b0; 
+                cdb_packet_out.tag   <= 5'b0;
                 cdb_packet_out.valid <= 1'b0;
             end
         end

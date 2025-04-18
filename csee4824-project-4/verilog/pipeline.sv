@@ -43,34 +43,55 @@ module pipeline (
     logic [`XLEN-1:0] branch_target;
     logic             stall_if;
     IF_ID_PACKET      if_packet;
-
+    IF_ID_PACKET      if_id_reg;
+    
     //////////////////////////////////////////////////
     //                ID Stage Wires                //
     //////////////////////////////////////////////////
     ID_IS_PACKET      id_is_packet;
-    IF_ID_PACKET      if_id_reg;
-
+    ID_IS_PACKET      id_is_reg;
     logic [45:0]      id_rob_debug[31:0];
     logic [11:0]      id_rob_pointers;
     logic [7:0]       id_mt_tags[31:0];
     logic [74:0]      id_rs_debug;
+    logic [`RS_SIZE-1:0] rs_issue_enable;
 
     //////////////////////////////////////////////////
     //                IS Stage Wires                //
     //////////////////////////////////////////////////
-    logic [`RS_SIZE-1:0] rs_ready_out;
-    logic [31:0]         rs_opa_out   [`RS_SIZE];
-    logic [31:0]         rs_opb_out   [`RS_SIZE];
-    logic [5:0]          rs_tag_out   [`RS_SIZE];
-    ALU_FUNC             rs_alu_func_out[`RS_SIZE];
-    logic [31:0]         rs_npc_out     [`RS_SIZE];
-    logic [31:0]         rs_inst_out    [`RS_SIZE];
+    IS_EX_PACKET      is_packet;
+    IS_EX_PACKET      is_ex_reg;
+    logic             issue_valid;
+    logic fu_ready = 1'b1; // For now, always ready
 
-    logic fu_ready = 1'b1;
-    logic [`RS_SIZE-1:0] rs_issue_enable;
-    IS_EX_PACKET is_packet;
-    logic issue_valid;
+    //////////////////////////////////////////////////
+    //                 EX Stage Wires               //
+    //////////////////////////////////////////////////
+    ID_EX_PACKET id_ex_reg;   // The ID to EX stage register
+    EX_MEM_PACKET ex_packet;  // Output Packet
 
+    //////////////////////////////////////////////////
+    //                CP Stage Wires                //
+    //////////////////////////////////////////////////
+    EX_CP_PACKET ex_cp_reg;
+    CDB_PACKET cdb_packet;
+
+    //////////////////////////////////////////////////
+    //               RT Stage Wires                 //
+    //////////////////////////////////////////////////
+    logic [`XLEN-1:0] retire_value_out;
+    logic [4:0]       retire_dest_out;
+    logic             retire_valid_out;
+    logic [`XLEN-1:0] mem_addr_out;
+    logic             mem_valid_out;
+
+    //////////////////////////////////////////////////
+    //                ROB + Map Table Wires         //
+    //////////////////////////////////////////////////
+    DISPATCH_ROB_PACKET rob_dispatch_packet;
+    ROB_DISPATCH_PACKET rob_dispatch_out;
+    ROB_RETIRE_PACKET rob_retire_packet;
+    logic rob_full;
 
     //////////////////////////////////////////////////
     //               I-Cache Wires                  //
@@ -121,18 +142,52 @@ module pipeline (
     );
 
     //////////////////////////////////////////////////
+    //         IF/ID Pipeline Register              //
+    //////////////////////////////////////////////////
+    always_ff @(posedge clock or posedge reset) begin
+        if (reset) begin
+            if_id_reg <= '0;
+        end else begin
+            if_id_reg <= if_packet;
+        end
+    end
+
+
+    //////////////////////////////////////////////////
     //               Decode Stage                   //
     //////////////////////////////////////////////////
     stage_id stage_id_0 (
         .clock(clock),
         .reset(reset),
-        .if_id_reg(if_packet),
-        .id_is_packet(id_is_packet),
+        .if_id_reg(if_id_reg),
+
+        .cdb_valid(cdb_packet.valid), // NEW
+        .cdb_tag(cdb_packet.tag),     // NEW
+        .cdb_value(cdb_packet.value), // (optional, if needed)
+
+        .id_is_packet(id_is_packet), // this packet goes TO issue stage
+
+        .rs1_issue(rs_issue_enable[0]),  // pass the rs_issue_enable signal
+        .rs1_clear(rs_issue_enable[0]),  // for now, clearing on issue 
+
         .rob_debug(id_rob_debug),
         .rob_pointers_debug(id_rob_pointers),
         .mt_tags_debug(id_mt_tags),
         .rs_debug(id_rs_debug)
     );
+
+    //////////////////////////////////////////////////
+    //         ID/IS Pipeline Register              //
+    //////////////////////////////////////////////////
+    always_ff @(posedge clock or posedge reset) begin
+        if (reset) begin
+            id_is_reg <= '0;
+        end else begin
+            id_is_reg <= id_is_packet;
+        end
+    end
+
+
 
     //////////////////////////////////////////////////
     //                Issue Stage                   //
@@ -152,6 +207,134 @@ module pipeline (
         .is_packet(is_packet),
         .rs_issue_enable(rs_issue_enable)
     );
+
+    //////////////////////////////////////////////////
+    //         IS/EX Pipeline Register              //
+    //////////////////////////////////////////////////
+    always_ff @(posedge clock or posedge reset) begin
+        if (reset) begin
+            is_ex_reg <= '0;
+        end else begin
+            is_ex_reg <= is_packet;
+        end
+    end
+
+    //////////////////////////////////////////////////
+    //                Execute Stage                 //
+    //////////////////////////////////////////////////
+    stage_ex stage_ex_0 (
+        .id_ex_reg(is_ex_reg),
+        .ex_packet(ex_packet)
+    );
+
+    //////////////////////////////////////////////////
+    //           EX/CP Pipeline Register            //
+    //////////////////////////////////////////////////
+    always_ff @(posedge clock or posedge reset) begin
+        if (reset) begin
+            ex_cp_reg <= '0;
+        end else begin
+            ex_cp_reg <= ex_packet;
+        end
+    end
+
+    //////////////////////////////////////////////////
+    //               Complete Stage                 //
+    //////////////////////////////////////////////////
+    stage_cp stage_cp_0 (
+        .clock(clock),
+        .reset(reset),
+        .ex_cp_packet(ex_cp_reg), // input packet from EX stage
+        .cdb_packet_out(cdb_packet)
+    );
+
+    //////////////////////////////////////////////////
+    //            Reorder Buffer (ROB)              //
+    //////////////////////////////////////////////////
+    reorder_buffer reorder_buffer_0 (
+        .reset(reset),
+        .clock(clock),
+        .rob_dispatch_in(rob_dispatch_packet),
+        .rob_dispatch_out(rob_dispatch_out),
+        .rob_cdb_in(cdb_packet),
+        .retire_entry(1'b0),
+        .rob_clear(1'b0),
+        .rob_retire_out(rob_retire_packet),
+        .rob_to_rs_value1(),
+        .rob_to_rs_value2(),
+        .rob_full(rob_full),
+        .rob_debug(id_rob_debug),
+        .rob_pointers(id_rob_pointers)
+    );
+
+    //////////////////////////////////////////////////
+    //                Map Table                     //
+    //////////////////////////////////////////////////
+    map_table map_table_0 (
+        .reset(reset),
+        .clock(clock),
+
+        // Source register addresses (for reading tags)
+        .rs1_addr(if_id_reg.inst.r.rs1),
+        .rs2_addr(if_id_reg.inst.r.rs2),
+
+        // Destination register address (where the result will eventually be written)
+        .r_dest(if_id_reg.inst.r.rd),
+
+        // ROB tag assigned to destination register
+        .tag_in(rob_dispatch_out.tag),
+
+        // Dispatch control: whether we are dispatching a new instruction
+        .load_entry(dispatch_ok && if_id_reg.valid && has_dest_reg),
+
+        // CDB broadcast: update map table when a result is ready
+        .cdb_tag_in(cdb_packet.tag),
+        .read_cdb(cdb_packet.valid),
+
+        // Retirement: clear mappings when instructions retire
+        .retire_addr(rob_retire_packet.dest_reg),
+        .retire_tag(rob_retire_packet.tag),
+        .retire_entry(rob_retire_packet.valid),
+
+        // Outputs to the Reservation Station / Decode
+        .rs1_tag(), // (connect later if needed)
+        .rs2_tag(), // (connect later if needed)
+
+        // Pass through register addresses for regfile reads
+        .regfile_rs1_addr(), // (connect if needed)
+        .regfile_rs2_addr(),
+
+        // Debug
+        .tags_debug(mt_tags_debug)
+    );
+
+    //////////////////////////////////////////////////
+    //            CP/RT Pipeline Register           //
+    //////////////////////////////////////////////////
+    always_ff @(posedge clock or posedge reset) begin
+        if (reset)
+            cp_rt_reg <= '0;
+        else
+            cp_rt_reg <= rob_retire_packet;
+    end
+
+
+    //////////////////////////////////////////////////
+    //               RT (Retire) Stage              //
+    //////////////////////////////////////////////////
+    stage_rt stage_rt_0 (
+        .clock(clock),
+        .reset(reset),
+        .rob_retire_packet(cp_rt_reg),
+        .branch_mispredict(1'b0),
+        .retire_value(retire_value_out),
+        .retire_dest(retire_dest_out),
+        .retire_valid_out(retire_valid_out),
+        .mem_addr(mem_addr_out),
+        .mem_valid(mem_valid_out)
+    );
+
+
 
 
     //////////////////////////////////////////////////
@@ -184,11 +367,11 @@ module pipeline (
     //////////////////////////////////////////////////
     //               Pipeline Outputs               //
     //////////////////////////////////////////////////
-    assign pipeline_completed_insts = 4'd0; // placeholder
+    assign pipeline_commit_wr_en    = retire_valid_out;
+    assign pipeline_commit_wr_idx   = retire_dest_out;
+    assign pipeline_commit_wr_data  = retire_value_out;
+    assign pipeline_commit_NPC      = cp_rt_reg.mem_addr; 
+    assign pipeline_completed_insts = retire_valid_out ? 4'd1 : 4'd0;
     assign pipeline_error_status    = NO_ERROR;
-    assign pipeline_commit_wr_en    = 1'b0;
-    assign pipeline_commit_wr_idx   = 5'd0;
-    assign pipeline_commit_wr_data  = 64'd0;
-    assign pipeline_commit_NPC      = 64'd0;
 
 endmodule // pipeline

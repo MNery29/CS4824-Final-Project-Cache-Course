@@ -36,9 +36,9 @@ module stage_is (
     output logic [`RS_SIZE-1:0] rs_issue_enable
   
 );
+logic issued;
 
 always_comb begin 
-    logic issued;
     issued = 0;
     issue_valid = 0;
     is_packet = '0;
@@ -50,7 +50,7 @@ always_comb begin
                 issue_valid               = 1;
                 is_packet.OPA          = rs_opa_out[i];
                 is_packet.OPB          = rs_opb_out[i];
-                is_packet.rob_tag      = rs_tag_out[i][4:0]; // fix to only send the last 4 bits of tag, keep msb internal
+                is_packet.rob_tag      = rs_tag_out[i]; // fix to only send the last 4 bits of tag, keep msb internal
                 is_packet.issue_valid  = 1;
                 is_packet.alu_func     = rs_alu_func_out[i];
                 is_packet.NPC          = rs_npc_out[i];
