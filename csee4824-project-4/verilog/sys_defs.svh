@@ -24,8 +24,9 @@
 `define N 1
 
 // sizes
-`define ROB_SZ xx
-`define RS_SZ xx
+`define ROB_SZ 32
+`define RS_SZ 16
+`define ROB_TAG_BITS 5 // log2(`ROB_SZ)
 `define PHYS_REG_SZ (32 + `ROB_SZ)
 
 // worry about these later
@@ -435,7 +436,7 @@ typedef struct packed {
 
 //CDB_ROB_PACKET: to be sent from CDB to ROB
 typedef struct packed {
-    logic [5:0] tag;     // ROB tag for the entry being updated
+    logic [`ROB_TAG_BITS-1:0] tag;     // ROB tag for the entry being updated
     logic [31:0] value;   // Value to write back to the register file
     logic       valid;   // Whether the output is valid
 } CDB_ROB_PACKET;

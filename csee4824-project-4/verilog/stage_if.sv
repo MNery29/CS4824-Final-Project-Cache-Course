@@ -20,7 +20,7 @@ module stage_if (
     input             Icache_valid_out,// high when valid
 
     output IF_ID_PACKET      if_packet,
-    output logic [`XLEN-1:0] proc2Icache_addr // address sent to icache
+    output logic [`XLEN-1:0] proc2Icache_addr, // address sent to icache
     output logic stall_if // stall signal from IF to pass down pipeline
 );
 

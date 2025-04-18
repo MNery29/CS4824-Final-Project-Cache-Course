@@ -209,7 +209,7 @@ module stage_id (
     //New I/O
     //CDB 
     input cdb_valid,
-    input [5:0] cdb_tag,
+    input [`ROB_TAG_BITS-1:0] cdb_tag,
     input [31:0] cdb_value,
 
     input mt_retire_entry,
@@ -222,9 +222,9 @@ module stage_id (
     
     output logic [31:0] opA,
     output logic [31:0] opB,
-    output logic [5:0] output_tag,
+    output logic [`ROB_TAG_BITS-1:0] output_tag,
 
-    output logic [45:0] rob_debug [31:0],
+    output logic [45:0] rob_debug [`ROB_SZ-1:0],
     output logic [11:0] rob_pointers_debug,
     output logic [7:0] mt_tags_debug [31:0],
     output logic [74:0] rs_debug,
@@ -235,224 +235,211 @@ module stage_id (
     output logic [4:0] dest_reg_idx
 
 );
+
     logic [6:0] opcode;
     assign opcode = if_id_reg.inst[6:0];
-    //logic has_dest_reg;
-    //logic [4:0] dest_reg_idx;
 
     assign dest_reg_idx = (has_dest_reg) ? if_id_reg.inst.r.rd : `ZERO_REG;
 
-    //Map table signals
-
-    logic [5:0] rob_tag_out; //Tag output from ROB (tail pointer)
-    logic [5:0] rob_retire_tag_out; //Retire tag output from ROB (head pointer)
-    logic [6:0] mt_to_rs_tag1, mt_to_rs_tag2; //MT output tags
-    logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2, mt_to_regfile_rd;
-
-    logic mt_load_entry;
-
-    //RS signals
-    logic [31:0] rs1_value; //Regile rs1 value (to RS)
-    logic [31:0] rs2_value; //Regile rs2 value (to RS)
-
-    logic [31:0] rs1_opa_in; //RS operand inputs
-    logic [31:0] rs1_opb_in;
-    logic rs1_opa_valid;
-    logic rs1_opb_valid;
-
-    logic rs1_load_entry; //RS control signals
-
-    logic rs1_ready; //RS status outputs
+    // Dispatch control signals
+    logic dispatch_ok;
+    logic rob_full;
     logic rs1_available;
-    
-    logic rob_to_rs_read1; //ROB to RS dataflow 
-    logic [5:0] rob_read_tag1;
+
+    assign dispatch_ok = (!rob_full) && (rs1_available);
+
+    logic mt_load_entry, rob_load_entry, rs1_load_entry;
+    assign mt_load_entry  = dispatch_ok && if_id_reg.valid;
+    assign rob_load_entry = dispatch_ok && if_id_reg.valid;
+    assign rs1_load_entry = dispatch_ok && if_id_reg.valid;
+
+    // Outputs from map table
+    logic [6:0] mt_to_rs_tag1, mt_to_rs_tag2;
+    logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2;
+
+    // Regfile read values
+    logic [31:0] rs1_value, rs2_value;
+
+    // RS operand handling
+    logic [31:0] rs1_opa_in, rs1_opb_in;
+    logic rs1_opa_valid, rs1_opb_valid;
+
+    // ROB to RS read signals
+    logic rob_to_rs_read1;
+    logic [`ROB_TAG_BITS-1:0] rob_read_tag1;
     logic [31:0] rob_to_rs_value1;
     logic rob_to_rs_read2;
-    logic [5:0] rob_read_tag2;
+    logic [`ROB_TAG_BITS-1:0] rob_read_tag2;
     logic [31:0] rob_to_rs_value2;
 
-    //ROB signals
-    logic rob_load_entry; //ROB control signals
-
-    logic rob_full; //ROB outputs
+    // ROB dispatch and retire signals
     logic [4:0] rob_dest_reg;
     logic [31:0] rob_to_regfile_value;
     logic rob_regfile_valid;
-    //Add mem outputs later!
+    logic [`ROB_TAG_BITS-1:0] rob_tag_out;
+    logic [`ROB_TAG_BITS-1:0] rob_retire_tag_out;
 
-    assign mt_load_entry = if_id_reg.valid;
-    assign rob_load_entry = !rob_full ? if_id_reg.valid : 0;
-    assign rs1_load_entry = rs1_available ? if_id_reg.valid : 0;
-    
-    //Reservation station operand muxes
+    //packets
+    DISPATCH_ROB_PACKET rob_dispatch_packet;
+    ROB_DISPATCH_PACKET rob_dispatch_out;
 
-    //ALU_OPA_SELECT opa_select;
-    //ALU_OPB_SELECT opb_select;
+    assign rob_dispatch_packet.dest_reg = dest_reg_idx;
+    assign rob_dispatch_packet.opcode   = opcode;
+    assign rob_dispatch_packet.valid    = rob_load_entry;
 
+    //operand select (OPA)
     always_comb begin
+        rs1_opa_in = 32'b0;
+        rs1_opa_valid = 0;
+        rob_to_rs_read1 = 0;
+        rob_read_tag1 = 0;
+
         case (opa_select)
-            OPA_IS_NPC : rs1_opa_in = if_id_reg.NPC; //Immediates
-            OPA_IS_PC : rs1_opa_in = if_id_reg.PC;
-            OPA_IS_ZERO : rs1_opa_in = 32'b0; 
-        endcase
-        if (opa_select == OPA_IS_RS1) begin //If inst is R type
-            if (mt_to_rs_tag1[6:1] == 6'b0) begin //Tag is zero
-                rs1_opa_in = rs1_value; //Read value from regfile
-                rs1_opa_valid = 1; 
-            end else if (!mt_to_rs_tag1[0]) begin //rs1 is not ready in ROB
-                rs1_opa_in = {27'b0, mt_to_rs_tag1[6:1]};
-                rs1_opa_valid = 0; //Clear valid bit
-            end else begin //rs1 is ready in ROB
-                rob_to_rs_read1 = 1; //Read value from ROB
-                rob_read_tag1 = mt_to_rs_tag1[6:1]; 
-                rs1_opa_in = rob_to_rs_value1; 
-                rs1_opa_valid = 1;
+            OPA_IS_NPC  : rs1_opa_in = if_id_reg.NPC;
+            OPA_IS_PC   : rs1_opa_in = if_id_reg.PC;
+            OPA_IS_ZERO : rs1_opa_in = 32'b0;
+            OPA_IS_RS1  : begin
+                if (mt_to_rs_tag1[6:1] == 6'b0) begin
+                    rs1_opa_in = rs1_value;
+                    rs1_opa_valid = 1;
+                end else if (!mt_to_rs_tag1[0]) begin
+                    rs1_opa_in = {27'b0, mt_to_rs_tag1[6:1]};
+                    rs1_opa_valid = 0;
+                end else begin
+                    rob_to_rs_read1 = 1;
+                    rob_read_tag1 = mt_to_rs_tag1[6:1];
+                    rs1_opa_in = rob_to_rs_value1;
+                    rs1_opa_valid = 1;
+                end
             end
-        end else begin
+        endcase
+
+        if (opa_select != OPA_IS_RS1)
             rs1_opa_valid = 1;
-        end 
     end
 
+    //operand select (OPB)
     always_comb begin
+        rs1_opb_in = 32'b0;
+        rs1_opb_valid = 0;
+        rob_to_rs_read2 = 0;
+        rob_read_tag2 = 0;
+
         case (opb_select)
-            OPB_IS_I_IMM  : rs1_opb_in = `RV32_signext_Iimm(if_id_reg.inst);
-            OPB_IS_S_IMM  : rs1_opb_in = `RV32_signext_Simm(if_id_reg.inst);
-            OPB_IS_B_IMM  : rs1_opb_in = `RV32_signext_Bimm(if_id_reg.inst);
-            OPB_IS_U_IMM  : rs1_opb_in = `RV32_signext_Uimm(if_id_reg.inst);
-            OPB_IS_J_IMM  : rs1_opb_in = `RV32_signext_Jimm(if_id_reg.inst);
-        endcase
-        if (opb_select == OPB_IS_RS2) begin //If inst is R type
-            if (mt_to_rs_tag2[6:1] == 6'b0) begin //Tag is zero
-                rs1_opb_in = rs2_value; //Read value from regfile
-                rs1_opb_valid = 1; 
-            end else if (!mt_to_rs_tag2[0]) begin //rs2 is not ready in ROB
-                rs1_opb_in = {27'b0, mt_to_rs_tag2[6:1]};
-                rs1_opb_valid = 0; //Clear valid bit
-            end else begin //rs2 is ready in ROB
-                rob_to_rs_read2 = 1; //Read value from ROB
-                rob_read_tag2 = mt_to_rs_tag2[6:1]; 
-                rs1_opb_in = rob_to_rs_value2; 
-                rs1_opb_valid = 1;
+            OPB_IS_I_IMM : rs1_opb_in = `RV32_signext_Iimm(if_id_reg.inst);
+            OPB_IS_S_IMM : rs1_opb_in = `RV32_signext_Simm(if_id_reg.inst);
+            OPB_IS_B_IMM : rs1_opb_in = `RV32_signext_Bimm(if_id_reg.inst);
+            OPB_IS_U_IMM : rs1_opb_in = `RV32_signext_Uimm(if_id_reg.inst);
+            OPB_IS_J_IMM : rs1_opb_in = `RV32_signext_Jimm(if_id_reg.inst);
+            OPB_IS_RS2   : begin
+                if (mt_to_rs_tag2[6:1] == 6'b0) begin
+                    rs1_opb_in = rs2_value;
+                    rs1_opb_valid = 1;
+                end else if (!mt_to_rs_tag2[0]) begin
+                    rs1_opb_in = {27'b0, mt_to_rs_tag2[6:1]};
+                    rs1_opb_valid = 0;
+                end else begin
+                    rob_to_rs_read2 = 1;
+                    rob_read_tag2 = mt_to_rs_tag2[6:1];
+                    rs1_opb_in = rob_to_rs_value2;
+                    rs1_opb_valid = 1;
+                end
             end
-        end else begin
+        endcase
+
+        if (opb_select != OPB_IS_RS2)
             rs1_opb_valid = 1;
-        end 
     end
 
-    //Instantiate the map table
+    // Map Table
     map_table map_table_0 (
-        .reset (reset),
-        .clock (clock),
-        .rs1_addr (if_id_reg.inst.r.rs1),
-        .rs2_addr (if_id_reg.inst.r.rs2),
-        .r_dest (dest_reg_idx),
-        .tag_in (rob_tag_out),
-        .load_entry (mt_load_entry),
-        .cdb_tag_in (cdb_tag),
-        .read_cdb (cdb_valid),
-        .retire_addr (rob_dest_reg),
-        .retire_entry (mt_retire_entry),
+        .reset(reset),
+        .clock(clock),
+        .rs1_addr(if_id_reg.inst.r.rs1),
+        .rs2_addr(if_id_reg.inst.r.rs2),
+        .r_dest(dest_reg_idx),
+        .tag_in(rob_tag_out),
+        .load_entry(mt_load_entry),
+        .cdb_tag_in(cdb_tag),
+        .read_cdb(cdb_valid),
+        .retire_addr(rob_dest_reg),
+        .retire_entry(mt_retire_entry),
         .retire_tag(rob_retire_tag_out),
-
-        .rs1_tag (mt_to_rs_tag1),
-        .rs2_tag (mt_to_rs_tag2),
-        .regfile_rs1_addr (mt_to_regfile_rs1),
-        .regfile_rs2_addr (mt_to_regfile_rs2),
-        
+        .rs1_tag(mt_to_rs_tag1),
+        .rs2_tag(mt_to_rs_tag2),
+        .regfile_rs1_addr(mt_to_regfile_rs1),
+        .regfile_rs2_addr(mt_to_regfile_rs2),
         .tags_debug(mt_tags_debug)
     );
 
-    //Instantiate the reservation station - Currently only supports one FU!
+    // Reservation Station
     reservation_station reservation_station_1 (
-        .reset (reset),
-        .clock (clock),
-        .rs_rob_tag (rob_tag_out),
-        .rs_cdb_in (cdb_value),
-        .rs_cdb_tag (cdb_tag),
-        .rs_cdb_valid (cdb_valid),
-        .rs_opa_in (rs1_opa_in),
-        .rs_opb_in (rs1_opb_in),
-        .rs_opa_valid (rs1_opa_valid),
-        .rs_opb_valid (rs1_opb_valid),
-        .rs_load_in (rs1_load_entry),
-        .rs_use_enable (rs1_issue),
-        .rs_free_in (rs1_clear),
- 
-        .rs_ready_out (rs1_ready),
-        .rs_opa_out (opA),
-        .rs_opb_out (opB),
-        .rs_tag_out (output_tag),
-        .rs_avail_out (rs1_available),
-
+        .reset(reset),
+        .clock(clock),
+        .rs_rob_tag(rob_tag_out),
+        .rs_cdb_in(cdb_value),
+        .rs_cdb_tag(cdb_tag),
+        .rs_cdb_valid(cdb_valid),
+        .rs_opa_in(rs1_opa_in),
+        .rs_opb_in(rs1_opb_in),
+        .rs_opa_valid(rs1_opa_valid),
+        .rs_opb_valid(rs1_opb_valid),
+        .rs_alu_func_in(alu_func),
+        .rs_load_in(rs1_load_entry),
+        .rs_use_enable(rs1_issue),
+        .rs_free_in(rs1_clear),
+        .rs_ready_out(rs1_ready),
+        .rs_opa_out(opA),
+        .rs_opb_out(opB),
+        .rs_tag_out(output_tag),
+        .rs_avail_out(rs1_available),
         .rs_debug(rs_debug)
     );
-    
-    //Instantiate the reorder buffer
+
+    // Reorder Buffer
     reorder_buffer reorder_buffer_0 (
-        .reset (reset),
-        .clock (clock),
-        .dispatch_dest_reg (dest_reg_idx),
-        .dispatch_opcode (opcode),
-        .load_entry(rob_load_entry),
-        .rob_to_rs_read1 (rob_to_rs_read1),
-        .rob_read_tag1 (rob_read_tag1),
-        .rob_to_rs_read2 (rob_to_rs_read2),
-        .rob_read_tag2 (rob_read_tag2),
-        .cdb_tag (cdb_tag), 
-        .cdb_value (cdb_value),
-        .cdb_valid (cdb_valid),
-        .retire_entry (rob_retire_entry),
-        .rob_clear (rob_clear),
-        
+        .reset(reset),
+        .clock(clock),
+        .rob_dispatch_in(rob_dispatch_packet),
+        .rob_dispatch_out(rob_dispatch_out),
+        .rob_to_rs_read1(rob_to_rs_read1),
+        .rob_read_tag1(rob_read_tag1),
+        .rob_to_rs_read2(rob_to_rs_read2),
+        .rob_read_tag2(rob_read_tag2),
+        .rob_cdb_in('{tag: cdb_tag, value: cdb_value, valid: cdb_valid}),
+        .retire_entry(rob_retire_entry),
+        .rob_clear(rob_clear),
         .reg_dest(rob_dest_reg),
         .reg_value(rob_to_regfile_value),
         .reg_valid(rob_regfile_valid),
-        .rob_tag_out(rob_tag_out),
-        .rob_retire_tag_out(rob_retire_tag_out),
+        .rob_retire_out(),
         .rob_to_rs_value1(rob_to_rs_value1),
         .rob_to_rs_value2(rob_to_rs_value2),
-        //.rob_out_valid(),
-        //.mem_addr(), //Will incorporate later with LSQ structures 
-        //.mem_valid(),
         .rob_full(rob_full),
-
         .rob_debug(rob_debug),
         .rob_pointers(rob_pointers_debug)
     );
 
-    // Instantiate the register file
+    // Register File
     regfile regfile_0 (
-        .clock  (clock),
-        .read_idx_1 (mt_to_regfile_rs1),
-        .read_idx_2 (mt_to_regfile_rs2),
-        .write_en   (rob_regfile_valid),
-        .write_idx  (rob_dest_reg),
-        .write_data (rob_to_regfile_value),
-
-        .read_out_1 (rs1_value),
-        .read_out_2 (rs2_value)
+        .clock(clock),
+        .read_idx_1(mt_to_regfile_rs1),
+        .read_idx_2(mt_to_regfile_rs2),
+        .write_en(rob_regfile_valid),
+        .write_idx(rob_dest_reg),
+        .write_data(rob_to_regfile_value),
+        .read_out_1(rs1_value),
+        .read_out_2(rs2_value)
     );
 
-    // Instantiate the instruction decoder
+    // Decoder
     decoder decoder_0 (
-        // Inputs
-        .inst  (if_id_reg.inst),
-        .valid (if_id_reg.valid),
-
-        // Outputs
-        .opa_select    (opa_select),
-        .opb_select    (opb_select),
-        .alu_func      (alu_func),
-        .has_dest      (has_dest_reg)
-        //.rd_mem        (rd_mem),
-        //.wr_mem        (wr_mem),
-        //.cond_branch   (cond_branch),
-        //.uncond_branch (uncond_branch),
-        //.csr_op        (csr_op),
-        //.halt          (halt),
-        //.illegal       (illegal)
+        .inst(if_id_reg.inst),
+        .valid(if_id_reg.valid),
+        .opa_select(opa_select),
+        .opb_select(opb_select),
+        .alu_func(alu_func),
+        .has_dest(has_dest_reg)
     );
 
-
-endmodule // stage_id
+endmodule 
