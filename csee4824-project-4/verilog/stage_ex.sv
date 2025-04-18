@@ -259,42 +259,60 @@ endmodule // conditional_branch
 //     logic        valid;   // Valid signal
 // } CDB_PACKET;
 
+
+// //packet from IS (issue stage) to EX (execute stage)
+// typedef struct packed {
+//     logic [31:0] OPA;         // Operand A
+//     logic [31:0] OPB;         // Operand B
+//     logic [4:0]  rob_tag;     // ROB tag for destination
+//     logic [5:0]  RS_tag;      // Optional: ID of issuing RS
+//     ALU_FUNC alu_func;    // ALU operation selector
+//     logic [31:0] NPC;         // Next PC (for branch evaluation)
+//     logic [31:0] inst;        // Raw instruction bits
+//     logic        issue_valid; // This packet is valid to execute
+//     logic rd_mem;
+//     logic wr_mem;
+// } IS_EX_PACKET;
+
 module stage_ex (
-    input ID_EX_PACKET id_ex_reg,
+    input IS_EX_PACKET is_ex_reg,
 
     output EX_MEM_PACKET ex_packet,
     //broad cast value + tag to cbd, so reorder buffer can be updated
-    output CDB_PACKET cdb_out,
+    output CDB_PACKET cdb_out
 );
 
     logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
     logic take_conditional;
 
     // Pass-throughs
-    assign ex_packet.NPC          = id_ex_reg.NPC;
-    assign ex_packet.rs2_value    = id_ex_reg.rs2_value;
-    assign ex_packet.rd_mem       = id_ex_reg.rd_mem;
-    assign ex_packet.wr_mem       = id_ex_reg.wr_mem;
-    assign ex_packet.dest_reg_idx = id_ex_reg.dest_reg_idx;
-    assign ex_packet.halt         = id_ex_reg.halt;
-    assign ex_packet.illegal      = id_ex_reg.illegal;
-    assign ex_packet.csr_op       = id_ex_reg.csr_op;
-    assign ex_packet.valid        = id_ex_reg.valid;
+    assign ex_packet.NPC          = is_ex_reg.NPC;
+    assign ex_packet.rs2_value    = is_ex_reg.rs2_value;
+    assign ex_packet.rd_mem       = is_ex_reg.rd_mem;
+    assign ex_packet.wr_mem       = is_ex_reg.wr_mem;
+    assign ex_packet.dest_reg_idx = is_ex_reg.dest_reg_idx;
+
+    // assign ex_packet.halt         = id_ex_reg.halt;
+    // assign ex_packet.illegal      = id_ex_reg.illegal;
+    // assign ex_packet.csr_op       = id_ex_reg.csr_op;
+    assign ex_packet.valid        = is_ex_reg.issue_valid;
 
     // Break out the signed/unsigned bit and memory read/write size
-    assign ex_packet.rd_unsigned  = id_ex_reg.inst.r.funct3[2]; // 1 if unsigned, 0 if signed
-    assign ex_packet.mem_size     = MEM_SIZE'(id_ex_reg.inst.r.funct3[1:0]);
+    assign ex_packet.rd_unsigned  = is_ex_reg.inst.r.funct3[2]; // 1 if unsigned, 0 if signed
+    assign ex_packet.mem_size     = MEM_SIZE'(is_ex_reg.inst.r.funct3[1:0]);
 
     // ultimate "take branch" signal:
     // unconditional, or conditional and the condition is true
-    assign ex_packet.take_branch = id_ex_reg.uncond_branch || (id_ex_reg.cond_branch && take_conditional);
+
+    // no branch 
+    // assign ex_packet.take_branch = id_ex_reg.uncond_branch || (id_ex_reg.cond_branch && take_conditional);
 
     // ALU opA mux
     always_comb begin
         case (id_ex_reg.opa_select)
-            OPA_IS_RS1:  opa_mux_out = id_ex_reg.rs1_value;
-            OPA_IS_NPC:  opa_mux_out = id_ex_reg.NPC;
-            OPA_IS_PC:   opa_mux_out = id_ex_reg.PC;
+            OPA_IS_RS1:  opa_mux_out = is_ex_req.OPA; // before it was: id_ex_reg.rs1_value;
+            OPA_IS_NPC:  opa_mux_out = is_ex_reg.NPC;
+            OPA_IS_PC:   opa_mux_out = is_ex_reg.PC;
             OPA_IS_ZERO: opa_mux_out = 0;
             default:     opa_mux_out = `XLEN'hdeadface; // dead face
         endcase
@@ -303,7 +321,7 @@ module stage_ex (
     // ALU opB mux
     always_comb begin
         case (id_ex_reg.opb_select)
-            OPB_IS_RS2:   opb_mux_out = id_ex_reg.rs2_value;
+            OPB_IS_RS2:   opb_mux_out =  is_ex_req.OPB; //id_ex_reg.rs2_value;
             OPB_IS_I_IMM: opb_mux_out = `RV32_signext_Iimm(id_ex_reg.inst);
             OPB_IS_S_IMM: opb_mux_out = `RV32_signext_Simm(id_ex_reg.inst);
             OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(id_ex_reg.inst);
@@ -318,7 +336,7 @@ module stage_ex (
         // Inputs
         .opa(opa_mux_out),
         .opb(opb_mux_out),
-        .func(id_ex_reg.alu_func),
+        .func(is_ex_reg.alu_func),
 
         // Output
         .result(ex_packet.alu_result)
@@ -327,16 +345,16 @@ module stage_ex (
     // Instantiate the conditional branch module
     conditional_branch conditional_branch_0 (
         // Inputs
-        .func(id_ex_reg.inst.b.funct3), // instruction bits for which condition to check
-        .rs1(id_ex_reg.rs1_value),
-        .rs2(id_ex_reg.rs2_value),
+        .func(is_ex_reg.inst.b.funct3), // instruction bits for which condition to check
+        .rs1(is_ex_reg.OPA),
+        .rs2(is_ex_reg.OPB),
 
         // Output
         .take(take_conditional)
     );
 
-    assign cdb_out.valid = id_ex_reg.valid && !id_ex_reg.halt && !id_ex_reg.illegal;
-    assign cdb_out.tag = id_ex_reg.rob_tag;
+    assign cdb_out.valid = is_ex_reg.valid  //&& !id_ex_reg.halt && !id_ex_reg.illegal;
+    assign cdb_out.tag = is_ex_reg.rob_tag;
     assign cdb_out.value = ex_packet.alu_result;
 
 endmodule // stage_ex

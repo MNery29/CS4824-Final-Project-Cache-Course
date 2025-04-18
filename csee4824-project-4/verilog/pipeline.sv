@@ -135,6 +135,7 @@ module pipeline (
     logic [3:0] dcache_tag, // high when valid
     logic [3:0] dcache_response, // 0 = can't accept, other=tag of transaction]
     logic [1:0] dcache_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
+    logic [63:0] dcache_data; // data going to cache for store
     logic [`XLEN-1:0] dcache_addr, // sending address to dcache
 
     //////////////////////////////////////////////////
@@ -178,7 +179,7 @@ module pipeline (
     // for now, no icache, i will pass through all the data
     assign proc2Imem_addr = proc2Icache_addr;
     assign Icache_data_out = Imem2proc_data;
-    assign Icache_valid_out = Imem2proc_tag !- 0; // this means it is returning data
+    assign Icache_valid_out = Imem2proc_tag != 0; // this means it is returning data
 
     //////////////////////////////////////////////////
     //                  D-Cache                     //
@@ -301,7 +302,35 @@ module pipeline (
 
         .cdb_out(cdb_packet_ex), // output packet to CDB
     );
+    
+    logic EX_MEM_PACKET ex_mem_reg;
+    always_ff @(posedge clock or posedge reset) begin
+        if (reset) begin
+            ex_mem_req <= '0;
+        end else begin
+            ex_mem_reg <= ex_packet;
+        end
+    end
 
+     //////////////////////////////////////////////////
+    //              Memory Stage                    //
+    //////////////////////////////////////////////////
+
+    //this is temporary while we wait for LSQ stage to be complete
+    // we will connect with LSQ wires
+
+    stage_mem stage_mem_0 (
+         // Inputs
+        .ex_mem_reg     (ex_mem_reg),
+        .Dmem2proc_data (dcache_data_out), 
+
+        // Outputs
+        .mem_packet        (mem_packet),
+        .proc2Dmem_command (dcache_command),
+        // .proc2Dmem_size    (dcache_size),
+        .proc2Dmem_addr    (dcache_addr),
+        .proc2Dmem_data    (dcache_data)
+    );
     //////////////////////////////////////////////////
     //                LSQ Stage                     //
     //////////////////////////////////////////////////
@@ -439,6 +468,7 @@ module pipeline (
         if (dcache_command != BUS_NONE) begin
             proc2mem_command = dcache2mem_command;
             proc2mem_addr    = dcache2mem_addr;
+            proc2mem_data = dcache2mem_data;
 `ifndef CACHE_MODE
             proc2mem_size    = dcache2mem_size;
 `endif
