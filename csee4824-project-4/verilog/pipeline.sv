@@ -105,6 +105,31 @@ module pipeline (
     //////////////////////////////////////////////////
     //               D-Cache Wires                  //
     //////////////////////////////////////////////////
+
+    logic [`XLEN-1:0] proc2Dcache_addr;
+    logic [1:0] proc2Dcache_command; // `BUS_NONE `BUS_LOAD or `BUS_STORE
+
+    logic [3:0]  mem2dcache_response; // 0 = can't accept, other=tag of transaction
+    logic [63:0] mem2dcache_data;    // data resulting from a load
+    logic [3:0]  mem2dcache_tag;       // 0 = no value, other=tag of transaction
+
+    logic [`XLEN-1:0] dcache2mem_addr;
+    logic [63:0]      dcache2mem_data; // address for current command
+    logic [1:0]       dcache2mem_command; // `BUS_NONE `BUS_LOAD or `BUS_STORE
+    MEM_SIZE    dcache2mem_size;
+
+    logic [63:0] hit_data; // data resulting from a load
+    logic hit; // 1 if hit, 0 if miss
+    logic [3:0] data_tag;
+    logic [3:0] data_response;
+    logic next_state; //for debugging 
+    logic state; //for debugging 
+    logic [3:0] number_of_waits; //for debugging
+    logic [3:0] next_number_of_waits; //for debugging
+
+    //////////////////////////////////////////////////
+    //               LSQ Wires                     //
+    //////////////////////////////////////////////////
     logic [63:0]dcache_data_out, // data coming back from cache
     logic [3:0] dcache_tag, // high when valid
     logic [3:0] dcache_response, // 0 = can't accept, other=tag of transaction]
@@ -137,18 +162,56 @@ module pipeline (
     //////////////////////////////////////////////////
     //                  I-Cache                     //
     //////////////////////////////////////////////////
-    icache icache_0 (
-        .clock(clock),
-        .reset(reset),
-        .Imem2proc_response(mem2proc_response),
-        .Imem2proc_data(mem2proc_data),
-        .Imem2proc_tag(mem2proc_tag),
-        .proc2Icache_addr(proc2Icache_addr),
-        .proc2Imem_command(proc2Imem_command),
-        .proc2Imem_addr(proc2Imem_addr),
-        .Icache_data_out(Icache_data_out),
-        .Icache_valid_out(Icache_valid_out)
-    );
+    // icache icache_0 (
+    //     .clock(clock),
+    //     .reset(reset),
+    //     .Imem2proc_response(mem2proc_response),
+    //     .Imem2proc_data(mem2proc_data),
+    //     .Imem2proc_tag(mem2proc_tag),
+    //     .proc2Icache_addr(proc2Icache_addr),
+    //     .proc2Imem_command(proc2Imem_command),
+    //     .proc2Imem_addr(proc2Imem_addr),
+    //     .Icache_data_out(Icache_data_out),
+    //     .Icache_valid_out(Icache_valid_out)
+    // );
+    // for now, no icache, i will pass through all the data
+    assign proc2Imem_addr = proc2Icache_addr;
+    assign Icache_data_out = Imem2proc_data;
+    assign Icache_valid_out = Imem2proc_tag !- 0; // this means it is returning data
+
+    //////////////////////////////////////////////////
+    //                  D-Cache                     //
+    //////////////////////////////////////////////////
+    // dcache dcache_0 (
+    //     .clk(clock),
+    //     .reset(reset),
+    //     .proc2Dcache_addr(proc2Dcache_addr),
+    //     .proc2Dcache_command(proc2Dcache_command),
+    //     .mem2dcache_response(mem2dcache_response),
+    //     .mem2dcache_data(mem2dcache_data),
+    //     .mem2dcache_tag(mem2dcache_tag),
+    //     .dcache2mem_addr(dcache2mem_addr),
+    //     .dcache2mem_data(dcache2mem_data),
+    //     .dcache2mem_command(dcache2mem_command),
+    //     .dcache2mem_size(dcache2mem_size),
+    //     .hit_data(hit_data),
+    //     .hit(hit),
+    //     .data_tag(data_tag),
+    //     .data_response(data_response),
+    //     .number_of_waits(number_of_waits),
+    //     .next_number_of_waits(next_number_of_waits),
+    //     .state(state),
+    //     .next_state(next_state),
+    // )
+    
+    // for now lets just do passthroughs:
+    assign proc2Dcache_addr = dcache2mem_addr;
+    assign proc2Dcache_command = dcache2mem_command;
+
+    assign data_tag = mem2dcache_tag;
+    assign hit_data = mem2dcache_data;
+    assign data_response = mem2dcache_response;
+
 
     //////////////////////////////////////////////////
     //         IF/ID Pipeline Register              //
@@ -260,62 +323,62 @@ module pipeline (
     //////////////////////////////////////////////////
     //            Reorder Buffer (ROB)              //
     //////////////////////////////////////////////////
-    reorder_buffer reorder_buffer_0 (
-        .reset(reset),
-        .clock(clock),
-        .rob_dispatch_in(rob_dispatch_packet),
-        .rob_dispatch_out(rob_dispatch_out),
-        .rob_cdb_in(cdb_packet),
-        .retire_entry(1'b0),
-        .rob_clear(1'b0),
-        .rob_retire_out(rob_retire_packet),
-        .rob_to_rs_value1(),
-        .rob_to_rs_value2(),
-        .rob_full(rob_full),
-        .rob_debug(id_rob_debug),
-        .rob_pointers(id_rob_pointers)
-    );
+    // reorder_buffer reorder_buffer_0 (
+    //     .reset(reset),
+    //     .clock(clock),
+    //     .rob_dispatch_in(rob_dispatch_packet),
+    //     .rob_dispatch_out(rob_dispatch_out),
+    //     .rob_cdb_in(cdb_packet),
+    //     .retire_entry(1'b0),
+    //     .rob_clear(1'b0),
+    //     .rob_retire_out(rob_retire_packet),
+    //     .rob_to_rs_value1(),
+    //     .rob_to_rs_value2(),
+    //     .rob_full(rob_full),
+    //     .rob_debug(id_rob_debug),
+    //     .rob_pointers(id_rob_pointers)
+    // );
 
     //////////////////////////////////////////////////
     //                Map Table                     //
     //////////////////////////////////////////////////
-    map_table map_table_0 (
-        .reset(reset),
-        .clock(clock),
+    // map_table map_table_0 (
+    //     .reset(reset),
+    //     .clock(clock),
 
-        // Source register addresses (for reading tags)
-        .rs1_addr(if_id_reg.inst.r.rs1),
-        .rs2_addr(if_id_reg.inst.r.rs2),
+    //     // Source register addresses (for reading tags)
+    //     .rs1_addr(if_id_reg.inst.r.rs1),
+    //     .rs2_addr(if_id_reg.inst.r.rs2),
 
-        // Destination register address (where the result will eventually be written)
-        .r_dest(if_id_reg.inst.r.rd),
+    //     // Destination register address (where the result will eventually be written)
+    //     .r_dest(if_id_reg.inst.r.rd),
 
-        // ROB tag assigned to destination register
-        .tag_in(rob_dispatch_out.tag),
+    //     // ROB tag assigned to destination register
+    //     .tag_in(rob_dispatch_out.tag),
 
-        // Dispatch control: whether we are dispatching a new instruction
-        .load_entry(dispatch_ok && if_id_reg.valid && has_dest_reg),
+    //     // Dispatch control: whether we are dispatching a new instruction
+    //     .load_entry(dispatch_ok && if_id_reg.valid && has_dest_reg),
 
-        // CDB broadcast: update map table when a result is ready
-        .cdb_tag_in(cdb_packet.tag),
-        .read_cdb(cdb_packet.valid),
+    //     // CDB broadcast: update map table when a result is ready
+    //     .cdb_tag_in(cdb_packet.tag),
+    //     .read_cdb(cdb_packet.valid),
 
-        // Retirement: clear mappings when instructions retire
-        .retire_addr(rob_retire_packet.dest_reg),
-        .retire_tag(rob_retire_packet.tag),
-        .retire_entry(rob_retire_packet.valid),
+    //     // Retirement: clear mappings when instructions retire
+    //     .retire_addr(rob_retire_packet.dest_reg),
+    //     .retire_tag(rob_retire_packet.tag),
+    //     .retire_entry(rob_retire_packet.valid),
 
-        // Outputs to the Reservation Station / Decode
-        .rs1_tag(), // (connect later if needed)
-        .rs2_tag(), // (connect later if needed)
+    //     // Outputs to the Reservation Station / Decode
+    //     .rs1_tag(), // (connect later if needed)
+    //     .rs2_tag(), // (connect later if needed)
 
-        // Pass through register addresses for regfile reads
-        .regfile_rs1_addr(), // (connect if needed)
-        .regfile_rs2_addr(),
+    //     // Pass through register addresses for regfile reads
+    //     .regfile_rs1_addr(), // (connect if needed)
+    //     .regfile_rs2_addr(),
 
-        // Debug
-        .tags_debug(mt_tags_debug)
-    );
+    //     // Debug
+    //     .tags_debug(mt_tags_debug)
+    // );
 
     //////////////////////////////////////////////////
     //            CP/RT Pipeline Register           //
@@ -353,6 +416,7 @@ module pipeline (
     //              Memory Access Logic             //
     //////////////////////////////////////////////////
     logic [1:0] owner_q, owner_d; // this will keep track of who sent the memory request at the last time step
+    logic stall_data; // are we stalling if a load is ahppening?
     logic [`XLEN-1:0] proc2Dmem_addr;
     logic [`XLEN-1:0] proc2Dmem_data;
     logic [1:0]       proc2Dmem_command;
@@ -363,10 +427,10 @@ module pipeline (
     always_comb begin
         owner_d = owner_q;
         if (dcache_command != BUS_NONE) begin
-            proc2mem_command = dcache_command;
-            proc2mem_addr    = dcache_addr;
+            proc2mem_command = dcache2mem_command;
+            proc2mem_addr    = dcache2mem_addr;
 `ifndef CACHE_MODE
-            proc2mem_size    = proc2Dmem_size;
+            proc2mem_size    = dcache2mem_size;
 `endif
             //if data mmodule sent the request
             owner_d = `OWN_D;
@@ -384,7 +448,7 @@ module pipeline (
 
 
     module mem (
-        .clk(clk),
+        .clock(clock),
         .proc2mem_addr(proc2mem_addr),
         .proc2mem_data(proc2mem_data),
     `ifndef CACHE_MODE
@@ -418,9 +482,9 @@ module pipeline (
 
         case (owner_q)
             `OWN_D: begin
-                dcache_response = mem2proc_response;
-                dcache_data_out = mem2proc_data;
-                dcache_tag      = mem2proc_tag;
+                mem2dcache_response = mem2proc_response;
+                mem2dcache_data = mem2proc_data;
+                mem2dcache_tag      = mem2proc_tag;
             end
             `OWN_I: begin
                 Imem2proc_response = mem2proc_response;

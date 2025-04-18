@@ -28,14 +28,14 @@ module dcache
     input logic [`XLEN-1:0] proc2Dcache_addr,
     input logic [1:0] proc2Dcache_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
 
-    input logic [3:0]  mem2proc_response, // 0 = can't accept, other=tag of transaction
-    input logic [63:0] mem2proc_data,     // data resulting from a load
-    input logic [3:0]  mem2proc_tag,       // 0 = no value, other=tag of transaction
+    input logic [3:0]  mem2dcache_response, // 0 = can't accept, other=tag of transaction
+    input logic [63:0] mem2dcache_data,     // data resulting from a load
+    input logic [3:0]  mem2dcache_tag,       // 0 = no value, other=tag of transaction
 
-    output logic [`XLEN-1:0] proc2mem_addr,
-    output logic [63:0]      proc2mem_data, // address for current command
-    output logic [1:0]       proc2mem_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
-    output MEM_SIZE    proc2mem_size,
+    output logic [`XLEN-1:0] dcache2mem_addr,
+    output logic [63:0]      dcache2mem_data, // address for current command
+    output logic [1:0]       dcache2mem_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
+    output MEM_SIZE    dcache2mem_size,
 
     output logic [63:0] hit_data, // data resulting from a load
     output logic hit, // 1 if hit, 0 if miss
@@ -99,10 +99,10 @@ module dcache
         next_hit_data = cache_data[addr_index]; //hit_data only valid if hit is high
         next_hit = (cache_tag[addr_index] == addr_tag) && cache_valid[addr_index] && 
                     (proc2Dcache_command == BUS_LOAD || proc2Dcache_command == BUS_STORE);
-        proc2mem_command = BUS_NONE;
-        proc2mem_addr = 32'b0;
-        proc2mem_data = 64'b0;
-        proc2mem_size = 1'b1;
+        dcache2mem_command = BUS_NONE;
+        dcache2mem_addr = 32'b0;
+        dcache2mem_data = 64'b0;
+        dcache2mem_size = 1'b1;
         next_number_of_waits = number_of_waits;
         next_state = state;
         next_tag = 0;
@@ -112,17 +112,17 @@ module dcache
             `IDLE: begin
                 if (!next_hit && (proc2Dcache_command == BUS_LOAD || proc2Dcache_command == BUS_STORE) ) begin
                 next_state = `MISS;
-                proc2mem_command = BUS_LOAD;
-                proc2mem_addr = {proc2Dcache_addr[`XLEN-1:OFFSET_BITS]};
+                dcache2mem_command = BUS_LOAD;
+                dcache2mem_addr = {proc2Dcache_addr[`XLEN-1:OFFSET_BITS]};
                 end
                 else begin
                 end
             end
             `MISS: begin
-                if (mem2proc_response != 0) begin
-                    tag_addr[mem2proc_response] = saved_addr;
-                    tag_addr_valid[mem2proc_response] = 1'b1;
-                    next_tag = mem2proc_response;
+                if (mem2dcache_response != 0) begin
+                    tag_addr[mem2dcache_response] = saved_addr;
+                    tag_addr_valid[mem2dcache_response] = 1'b1;
+                    next_tag = mem2dcache_response;
                     next_state = `IDLE;
                     next_number_of_waits = number_of_waits + 1;
                     
@@ -136,12 +136,12 @@ module dcache
             `NONE: begin
             end
             default begin
-                if (mem2proc_tag != 0) begin
+                if (mem2dcache_tag != 0) begin
                     // this if statement is to check if the tag we are waiting for is the same as the one we are getting
                     // this is caused if the mem module is sending us a tag for more than one cycle
-                    if (mem2proc_tag != prev_tag) begin
+                    if (mem2dcache_tag != prev_tag) begin
                         next_number_of_waits = number_of_waits - 1;
-                        proc2mem_command = BUS_NONE;
+                        dcache2mem_command = BUS_NONE;
                     end
                 end
                 else begin 
@@ -184,14 +184,14 @@ module dcache
             else begin 
             end
             // this can happen regardless of miss or hit, so we will check for it here
-            if (mem2proc_tag != 0 && number_of_waits != `NONE) begin
-                prev_tag <= mem2proc_tag;
-                cache_data[tag_addr[mem2proc_tag][INDEX_BITS + OFFSET_BITS - 1 : OFFSET_BITS]]  <= mem2proc_data;
-                cache_tag[tag_addr[mem2proc_tag][INDEX_BITS + OFFSET_BITS - 1 : OFFSET_BITS]]   <= tag_addr[mem2proc_tag][`XLEN-1 : INDEX_BITS + OFFSET_BITS];
-                cache_valid[tag_addr[mem2proc_tag][INDEX_BITS + OFFSET_BITS - 1 : OFFSET_BITS]] <= 1'b1;
+            if (mem2dcache_tag != 0 && number_of_waits != `NONE) begin
+                prev_tag <= mem2dcache_tag;
+                cache_data[tag_addr[mem2dcache_tag][INDEX_BITS + OFFSET_BITS - 1 : OFFSET_BITS]]  <= mem2dcache_data;
+                cache_tag[tag_addr[mem2dcache_tag][INDEX_BITS + OFFSET_BITS - 1 : OFFSET_BITS]]   <= tag_addr[mem2dcache_tag][`XLEN-1 : INDEX_BITS + OFFSET_BITS];
+                cache_valid[tag_addr[mem2dcache_tag][INDEX_BITS + OFFSET_BITS - 1 : OFFSET_BITS]] <= 1'b1;
 
-                data_tag <= mem2proc_tag;
-                hit_data <= mem2proc_data;
+                data_tag <= mem2dcache_tag;
+                hit_data <= mem2dcache_data;
                 data_response <= 0;
                 // because we are returning other data so, hit is not going to be high, regardless of what it is before.
                 hit <= 0;
