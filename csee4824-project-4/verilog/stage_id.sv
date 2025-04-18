@@ -232,7 +232,8 @@ module stage_id (
     output ALU_OPA_SELECT opa_select,
     output ALU_OPB_SELECT opb_select,
     output logic has_dest_reg,
-    output logic [4:0] dest_reg_idx
+    output logic [4:0] dest_reg_idx,
+    output logic rd_mem, wr_mem
 
 );
 

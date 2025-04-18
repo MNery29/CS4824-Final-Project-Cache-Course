@@ -21,7 +21,7 @@ module cdb (
     input CDB_PACKET cdb_in,
     //output signals
 
-    output logic [63:0] cdb_data, // data to be sent to broadcast
+    output logic [31:0] cdb_data, // data to be sent to broadcast
     output logic [4:0] cdb_tag, // tag to be sent to broadcast
     output logic cdb_valid // is the data valid?
 

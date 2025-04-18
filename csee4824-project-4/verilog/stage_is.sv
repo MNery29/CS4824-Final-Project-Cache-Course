@@ -24,6 +24,7 @@ module stage_is (
     input ALU_FUNC             rs_alu_func_out[`RS_SIZE],       // ALU operation
     input logic [31:0]         rs_npc_out     [`RS_SIZE],       // Next PC
     input logic [31:0]         rs_inst_out    [`RS_SIZE],       // Instruction word
+    input logic rd_mem, wr_mem, // read/write memory
 
     //Functional unit ready signal 
     input logic fu_ready,
@@ -56,6 +57,8 @@ always_comb begin
                 is_packet.NPC          = rs_npc_out[i];
                 is_packet.inst         = rs_inst_out[i];
                 is_packet.RS_tag       = i;
+                is_packet.rd_mem       = rd_mem;
+                is_packet.wr_mem       = wr_mem;
 
                 rs_issue_enable[i]        = 1;
                 issued = 1; 

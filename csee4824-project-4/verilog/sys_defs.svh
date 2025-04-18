@@ -388,6 +388,8 @@ typedef struct packed {
     logic [31:0] NPC;         // Next PC (for branch evaluation)
     logic [31:0] inst;        // Raw instruction bits
     logic        issue_valid; // This packet is valid to execute
+    logic rd_mem;
+    logic wr_mem;
 } IS_EX_PACKET;
 
 
@@ -430,7 +432,7 @@ typedef struct packed {
 //CDB packet: to be sent to CDB
 typedef struct packed {
     logic [4:0]  tag;     // ROB tag
-    logic [63:0] value;   // Result value
+    logic [31:0] value;   // Result value
     logic        valid;   // Valid signal
 } CDB_PACKET;
 

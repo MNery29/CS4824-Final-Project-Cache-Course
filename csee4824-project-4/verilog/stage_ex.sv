@@ -253,11 +253,18 @@ module conditional_branch (
 
 endmodule // conditional_branch
 
+// typedef struct packed {
+//     logic [4:0]  tag;     // ROB tag
+//     logic [63:0] value;   // Result value
+//     logic        valid;   // Valid signal
+// } CDB_PACKET;
 
 module stage_ex (
     input ID_EX_PACKET id_ex_reg,
 
-    output EX_MEM_PACKET ex_packet
+    output EX_MEM_PACKET ex_packet,
+    //broad cast value + tag to cbd, so reorder buffer can be updated
+    output CDB_PACKET cdb_out,
 );
 
     logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
@@ -327,5 +334,9 @@ module stage_ex (
         // Output
         .take(take_conditional)
     );
+
+    assign cdb_out.valid = id_ex_reg.valid && !id_ex_reg.halt && !id_ex_reg.illegal;
+    assign cdb_out.tag = id_ex_reg.rob_tag;
+    assign cdb_out.value = ex_packet.alu_result;
 
 endmodule // stage_ex
