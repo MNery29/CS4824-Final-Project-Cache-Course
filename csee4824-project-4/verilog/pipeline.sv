@@ -103,6 +103,15 @@ module pipeline (
     logic [3:0]       Imem2proc_tag;
 
     //////////////////////////////////////////////////
+    //               D-Cache Wires                  //
+    //////////////////////////////////////////////////
+    logic [63:0]dcache_data_out, // data coming back from cache
+    logic [3:0] dcache_tag, // high when valid
+    logic [3:0] dcache_response, // 0 = can't accept, other=tag of transaction]
+    logic [1:0] dcache_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
+    logic [`XLEN-1:0] dcache_addr, // sending address to dcache
+
+    //////////////////////////////////////////////////
     //           Temporary Branch Logic             //
     //////////////////////////////////////////////////
     assign if_valid = 1'b1;                // Always fetch for now
@@ -335,11 +344,15 @@ module pipeline (
     );
 
 
+    `DEFINE OWN_NONE = 2'b00;
+    `DEFINE OWN_D    = 2'b01;
+    `DEFINE OWN_I    = 2'b10;
 
 
     //////////////////////////////////////////////////
     //              Memory Access Logic             //
     //////////////////////////////////////////////////
+    logic [1:0] owner_q, owner_d; // this will keep track of who sent the memory request at the last time step
     logic [`XLEN-1:0] proc2Dmem_addr;
     logic [`XLEN-1:0] proc2Dmem_data;
     logic [1:0]       proc2Dmem_command;
@@ -348,20 +361,75 @@ module pipeline (
 `endif
 
     always_comb begin
-        if (proc2Dmem_command != BUS_NONE) begin
-            proc2mem_command = proc2Dmem_command;
-            proc2mem_addr    = proc2Dmem_addr;
+        owner_d = owner_q;
+        if (dcache_command != BUS_NONE) begin
+            proc2mem_command = dcache_command;
+            proc2mem_addr    = dcache_addr;
 `ifndef CACHE_MODE
             proc2mem_size    = proc2Dmem_size;
 `endif
+            //if data mmodule sent the request
+            owner_d = `OWN_D;
         end else begin
             proc2mem_command = BUS_LOAD;
             proc2mem_addr    = proc2Imem_addr;
 `ifndef CACHE_MODE
             proc2mem_size    = DOUBLE;
 `endif
+            // then if instruction module sent the request
+            owner_d = `OWN_I;
         end
         proc2mem_data = {32'b0, proc2Dmem_data};
+    end
+
+
+    module mem (
+        .clk(clk),
+        .proc2mem_addr(proc2mem_addr),
+        .proc2mem_data(proc2mem_data),
+    `ifndef CACHE_MODE
+        .proc2mem_size(proc2mem_size),
+    `endif
+        .proc2mem_command(proc2mem_command),
+        .mem2proc_response(mem2proc_response),
+        .mem2proc_data(mem2proc_data),
+        .mem2proc_tag(mem2proc_tag)
+    );
+
+    always_ff @(posedge clk or posedge reset) begin
+        if (reset)
+            owner_q <= `OWN_NONE;
+        // for now, we have to wait for data to respond, so not just tag
+        else if (mem2proc_data != 0)   // memory sent a reply -> done
+            owner_q <= `OWN_NONE;
+        else
+            owner_q <= owner_d;
+    end
+    
+    always_comb begin
+        // Default: de‑assert
+        dcache_response     = 0;
+        dcache_data_out     = 0;
+        dcache_tag          = 0;
+
+        Imem2proc_response  = 0;
+        Imem2proc_data      = 0;
+        Imem2proc_tag       = 0;
+
+        case (owner_q)
+            `OWN_D: begin
+                dcache_response = mem2proc_response;
+                dcache_data_out = mem2proc_data;
+                dcache_tag      = mem2proc_tag;
+            end
+            `OWN_I: begin
+                Imem2proc_response = mem2proc_response;
+                Imem2proc_data     = mem2proc_data;
+                Imem2proc_tag      = mem2proc_tag;
+            end
+            default: begin
+            end
+        endcase
     end
 
     //////////////////////////////////////////////////
