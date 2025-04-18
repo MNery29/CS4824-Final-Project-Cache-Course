@@ -29,19 +29,19 @@
             Inclusivity and Diversity" (Refer to article 000036315 at
                         https://solvnetplus.synopsys.com)
 Initializing...
-Current time:       Wed Apr 16 02:29:46 2025
-Hostname:           cadpc11
+Current time:       Fri Apr 18 18:42:26 2025
+Hostname:           cadpc15
 CPU Model:          11th Gen Intel(R) Core(TM) i9-11900 @ 2.50GHz
-CPU Details:        Cores = 16 : Sockets = 1 : Cache Size = 16384 KB : Freq = 3.80 GHz
+CPU Details:        Cores = 16 : Sockets = 1 : Cache Size = 16384 KB : Freq = 4.00 GHz
 OS:                 Linux 4.18.0-553.44.1.el8_10.x86_64
-RAM:                 62 GB (Free  44 GB)
+RAM:                 62 GB (Free  40 GB)
 Swap:                31 GB (Free  31 GB)
 Work Filesystem:    /homes mounted to auto.homes
 Tmp Filesystem:     /tmp mounted to tmpfs
-Work Disk:          16773 GB (Free 6126 GB)
+Work Disk:          16773 GB (Free 6113 GB)
 Tmp Disk:            31 GB (Free  31 GB)
 
-CPU Load: 32%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6126 GB, Tmp Disk Free: 31 GB
+CPU Load: 40%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6113 GB, Tmp Disk Free: 31 GB
 ##########################
 # ---- Introduction ---- #
 ##########################
@@ -350,7 +350,7 @@ redirect $chk_file { check_design }
 # map_effort can be changed to high if you're ok with time increasing for better performance
 # or you can change from compile to compile_ultra for best performance, but likely increased time
 compile -map_effort medium
-CPU Load: 32%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6126 GB, Tmp Disk Free: 31 GB
+CPU Load: 40%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6113 GB, Tmp Disk Free: 31 GB
 Information: Evaluating DesignWare library utilization. (UISN-27)
 
 ============================================================================
@@ -448,19 +448,20 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:03     265.5      0.00       0.0       0.0                                0.00  
-    0:00:03     265.5      0.00       0.0       0.0                                0.00  
-    0:00:03     265.5      0.00       0.0       0.0                                0.00  
-    0:00:03     265.5      0.00       0.0       0.0                                0.00  
-    0:00:03     265.5      0.00       0.0       0.0                                0.00  
-    0:00:03     204.0      0.00       0.0       0.0                                0.00  
-    0:00:03     204.0      0.00       0.0       0.0                                0.00  
-    0:00:03     204.0      0.00       0.0       0.0                                0.00  
-    0:00:03     204.0      0.00       0.0       0.0                                0.00  
-    0:00:03     204.0      0.00       0.0       0.0                                0.00  
-    0:00:03     204.0      0.00       0.0       0.0                                0.00  
-    0:00:03     204.0      0.00       0.0       0.0                                0.00  
-    0:00:03     204.0      0.00       0.0       0.0                                0.00  
+    0:00:03     234.7      0.00       0.0       0.0                                0.00  
+    0:00:03     234.7      0.00       0.0       0.0                                0.00  
+    0:00:03     234.7      0.00       0.0       0.0                                0.00  
+    0:00:03     234.7      0.00       0.0       0.0                                0.00  
+    0:00:03     234.7      0.00       0.0       0.0                                0.00  
+    0:00:03     178.8      0.00       0.0       0.0                                0.00  
+    0:00:03     178.8      0.00       0.0       0.0                                0.00  
+    0:00:03     178.8      0.00       0.0       0.0                                0.00  
+    0:00:03     178.8      0.00       0.0       0.0                                0.00  
+    0:00:03     178.8      0.00       0.0       0.0                                0.00  
+    0:00:03     178.8      0.00       0.0       0.0                                0.00  
+    0:00:03     178.8      0.00       0.0       0.0                                0.00  
+    0:00:03     178.8      0.00       0.0       0.0                                0.00  
+    0:00:03     178.8      0.00       0.0       0.0                                0.00  
 
 
 
@@ -471,9 +472,9 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:03     204.0      0.00       0.0       0.0                                0.00  
-    0:00:03     204.0      0.00       0.0       0.0                                0.00  
-    0:00:03     194.5      0.00       0.0       0.0                                0.00  
+    0:00:03     178.8      0.00       0.0       0.0                                0.00  
+    0:00:03     178.8      0.00       0.0       0.0                                0.00  
+    0:00:03     170.6      0.00       0.0       0.0                                0.00  
 
 
   Beginning Design Rule Fixing  (min_path)
@@ -483,7 +484,7 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:03     194.5      0.00       0.0       0.0                            -1194.25  
+    0:00:03     170.6      0.00       0.0       0.0                            -1024.43  
 
 
   Beginning Critical Range Optimization
@@ -493,7 +494,7 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:03     194.5      0.00       0.0       0.0                            -1194.25  
+    0:00:03     170.6      0.00       0.0       0.0                            -1024.43  
 
 
   Beginning Area-Recovery Phase  (cleanup)
@@ -503,20 +504,19 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:03     194.5      0.00       0.0       0.0                            -1194.25  
-    0:00:03     194.5      0.00       0.0       0.0                            -1194.25  
-    0:00:04     194.0      0.00       0.0       0.0                            -1194.25  
-    0:00:04     193.8      0.00       0.0       0.0                            -1194.25  
-    0:00:04     193.7      0.00       0.0       0.0                            -1194.25  
-    0:00:04     193.6      0.00       0.0       0.0                            -1194.25  
-    0:00:04     193.5      0.00       0.0       0.0                            -1194.25  
-    0:00:04     193.5      0.00       0.0       0.0                            -1194.25  
-    0:00:04     193.5      0.00       0.0       0.0                            -1194.25  
-    0:00:04     193.5      0.00       0.0       0.0                            -1194.25  
-    0:00:04     193.5      0.00       0.0       0.0                            -1194.25  
-    0:00:04     193.5      0.00       0.0       0.0                            -1194.25  
-    0:00:04     193.5      0.00       0.0       0.0                            -1194.25  
-    0:00:04     193.5      0.00       0.0       0.0                            -1194.25  
+    0:00:03     170.6      0.00       0.0       0.0                            -1024.43  
+    0:00:03     170.6      0.00       0.0       0.0                            -1024.43  
+    0:00:03     169.9      0.00       0.0       0.0                            -1024.43  
+    0:00:03     169.6      0.00       0.0       0.0                            -1024.43  
+    0:00:04     169.6      0.00       0.0       0.0                            -1024.43  
+    0:00:04     169.6      0.00       0.0       0.0                            -1024.43  
+    0:00:04     169.6      0.00       0.0       0.0                            -1024.43  
+    0:00:04     169.6      0.00       0.0       0.0                            -1024.43  
+    0:00:04     169.6      0.00       0.0       0.0                            -1024.43  
+    0:00:04     169.6      0.00       0.0       0.0                            -1024.43  
+    0:00:04     169.6      0.00       0.0       0.0                            -1024.43  
+    0:00:04     169.6      0.00       0.0       0.0                            -1024.43  
+    0:00:04     169.6      0.00       0.0       0.0                            -1024.43  
 
 
   Beginning Critical Range Optimization
@@ -526,8 +526,8 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:04     193.5      0.00       0.0       0.0                            -1194.25  
-    0:00:04     193.6      0.00       0.0       0.0                            -1194.25  
+    0:00:04     169.6      0.00       0.0       0.0                            -1024.43  
+    0:00:04     169.6      0.00       0.0       0.0                            -1024.43  
 Loading db file '/homes/user/fac/tk3070/tmp/synthesis/asap7sc7p5t_merged_RVT_FF_nldm_211120.db'
 
 
@@ -536,7 +536,7 @@ Note: Symbol # after min delay cost means estimated hold TNS across all active s
 
   Optimization Complete
   ---------------------
-CPU Load: 33%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6126 GB, Tmp Disk Free: 31 GB
+CPU Load: 40%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6113 GB, Tmp Disk Free: 31 GB
 Information: Total number of MV cells in the design.
 ----------------------------------------------------------------------------------------------------
  MV Cells                                           Total Number                                   
@@ -618,9 +618,9 @@ redirect -append $rep_file { report_reference -nosplit }
 # exit with success
 exit 0
 
-Memory usage for this session 238 Mbytes.
-Memory usage for this session including child processes 238 Mbytes.
+Memory usage for this session 237 Mbytes.
+Memory usage for this session including child processes 237 Mbytes.
 CPU usage for this session 7 seconds ( 0.00 hours ).
-Elapsed time for this session 16 seconds ( 0.00 hours ).
+Elapsed time for this session 10 seconds ( 0.00 hours ).
 
 Thank you...

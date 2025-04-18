@@ -13,7 +13,7 @@ module testbench;
     
     //CDB inputs
     logic cdb_valid;
-    logic [5:0] cdb_tag;
+    logic [4:0] cdb_tag;
     logic [31:0] cdb_value;
 
     //Control inputs
@@ -26,7 +26,7 @@ module testbench;
     //Ouputs
     logic [31:0] opA;
     logic [31:0] opB;
-    logic [5:0] output_tag;
+    logic [4:0] output_tag;
 
     ALU_OPA_SELECT opa_select;
     ALU_OPB_SELECT opb_select;
@@ -34,10 +34,10 @@ module testbench;
     logic [4:0] dest_reg_idx;
 
     //Debug inputs
-    logic [45:0] rob_debug [31:0];
+    //logic [45:0] rob_debug [31:0];
     logic [11:0] rob_pointers_debug;
-    logic [7:0] mt_tags_debug [31:0];
-    logic [74:0] rs_debug;
+    //logic [7:0] mt_tags_debug [31:0];
+    //logic [74:0] rs_debug;
 
     stage_id dispatch(
         .clock(clock),
@@ -59,10 +59,10 @@ module testbench;
         .opB(opB),
         .output_tag(output_tag),
         
-        .rob_debug(rob_debug),
+        //.rob_debug(rob_debug),
         .rob_pointers_debug(rob_pointers_debug),
-        .mt_tags_debug(mt_tags_debug),
-        .rs_debug(rs_debug),
+        //.mt_tags_debug(mt_tags_debug),
+        //.rs_debug(rs_debug),
         .opa_select(opa_select),
         .opb_select(opb_select),
         .has_dest_reg(has_dest_reg),
@@ -161,9 +161,9 @@ module testbench;
         rs1_clear = 1'b0;
 
         @(negedge clock)
-        print_MT(mt_tags_debug);
-        print_ROB(rob_debug, rob_pointers_debug);
-        print_RS(rs_debug);
+        //print_MT(mt_tags_debug);
+        //print_ROB(rob_debug, rob_pointers_debug);
+        //print_RS(rs_debug);
         if_id_packet.valid = 1'b0; //Stall dispatch
 
         cdb_valid = 1'b1; //Simulate CDB broadcast
@@ -218,9 +218,9 @@ module testbench;
         rs1_clear = 1'b0;
 
         @(negedge clock)
-        print_MT(mt_tags_debug);
-        print_ROB(rob_debug, rob_pointers_debug);
-        print_RS(rs_debug);
+        //print_MT(mt_tags_debug);
+        //print_ROB(rob_debug, rob_pointers_debug);
+        //print_RS(rs_debug);
         if_id_packet.valid = 1'b0; //Stall dispatch
 
         cdb_valid = 1'b1; //Simulate CDB broadcast
@@ -276,9 +276,9 @@ module testbench;
         rs1_clear = 1'b0;
 
         @(negedge clock)
-        print_MT(mt_tags_debug);
-        print_ROB(rob_debug, rob_pointers_debug);
-        print_RS(rs_debug);
+        //print_MT(mt_tags_debug);
+        //print_ROB(rob_debug, rob_pointers_debug);
+        //print_RS(rs_debug);
         if_id_packet.valid = 1'b0;
         rs1_clear = 1'b1; //clear RS for next test
 
@@ -309,9 +309,9 @@ module testbench;
         rs1_clear = 1'b0;
 
         @(negedge clock)
-        print_MT(mt_tags_debug);
-        print_ROB(rob_debug, rob_pointers_debug);
-        print_RS(rs_debug);
+        //print_MT(mt_tags_debug);
+        //print_ROB(rob_debug, rob_pointers_debug);
+        //print_RS(rs_debug);
 
         $finish;
 

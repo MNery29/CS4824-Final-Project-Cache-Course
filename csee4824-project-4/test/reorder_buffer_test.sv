@@ -7,12 +7,14 @@ module testbench;
 
     logic clock, reset;
     logic rob_to_rs_read1, rob_to_rs_read2;
-    logic [5:0] rob_read_tag1, rob_read_tag2;
+    logic [4:0] rob_read_tag1, rob_read_tag2;
     logic retire_entry, rob_clear;
     logic rob_full;
     logic [31:0] rob_to_rs_value1, rob_to_rs_value2;
-    logic [11:0] rob_pointers;
-    logic [45:0] rob_debug[31:0];
+
+    // DEBUG signals:
+    logic [11:0] rob_pointers; 
+    //logic [45:0] rob_debug[31:0];
 
     // Local Values
     logic        dispatch_valid;
@@ -58,7 +60,7 @@ module testbench;
         .rob_to_rs_value1(rob_to_rs_value1),
         .rob_to_rs_value2(rob_to_rs_value2),
         .rob_full(rob_full),
-        .rob_debug(rob_debug),
+        //.rob_debug(rob_debug),
         .rob_pointers(rob_pointers)
     );
 
@@ -117,20 +119,20 @@ module testbench;
         dispatch_opcode = `RV32_ADD;
 
         @(negedge clock);
-        print_contents(rob_debug, rob_pointers);
+        //print_contents(rob_debug, rob_pointers);
 
         // Cycle 2: Instruction 2 
         dispatch_dest = 5'd2;
 
         @(negedge clock);
-        print_contents(rob_debug, rob_pointers);
+        //print_contents(rob_debug, rob_pointers);
 
         // Cycle 3: Instruction 3
         dispatch_dest = 5'd8;
         dispatch_opcode = `RV32_SUB;
 
         @(negedge clock);
-        print_contents(rob_debug, rob_pointers);
+        //print_contents(rob_debug, rob_pointers);
 
         // Cycle 4: Broadcast CDB tag 1
         dispatch_valid = 0;
@@ -139,20 +141,20 @@ module testbench;
         cdb_value = 32'hFFFF_FFFF;
 
         @(negedge clock);
-        print_contents(rob_debug, rob_pointers);
+        //print_contents(rob_debug, rob_pointers);
 
         // Cycle 5: Retire instruction 
         cdb_valid = 0;
         retire_entry = 1;
 
         @(negedge clock);
-        print_contents(rob_debug, rob_pointers);
+        //print_contents(rob_debug, rob_pointers);
 
         // Cycle 6: Attempt another retire (may stall)
         retire_entry = 1;
 
         @(negedge clock);
-        print_contents(rob_debug, rob_pointers);
+        //print_contents(rob_debug, rob_pointers);
 
         // Cycle 7: Instruction 4
         retire_entry = 0;
@@ -161,7 +163,7 @@ module testbench;
         dispatch_opcode = `RV32_SUB;
 
         @(negedge clock);
-        print_contents(rob_debug, rob_pointers);
+        //print_contents(rob_debug, rob_pointers);
 
         $finish;
     end

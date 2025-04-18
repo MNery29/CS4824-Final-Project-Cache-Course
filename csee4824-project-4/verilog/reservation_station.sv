@@ -30,10 +30,8 @@ module reservation_station(
     input        rs_use_enable,   // Issue new instruction, indicates whether to issue new instruction to a functional unit
     input        rs_free_in,      // Free RS entry, indicates whether to free RS entry upon completion
     
-    
     input        reset,            // Reset signal
     input        clock,            // Clock signal
-
 
     output       rs_ready_out,            // Ready to issue
     output [31:0] rs_opa_out,             // Out: Operand A

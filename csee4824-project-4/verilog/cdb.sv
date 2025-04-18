@@ -8,7 +8,8 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-
+`include "verilog/sys_defs.svh"
+`include "verilog/ISA.svh"
 
 module cdb (
     //fundamental signals
@@ -33,7 +34,7 @@ always_ff @(posedge clock or posedge reset) begin
         cdb_tag <= 0;
         cdb_valid <= 0;
     end else begin
-        if (fu_valid) begin //if fu_data is valid, broadcast
+        if (cdb_in.valid) begin //if fu_data is valid, broadcast
             cdb_data <= cdb_in.value;
             cdb_tag <= cdb_in.tag;
             cdb_valid <= cdb_in.valid;

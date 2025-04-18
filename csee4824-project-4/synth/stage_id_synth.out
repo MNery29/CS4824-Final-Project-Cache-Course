@@ -29,19 +29,19 @@
             Inclusivity and Diversity" (Refer to article 000036315 at
                         https://solvnetplus.synopsys.com)
 Initializing...
-Current time:       Wed Apr 16 02:41:32 2025
-Hostname:           cadpc11
+Current time:       Fri Apr 18 18:43:05 2025
+Hostname:           cadpc15
 CPU Model:          11th Gen Intel(R) Core(TM) i9-11900 @ 2.50GHz
-CPU Details:        Cores = 16 : Sockets = 1 : Cache Size = 16384 KB : Freq = 3.80 GHz
+CPU Details:        Cores = 16 : Sockets = 1 : Cache Size = 16384 KB : Freq = 4.00 GHz
 OS:                 Linux 4.18.0-553.44.1.el8_10.x86_64
-RAM:                 62 GB (Free  44 GB)
+RAM:                 62 GB (Free  40 GB)
 Swap:                31 GB (Free  31 GB)
 Work Filesystem:    /homes mounted to auto.homes
 Tmp Filesystem:     /tmp mounted to tmpfs
-Work Disk:          16773 GB (Free 6123 GB)
+Work Disk:          16773 GB (Free 6112 GB)
 Tmp Disk:            31 GB (Free  31 GB)
 
-CPU Load: 33%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6123 GB, Tmp Disk Free: 31 GB
+CPU Load: 39%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6112 GB, Tmp Disk Free: 31 GB
 ##########################
 # ---- Introduction ---- #
 ##########################
@@ -184,6 +184,7 @@ Opening include file ..//verilog/sys_defs.svh
 Opening include file ..//verilog/ISA.svh
 Opening include file ..//verilog/regfile.sv
 Opening include file ..//verilog/sys_defs.svh
+Warning:  ../verilog/stage_id.sv:399: the undeclared symbol 'rs1_ready' assumed to have the default net type, which is 'wire'. (VER-936)
 Presto compilation completed successfully.
 Loading db file '/homes/user/fac/tk3070/tmp/synthesis/asap7sc7p5t_merged_RVT_FF_nldm_211120.db'
 #read_file -format sverilog $sources -define SYNTH
@@ -200,44 +201,21 @@ Loading db file '/tools/synopsys/syn/current/libraries/syn/standard.sldb'
   Loading link library 'gtech'
 Running PRESTO HDLC
 
-Statistics for case statements in always block at line 293 in file
+Statistics for case statements in always block at line 299 in file
 	'../verilog/stage_id.sv'
 ===============================================
 |           Line           |  full/ parallel  |
 ===============================================
-|           294            |     no/auto      |
+|           305            |    auto/auto     |
 ===============================================
 
-Statistics for case statements in always block at line 317 in file
+Statistics for case statements in always block at line 330 in file
 	'../verilog/stage_id.sv'
 ===============================================
 |           Line           |  full/ parallel  |
 ===============================================
-|           318            |     no/auto      |
+|           336            |     no/auto      |
 ===============================================
-
-Inferred memory devices in process
-	in routine stage_id line 293 in file
-		'../verilog/stage_id.sv'.
-===========================================================================
-|    Register Name    | Type  | Width | Bus | MB | AR | AS | SR | SS | ST |
-===========================================================================
-| rob_to_rs_read1_reg | Latch |   1   |  N  | N  | N  | N  | -  | -  | -  |
-|  rob_read_tag1_reg  | Latch |   6   |  Y  | N  | N  | N  | -  | -  | -  |
-===========================================================================
-
-Inferred memory devices in process
-	in routine stage_id line 317 in file
-		'../verilog/stage_id.sv'.
-===========================================================================
-|    Register Name    | Type  | Width | Bus | MB | AR | AS | SR | SS | ST |
-===========================================================================
-| rob_to_rs_read2_reg | Latch |   1   |  N  | N  | N  | N  | -  | -  | -  |
-|   rs1_opb_in_reg    | Latch |  32   |  Y  | N  | N  | N  | -  | -  | -  |
-|  rob_read_tag2_reg  | Latch |   6   |  Y  | N  | N  | N  | -  | -  | -  |
-===========================================================================
-Warning:  ../verilog/stage_id.sv:293: Netlist for always_comb block contains a latch. (ELAB-974)
-Warning:  ../verilog/stage_id.sv:317: Netlist for always_comb block contains a latch. (ELAB-974)
 Presto compilation completed successfully. (stage_id)
 Elaborated 1 design.
 Current design is now 'stage_id'.
@@ -394,7 +372,7 @@ redirect $chk_file { check_design }
 # map_effort can be changed to high if you're ok with time increasing for better performance
 # or you can change from compile to compile_ultra for best performance, but likely increased time
 compile -map_effort medium
-CPU Load: 33%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6123 GB, Tmp Disk Free: 31 GB
+CPU Load: 39%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6112 GB, Tmp Disk Free: 31 GB
 Information: Evaluating DesignWare library utilization. (UISN-27)
 
 ============================================================================
@@ -412,7 +390,7 @@ Information: Evaluating DesignWare library utilization. (UISN-27)
 | Design Information                                      | Value                                  |
 ====================================================================================================
 | Number of Scenarios                                     | 0                                      |
-| Leaf Cell Count                                         | 10707                                  |
+| Leaf Cell Count                                         | 10582                                  |
 | Number of User Hierarchies                              | 0                                      |
 | Sequential Cell Count                                   | 2828                                   |
 | Macro Count                                             | 0                                      |
@@ -420,7 +398,7 @@ Information: Evaluating DesignWare library utilization. (UISN-27)
 | Number of Path Groups                                   | 4                                      |
 | Number of VT Class                                      | 0                                      |
 | Number of Clocks                                        | 1                                      |
-| Number of Dont Touch Cells                              | 175                                    |
+| Number of Dont Touch Cells                              | 177                                    |
 | Number of Dont Touch Nets                               | 1                                      |
 | Number of Size Only Cells                               | 0                                      |
 | Design with UPF Data                                    | false                                  |
@@ -430,7 +408,7 @@ Information: Evaluating DesignWare library utilization. (UISN-27)
 | set_fix_multiple_port_nets                              | -outputs -buffer_constants             |
 ====================================================================================================
 
-Information: There are 49 potential problems in your design. Please run 'check_design' for more information. (LINT-99)
+Information: There are 1355 potential problems in your design. Please run 'check_design' for more information. (LINT-99)
 
 
 
@@ -444,35 +422,31 @@ Information: Updating design information... (UID-85)
 
   Beginning Implementation Selection
   ----------------------------------
-  Processing 'stage_id_DW01_cmp6_0'
-  Processing 'stage_id_DW01_cmp6_1'
 Information: Command 'do_operand_isolation' is obsolete and is being ignored.  Please refer to the replacement command 'set power_enable_datapath_gating true' instead. (INFO-118)
 
   Beginning Mapping Optimizations  (Medium effort)
   -------------------------------
 LNC WARNING: Found output_to_output lib arc on HAxp5_ASAP7_75t_R.
+Information: Command 'do_operand_isolation' is obsolete and is being ignored.  Please refer to the replacement command 'set power_enable_datapath_gating true' instead. (INFO-118)
 
                                   TOTAL                                                  
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:12    2469.1    164.68    8478.4    2200.5                                0.00  
-    0:00:12    2469.1    164.68    8478.4    2200.5                                0.00  
-Information: Command 'do_operand_isolation' is obsolete and is being ignored.  Please refer to the replacement command 'set power_enable_datapath_gating true' instead. (INFO-118)
-    0:00:16    2620.4      0.00       0.0       0.0                                0.00  
-    0:00:17    2620.4      0.00       0.0       0.0                                0.00  
-    0:00:17    2620.4      0.00       0.0       0.0                                0.00  
-    0:00:17    2620.4      0.00       0.0       0.0                                0.00  
-    0:00:17    2620.4      0.00       0.0       0.0                                0.00  
-    0:00:21    1915.1      0.00       0.0       0.0                                0.00  
-    0:00:22    1913.5      0.00       0.0       0.0                                0.00  
-    0:00:25    1913.5      0.00       0.0       0.0                                0.00  
-    0:00:25    1913.5      0.00       0.0       0.0                                0.00  
-    0:00:25    1913.5      0.00       0.0       0.0                                0.00  
-    0:00:25    1913.5      0.00       0.0       0.0                                0.00  
-    0:00:25    1913.5      0.00       0.0       0.0                                0.00  
-    0:00:25    1913.5      0.00       0.0       0.0                                0.00  
-    0:00:25    1913.5      0.00       0.0       0.0                                0.00  
+    0:00:13    2318.5      0.00       0.0       0.0                                0.00  
+    0:00:13    2318.5      0.00       0.0       0.0                                0.00  
+    0:00:13    2318.5      0.00       0.0       0.0                                0.00  
+    0:00:13    2318.5      0.00       0.0       0.0                                0.00  
+    0:00:13    2318.5      0.00       0.0       0.0                                0.00  
+    0:00:15    1738.2      0.00       0.0       0.0                                0.00  
+    0:00:15    1737.6      0.00       0.0       0.0                                0.00  
+    0:00:17    1737.6      0.00       0.0       0.0                                0.00  
+    0:00:17    1737.6      0.00       0.0       0.0                                0.00  
+    0:00:17    1737.6      0.00       0.0       0.0                                0.00  
+    0:00:17    1737.6      0.00       0.0       0.0                                0.00  
+    0:00:17    1737.6      0.00       0.0       0.0                                0.00  
+    0:00:17    1737.6      0.00       0.0       0.0                                0.00  
+    0:00:17    1737.6      0.00       0.0       0.0                                0.00  
 
 
 
@@ -483,9 +457,9 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:25    1913.5      0.00       0.0       0.0                                0.00  
-    0:00:25    1913.5      0.00       0.0       0.0                                0.00  
-    0:00:25    1913.5      0.00       0.0       0.0                                0.00  
+    0:00:17    1737.6      0.00       0.0       0.0                                0.00  
+    0:00:17    1737.6      0.00       0.0       0.0                                0.00  
+    0:00:17    1737.6      0.00       0.0       0.0                                0.00  
 
 
   Beginning Design Rule Fixing  (min_path)
@@ -495,7 +469,7 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:25    1913.5      0.00       0.0       0.0                            -9723.82  
+    0:00:18    1737.6      0.00       0.0       0.0                            -4713.22  
 
 
   Beginning Critical Range Optimization
@@ -505,7 +479,7 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:25    1913.5      0.00       0.0       0.0                            -9723.82  
+    0:00:18    1737.6      0.00       0.0       0.0                            -4713.22  
 
 
   Beginning Area-Recovery Phase  (cleanup)
@@ -515,26 +489,23 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:26    1913.5      0.00       0.0       0.0                            -9723.82  
-    0:00:26    1913.5      0.00       0.0       0.0                            -9723.82  
-    0:00:28    1844.0      0.00       0.0       0.0                            -9723.82  
-    0:00:29    1829.7      0.92       4.2       0.0                            -9723.82  
-    0:00:29    1817.3      0.92       4.2       0.0                            -9723.82  
-    0:00:29    1815.9      0.00       0.0       0.0                            -9723.82  
-    0:00:30    1814.7      0.00       0.0       0.0                            -9723.82  
-    0:00:30    1813.6      0.00       0.0       0.0                            -9723.82  
-    0:00:30    1812.6      0.00       0.0       0.0                            -9723.82  
-    0:00:30    1811.5      0.00       0.0       0.0                            -9723.82  
-    0:00:30    1810.6      0.00       0.0       0.0                            -9723.82  
-    0:00:31    1810.1      0.00       0.0       0.0                            -9723.82  
-    0:00:31    1809.3      0.00       0.0       0.0                            -9723.82  
-    0:00:31    1809.3      0.00       0.0       0.0                            -9723.82  
-    0:00:31    1809.3      0.00       0.0       0.0                            -9723.82  
-    0:00:31    1809.3      0.00       0.0       0.0                            -9723.82  
-    0:00:31    1809.3      0.00       0.0       0.0                            -9723.82  
-    0:00:31    1809.3      0.00       0.0       0.0                            -9723.82  
-    0:00:31    1809.3      0.00       0.0       0.0                            -9723.82  
-    0:00:31    1809.3      0.00       0.0       0.0                            -9723.82  
+    0:00:18    1737.6      0.00       0.0       0.0                            -4713.22  
+    0:00:18    1737.6      0.00       0.0       0.0                            -4713.22  
+    0:00:20    1734.2      0.00       0.0       0.0                            -4713.22  
+    0:00:21    1731.4      0.00       0.0       0.0                            -4713.22  
+    0:00:21    1728.3      0.00       0.0       0.0                            -4713.22  
+    0:00:21    1726.1      0.00       0.0       0.0                            -4713.22  
+    0:00:21    1723.9      0.00       0.0       0.0                            -4713.22  
+    0:00:22    1723.3      0.00       0.0       0.0                            -4713.22  
+    0:00:22    1723.3      0.00       0.0       0.0                            -4713.22  
+    0:00:22    1723.3      0.00       0.0       0.0                            -4713.22  
+    0:00:22    1723.3      0.00       0.0       0.0                            -4713.22  
+    0:00:22    1723.3      0.00       0.0       0.0                            -4713.22  
+    0:00:22    1723.3      0.00       0.0       0.0                            -4713.22  
+    0:00:22    1723.3      0.00       0.0       0.0                            -4713.22  
+    0:00:22    1723.3      0.00       0.0       0.0                            -4713.22  
+    0:00:22    1725.0      0.00       0.0       0.0 reorder_buffer_0/rob_values_reg[16][29]/D  -1775.68  
+    0:00:23    1725.2      0.00       0.0       0.0                            -1473.64  
 
 
   Beginning Critical Range Optimization
@@ -544,8 +515,8 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:31    1809.3      0.00       0.0       0.0                            -9723.82  
-    0:00:31    1810.9      0.00       0.0       0.0                            -9723.82  
+    0:00:23    1725.2      0.00       0.0       0.0                            -1473.64  
+    0:00:23    1725.3      0.00       0.0       0.0                            -1473.64  
 Loading db file '/homes/user/fac/tk3070/tmp/synthesis/asap7sc7p5t_merged_RVT_FF_nldm_211120.db'
 
 
@@ -555,9 +526,9 @@ Note: Symbol # after min delay cost means estimated hold TNS across all active s
   Optimization Complete
   ---------------------
 Warning: Design 'stage_id' contains 2 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
-     Net 'clock': 2767 load(s), 1 driver(s)
-     Net 'mt_tags_debug[0][0]': 1828 load(s), 1 driver(s)
-CPU Load: 35%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6123 GB, Tmp Disk Free: 31 GB
+     Net 'clock': 2745 load(s), 1 driver(s)
+     Net 'n2195': 1770 load(s), 1 driver(s)
+CPU Load: 38%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6112 GB, Tmp Disk Free: 31 GB
 Information: Total number of MV cells in the design.
 ----------------------------------------------------------------------------------------------------
  MV Cells                                           Total Number                                   
@@ -639,9 +610,9 @@ redirect -append $rep_file { report_reference -nosplit }
 # exit with success
 exit 0
 
-Memory usage for this session 280 Mbytes.
-Memory usage for this session including child processes 280 Mbytes.
-CPU usage for this session 36 seconds ( 0.01 hours ).
-Elapsed time for this session 39 seconds ( 0.01 hours ).
+Memory usage for this session 248 Mbytes.
+Memory usage for this session including child processes 248 Mbytes.
+CPU usage for this session 29 seconds ( 0.01 hours ).
+Elapsed time for this session 32 seconds ( 0.01 hours ).
 
 Thank you...

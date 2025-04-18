@@ -49,8 +49,9 @@ module reorder_buffer(
     
     //rob full signal, for stalling/hazards   
     output rob_full,
+
     //debug
-    output logic [45:0] rob_debug [31:0],
+    // output logic [45:0] rob_debug [31:0],
     output logic [11:0] rob_pointers
 );
 
@@ -113,11 +114,11 @@ module reorder_buffer(
     //DEBUGGING OUTPUTS
     assign rob_pointers = {head, tail};
 
-    always_comb begin
-        for (int i = 0; i < `ROB_SZ; i++) begin
-            rob_debug[i] = {rob_status[i], rob_opcode[i], rob_dest[i], rob_values[i]};
-        end
-    end
+    //always_comb begin
+    //    for (int i = 0; i < `ROB_SZ; i++) begin
+    //        rob_debug[i] = {rob_status[i], rob_opcode[i], rob_dest[i], rob_values[i]};
+    //    end
+    //end
 
     // ROB LOGIC 
     always_ff @(posedge clock or posedge reset) begin

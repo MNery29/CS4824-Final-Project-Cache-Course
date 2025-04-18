@@ -29,19 +29,19 @@
             Inclusivity and Diversity" (Refer to article 000036315 at
                         https://solvnetplus.synopsys.com)
 Initializing...
-Current time:       Wed Apr 16 02:37:45 2025
-Hostname:           cadpc11
+Current time:       Fri Apr 18 18:40:18 2025
+Hostname:           cadpc15
 CPU Model:          11th Gen Intel(R) Core(TM) i9-11900 @ 2.50GHz
-CPU Details:        Cores = 16 : Sockets = 1 : Cache Size = 16384 KB : Freq = 3.80 GHz
+CPU Details:        Cores = 16 : Sockets = 1 : Cache Size = 16384 KB : Freq = 3.91 GHz
 OS:                 Linux 4.18.0-553.44.1.el8_10.x86_64
-RAM:                 62 GB (Free  44 GB)
+RAM:                 62 GB (Free  40 GB)
 Swap:                31 GB (Free  31 GB)
 Work Filesystem:    /homes mounted to auto.homes
 Tmp Filesystem:     /tmp mounted to tmpfs
-Work Disk:          16773 GB (Free 6124 GB)
+Work Disk:          16773 GB (Free 6114 GB)
 Tmp Disk:            31 GB (Free  31 GB)
 
-CPU Load: 33%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6124 GB, Tmp Disk Free: 31 GB
+CPU Load: 32%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6114 GB, Tmp Disk Free: 31 GB
 ##########################
 # ---- Introduction ---- #
 ##########################
@@ -191,31 +191,29 @@ Loading db file '/tools/synopsys/syn/current/libraries/syn/standard.sldb'
 Running PRESTO HDLC
 
 Inferred memory devices in process
-	in routine reorder_buffer line 126 in file
+	in routine reorder_buffer line 124 in file
 		'../verilog/reorder_buffer.sv'.
 ===============================================================================
 |    Register Name    |   Type    | Width | Bus | MB | AR | AS | SR | SS | ST |
 ===============================================================================
-|  rob_out_valid_reg  | Flip-flop |   1   |  N  | N  | N  | N  | Y  | N  | N  |
-|   rob_opcode_reg    | Flip-flop |  224  |  Y  | N  | N  | N  | Y  | N  | N  |
-|   rob_status_reg    | Flip-flop |  64   |  Y  | N  | N  | N  | Y  | N  | N  |
-|   rob_values_reg    | Flip-flop | 1024  |  Y  | N  | N  | N  | Y  | N  | N  |
-|    rob_dest_reg     | Flip-flop |  160  |  Y  | N  | N  | N  | Y  | N  | N  |
-|      head_reg       | Flip-flop |   6   |  Y  | N  | N  | N  | Y  | N  | N  |
-|      tail_reg       | Flip-flop |   6   |  Y  | N  | N  | N  | Y  | N  | N  |
+|      tail_reg       | Flip-flop |   6   |  Y  | N  | Y  | N  | N  | N  | N  |
+|   rob_opcode_reg    | Flip-flop |  224  |  Y  | N  | Y  | N  | N  | N  | N  |
+|   rob_status_reg    | Flip-flop |  64   |  Y  | N  | Y  | N  | N  | N  | N  |
+|   rob_values_reg    | Flip-flop | 1024  |  Y  | N  | Y  | N  | N  | N  | N  |
+|    rob_dest_reg     | Flip-flop |  160  |  Y  | N  | Y  | N  | N  | N  | N  |
+|      head_reg       | Flip-flop |   6   |  Y  | N  | Y  | N  | N  | N  | N  |
 ===============================================================================
 Statistics for MUX_OPs
-========================================================
-|  block name/line   | Inputs | Outputs | # sel inputs |
-========================================================
-| reorder_buffer/79  |   32   |    7    |      5       |
-| reorder_buffer/80  |   32   |   32    |      5       |
-| reorder_buffer/78  |   32   |    2    |      5       |
-| reorder_buffer/79  |   32   |    5    |      5       |
-| reorder_buffer/115 |   32   |   32    |      5       |
-| reorder_buffer/116 |   32   |   32    |      5       |
-========================================================
-Information:  Complex logic will not be considered for set/reset inference. (ELAB-2008)
+=======================================================
+| block name/line   | Inputs | Outputs | # sel inputs |
+=======================================================
+| reorder_buffer/73 |   32   |   32    |      5       |
+| reorder_buffer/74 |   32   |   32    |      5       |
+| reorder_buffer/85 |   32   |    7    |      5       |
+| reorder_buffer/86 |   32   |   32    |      5       |
+| reorder_buffer/83 |   32   |    2    |      5       |
+| reorder_buffer/85 |   32   |    5    |      5       |
+=======================================================
 Presto compilation completed successfully. (reorder_buffer)
 Elaborated 1 design.
 Current design is now 'reorder_buffer'.
@@ -346,7 +344,7 @@ redirect $chk_file { check_design }
 # map_effort can be changed to high if you're ok with time increasing for better performance
 # or you can change from compile to compile_ultra for best performance, but likely increased time
 compile -map_effort medium
-CPU Load: 33%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6124 GB, Tmp Disk Free: 31 GB
+CPU Load: 32%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6114 GB, Tmp Disk Free: 31 GB
 Information: Evaluating DesignWare library utilization. (UISN-27)
 
 ============================================================================
@@ -367,15 +365,15 @@ Warning: Dont_touch on net 'reset' may be overridden by compile because it
 | Design Information                                      | Value                                  |
 ====================================================================================================
 | Number of Scenarios                                     | 0                                      |
-| Leaf Cell Count                                         | 3022                                   |
+| Leaf Cell Count                                         | 2848                                   |
 | Number of User Hierarchies                              | 0                                      |
-| Sequential Cell Count                                   | 1485                                   |
+| Sequential Cell Count                                   | 1484                                   |
 | Macro Count                                             | 0                                      |
 | Number of Power Domains                                 | 0                                      |
 | Number of Path Groups                                   | 4                                      |
 | Number of VT Class                                      | 0                                      |
 | Number of Clocks                                        | 1                                      |
-| Number of Dont Touch Cells                              | 390                                    |
+| Number of Dont Touch Cells                              | 389                                    |
 | Number of Dont Touch Nets                               | 1                                      |
 | Number of Size Only Cells                               | 0                                      |
 | Design with UPF Data                                    | false                                  |
@@ -385,7 +383,7 @@ Warning: Dont_touch on net 'reset' may be overridden by compile because it
 | set_fix_multiple_port_nets                              | -outputs -buffer_constants             |
 ====================================================================================================
 
-Information: There are 5 potential problems in your design. Please run 'check_design' for more information. (LINT-99)
+Information: There are 10 potential problems in your design. Please run 'check_design' for more information. (LINT-99)
 
 
 
@@ -400,10 +398,7 @@ Information: Updating design information... (UID-85)
   Beginning Implementation Selection
   ----------------------------------
   Processing 'reorder_buffer_DW01_inc_0'
-  Processing 'reorder_buffer_DW01_dec_0'
   Processing 'reorder_buffer_DW01_inc_1'
-  Processing 'reorder_buffer_DW01_inc_2'
-  Processing 'reorder_buffer_DW01_inc_3'
   Processing 'reorder_buffer_DW01_cmp6_0'
 Information: Command 'do_operand_isolation' is obsolete and is being ignored.  Please refer to the replacement command 'set power_enable_datapath_gating true' instead. (INFO-118)
 
@@ -416,20 +411,19 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:12    1530.0      0.00       0.0       0.0                                0.00  
-    0:00:12    1530.0      0.00       0.0       0.0                                0.00  
-    0:00:12    1530.0      0.00       0.0       0.0                                0.00  
-    0:00:12    1530.0      0.00       0.0       0.0                                0.00  
-    0:00:12    1530.0      0.00       0.0       0.0                                0.00  
-    0:00:14    1085.1      0.00       0.0       0.0                                0.00  
-    0:00:14    1085.0      0.00       0.0       0.0                                0.00  
-    0:00:16    1085.0      0.00       0.0       0.0                                0.00  
-    0:00:16    1085.0      0.00       0.0       0.0                                0.00  
-    0:00:16    1085.0      0.00       0.0       0.0                                0.00  
-    0:00:16    1085.0      0.00       0.0       0.0                                0.00  
-    0:00:16    1085.0      0.00       0.0       0.0                                0.00  
-    0:00:16    1085.0      0.00       0.0       0.0                                0.00  
-    0:00:16    1085.0      0.00       0.0       0.0                                0.00  
+    0:00:12    1449.7      0.00       0.0       0.0                                0.00  
+    0:00:12    1449.7      0.00       0.0       0.0                                0.00  
+    0:00:12    1449.7      0.00       0.0       0.0                                0.00  
+    0:00:12    1449.7      0.00       0.0       0.0                                0.00  
+    0:00:12    1449.7      0.00       0.0       0.0                                0.00  
+    0:00:13    1107.8      0.00       0.0       0.0                                0.00  
+    0:00:13    1107.8      0.00       0.0       0.0                                0.00  
+    0:00:13    1107.8      0.00       0.0       0.0                                0.00  
+    0:00:13    1107.8      0.00       0.0       0.0                                0.00  
+    0:00:13    1107.8      0.00       0.0       0.0                                0.00  
+    0:00:13    1107.8      0.00       0.0       0.0                                0.00  
+    0:00:13    1107.8      0.00       0.0       0.0                                0.00  
+    0:00:13    1107.8      0.00       0.0       0.0                                0.00  
 
 
 
@@ -440,9 +434,9 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:16    1085.0      0.00       0.0       0.0                                0.00  
-    0:00:16    1085.0      0.00       0.0       0.0                                0.00  
-    0:00:18    1020.1      0.00       0.0       0.0                                0.00  
+    0:00:13    1107.8      0.00       0.0       0.0                                0.00  
+    0:00:13    1107.8      0.00       0.0       0.0                                0.00  
+    0:00:16    1042.9      0.00       0.0       0.0                                0.00  
 
 
   Beginning Design Rule Fixing  (min_path)
@@ -452,7 +446,7 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:18    1020.1      0.00       0.0       0.0                            -8135.14  
+    0:00:16    1042.9      0.00       0.0       0.0                            -3226.54  
 
 
   Beginning Critical Range Optimization
@@ -462,7 +456,7 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:18    1020.1      0.00       0.0       0.0                            -8135.14  
+    0:00:16    1042.9      0.00       0.0       0.0                            -3226.54  
 
 
   Beginning Area-Recovery Phase  (cleanup)
@@ -472,20 +466,21 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:18    1020.1      0.00       0.0       0.0                            -8135.14  
-    0:00:18    1020.1      0.00       0.0       0.0                            -8135.14  
-    0:00:19    1017.1      0.00       0.0       0.0                            -8135.14  
-    0:00:19    1016.3      0.00       0.0       0.0                            -8135.14  
-    0:00:19    1016.0      0.00       0.0       0.0                            -8135.14  
-    0:00:19    1015.9      0.00       0.0       0.0                            -8135.14  
-    0:00:19    1015.8      0.00       0.0       0.0                            -8135.14  
-    0:00:19    1015.8      0.00       0.0       0.0                            -8135.14  
-    0:00:19    1015.8      0.00       0.0       0.0                            -8135.14  
-    0:00:19    1015.8      0.00       0.0       0.0                            -8135.14  
-    0:00:19    1015.8      0.00       0.0       0.0                            -8135.14  
-    0:00:19    1015.8      0.00       0.0       0.0                            -8135.14  
-    0:00:19    1015.8      0.00       0.0       0.0                            -8135.14  
-    0:00:19    1015.8      0.00       0.0       0.0                            -8135.14  
+    0:00:16    1042.9      0.00       0.0       0.0                            -3226.54  
+    0:00:16    1042.9      0.00       0.0       0.0                            -3226.54  
+    0:00:18    1041.9      0.00       0.0       0.0                            -3226.54  
+    0:00:18    1041.5      0.00       0.0       0.0                            -3226.54  
+    0:00:19    1041.5      0.00       0.0       0.0                            -3226.54  
+    0:00:19    1041.5      0.00       0.0       0.0                            -3226.54  
+    0:00:19    1041.5      0.00       0.0       0.0                            -3226.54  
+    0:00:19    1041.5      0.00       0.0       0.0                            -3226.54  
+    0:00:19    1041.5      0.00       0.0       0.0                            -3226.54  
+    0:00:19    1041.5      0.00       0.0       0.0                            -3226.54  
+    0:00:19    1041.5      0.00       0.0       0.0                            -3226.54  
+    0:00:19    1041.5      0.00       0.0       0.0                            -3226.54  
+    0:00:19    1041.5      0.00       0.0       0.0                            -3226.54  
+    0:00:19    1043.2      0.00       0.0       0.0 rob_values_reg[31][10]/D    -300.82  
+    0:00:19    1043.3      0.00       0.0       0.0                                0.00  
 
 
   Beginning Critical Range Optimization
@@ -495,8 +490,8 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:19    1015.8      0.00       0.0       0.0                            -8135.14  
-    0:00:20    1015.8      0.00       0.0       0.0                            -8135.14  
+    0:00:19    1043.3      0.00       0.0       0.0                                0.00  
+    0:00:20    1043.4      0.00       0.0       0.0                                0.00  
 Loading db file '/homes/user/fac/tk3070/tmp/synthesis/asap7sc7p5t_merged_RVT_FF_nldm_211120.db'
 
 
@@ -506,9 +501,9 @@ Note: Symbol # after min delay cost means estimated hold TNS across all active s
   Optimization Complete
   ---------------------
 Warning: Design 'reorder_buffer' contains 2 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
-     Net 'clock': 1485 load(s), 1 driver(s)
-     Net 'net57005': 1485 load(s), 1 driver(s)
-CPU Load: 34%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6124 GB, Tmp Disk Free: 31 GB
+     Net 'clock': 1484 load(s), 1 driver(s)
+     Net 'net64326': 1486 load(s), 1 driver(s)
+CPU Load: 33%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6114 GB, Tmp Disk Free: 31 GB
 Information: Total number of MV cells in the design.
 ----------------------------------------------------------------------------------------------------
  MV Cells                                           Total Number                                   
@@ -590,9 +585,9 @@ redirect -append $rep_file { report_reference -nosplit }
 # exit with success
 exit 0
 
-Memory usage for this session 311 Mbytes.
-Memory usage for this session including child processes 311 Mbytes.
-CPU usage for this session 24 seconds ( 0.01 hours ).
-Elapsed time for this session 27 seconds ( 0.01 hours ).
+Memory usage for this session 298 Mbytes.
+Memory usage for this session including child processes 298 Mbytes.
+CPU usage for this session 26 seconds ( 0.01 hours ).
+Elapsed time for this session 29 seconds ( 0.01 hours ).
 
 Thank you...

@@ -224,16 +224,18 @@ module stage_id (
     output logic [31:0] opB,
     output logic [`ROB_TAG_BITS-1:0] output_tag,
 
-    output logic [45:0] rob_debug [`ROB_SZ-1:0],
+    //output logic [45:0] rob_debug [`ROB_SZ-1:0],
     output logic [11:0] rob_pointers_debug,
-    output logic [7:0] mt_tags_debug [31:0],
-    output logic [74:0] rs_debug,
+    //output logic [7:0] mt_tags_debug [31:0],
+    //output logic [74:0] rs_debug,
 
     output ALU_OPA_SELECT opa_select,
     output ALU_OPB_SELECT opb_select,
     output logic has_dest_reg,
     output logic [4:0] dest_reg_idx,
-    output logic rd_mem, wr_mem
+    output logic rd_mem, wr_mem,
+    output ALU_FUNC alu_func,
+    output ROB_RETIRE_PACKET rob_retire_out // matches port type exactly
 
 );
 
@@ -253,6 +255,11 @@ module stage_id (
     assign mt_load_entry  = dispatch_ok && if_id_reg.valid;
     assign rob_load_entry = dispatch_ok && if_id_reg.valid;
     assign rs1_load_entry = dispatch_ok && if_id_reg.valid;
+
+    CDB_ROB_PACKET rob_cdb_packet;
+    assign rob_cdb_packet.tag = cdb_tag;
+    assign rob_cdb_packet.value = cdb_value;
+    assign rob_cdb_packet.valid = cdb_valid;
 
     // Outputs from map table
     logic [6:0] mt_to_rs_tag1, mt_to_rs_tag2;
@@ -369,8 +376,8 @@ module stage_id (
         .rs1_tag(mt_to_rs_tag1),
         .rs2_tag(mt_to_rs_tag2),
         .regfile_rs1_addr(mt_to_regfile_rs1),
-        .regfile_rs2_addr(mt_to_regfile_rs2),
-        .tags_debug(mt_tags_debug)
+        .regfile_rs2_addr(mt_to_regfile_rs2)
+        //.tags_debug(mt_tags_debug)
     );
 
     // Reservation Station
@@ -393,8 +400,8 @@ module stage_id (
         .rs_opa_out(opA),
         .rs_opb_out(opB),
         .rs_tag_out(output_tag),
-        .rs_avail_out(rs1_available),
-        .rs_debug(rs_debug)
+        .rs_avail_out(rs1_available)
+        //.rs_debug(rs_debug)
     );
 
     // Reorder Buffer
@@ -407,17 +414,18 @@ module stage_id (
         .rob_read_tag1(rob_read_tag1),
         .rob_to_rs_read2(rob_to_rs_read2),
         .rob_read_tag2(rob_read_tag2),
-        .rob_cdb_in('{tag: cdb_tag, value: cdb_value, valid: cdb_valid}),
+        //.rob_cdb_in('{tag: cdb_tag, value: cdb_value, valid: cdb_valid}), Synthesis Issues, Replacing with, with other instantiations above:
+        .rob_cdb_in(rob_cdb_packet),
         .retire_entry(rob_retire_entry),
         .rob_clear(rob_clear),
-        .reg_dest(rob_dest_reg),
-        .reg_value(rob_to_regfile_value),
-        .reg_valid(rob_regfile_valid),
-        .rob_retire_out(),
+        //.reg_dest(rob_dest_reg), UNDEFINED
+        //.reg_value(rob_to_regfile_value), UNDEFINED
+        //.reg_valid(rob_regfile_valid), UNDEFINED
+        .rob_retire_out(rob_retire_out),
         .rob_to_rs_value1(rob_to_rs_value1),
         .rob_to_rs_value2(rob_to_rs_value2),
         .rob_full(rob_full),
-        .rob_debug(rob_debug),
+        //.rob_debug(rob_debug),
         .rob_pointers(rob_pointers_debug)
     );
 

@@ -19,9 +19,9 @@ module dcache_svsim
 
     input logic [32-1:0] proc2Dcache_addr,
     input logic [1:0] proc2Dcache_command, 
-    input logic [3:0]  mem2proc_response,     input logic [63:0] mem2proc_data,         input logic [3:0]  mem2proc_tag,       
-    output logic [32-1:0] proc2mem_addr,
-    output logic [63:0]      proc2mem_data,     output logic [1:0]       proc2mem_command,     output MEM_SIZE    proc2mem_size,
+    input logic [3:0]  mem2dcache_response,     input logic [63:0] mem2dcache_data,         input logic [3:0]  mem2dcache_tag,       
+    output logic [32-1:0] dcache2mem_addr,
+    output logic [63:0]      dcache2mem_data,     output logic [1:0]       dcache2mem_command,     output MEM_SIZE    dcache2mem_size,
 
     output logic [63:0] hit_data,     output logic hit,     output logic [3:0] data_tag,
     output logic [3:0] data_response,
@@ -31,10 +31,11 @@ module dcache_svsim
     
 
   dcache dcache( {>>{ clk }}, {>>{ reset }}, {>>{ proc2Dcache_addr }}, 
-        {>>{ proc2Dcache_command }}, {>>{ mem2proc_response }}, 
-        {>>{ mem2proc_data }}, {>>{ mem2proc_tag }}, {>>{ proc2mem_addr }}, 
-        {>>{ proc2mem_data }}, {>>{ proc2mem_command }}, {>>{ proc2mem_size }}, 
-        {>>{ hit_data }}, {>>{ hit }}, {>>{ data_tag }}, {>>{ data_response }}, 
+        {>>{ proc2Dcache_command }}, {>>{ mem2dcache_response }}, 
+        {>>{ mem2dcache_data }}, {>>{ mem2dcache_tag }}, 
+        {>>{ dcache2mem_addr }}, {>>{ dcache2mem_data }}, 
+        {>>{ dcache2mem_command }}, {>>{ dcache2mem_size }}, {>>{ hit_data }}, 
+        {>>{ hit }}, {>>{ data_tag }}, {>>{ data_response }}, 
         {>>{ next_state }}, {>>{ state }}, {>>{ number_of_waits }}, 
         {>>{ next_number_of_waits }} );
 endmodule

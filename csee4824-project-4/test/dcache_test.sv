@@ -1,12 +1,12 @@
 `include "verilog/sys_defs.svh"
 `timescale 1ns/1ps
 
-
 module testbench;
 
     logic clk;
     logic reset;
     logic[`XLEN-1:0] proc2Dcache_addr;
+    logic [1:0] proc2Dcache_command;
     logic [3:0] mem2proc_response; // 0 = can't accept, other=tag of transaction
     logic [63:0] mem2proc_data;     // data resulting from a load
     logic [3:0] mem2proc_tag;       // 0 = no value, other=tag of transaction
@@ -14,6 +14,7 @@ module testbench;
     logic [`XLEN-1:0] proc2mem_addr;
     logic [63:0] proc2mem_data; // address for current command
     logic [1:0] proc2mem_command; // `BUS_NONE `BUS_LOAD or `BUS_STORE
+
     MEM_SIZE proc2mem_size;
     logic [63:0] hit_data; // data resulting from a load
     logic hit;
@@ -29,25 +30,28 @@ module testbench;
     dcache data_cache(
         .clk(clk),
         .reset(reset),
+
         .proc2Dcache_addr(proc2Dcache_addr),
-        .proc2Dcache_command(proc2Dcache_command), // `BUS_NONE `BUS_LOAD or `BUS_STORE
-        .mem2proc_response(mem2proc_response), // 0 = can't accept, other=tag of transaction
-        .mem2proc_data(mem2proc_data),     // data resulting from a load
-        .mem2proc_tag(mem2proc_tag),       // 0 = no value, other=tag of transaction
-        .proc2mem_addr(proc2mem_addr),
-        .proc2mem_data(proc2mem_data), // address for current command
-        .proc2mem_command(proc2mem_command), // `BUS_NONE `BUS_LOAD or `BUS_STORE
-        .proc2mem_size(proc2mem_size),
-        .hit_data(hit_data), // data resulting from a load
-        .hit(hit), // 1 if hit, 0 if miss
+        .proc2Dcache_command(proc2Dcache_command),
+
+        .mem2dcache_response(mem2proc_response), // matching module port name
+        .mem2dcache_data(mem2proc_data),
+        .mem2dcache_tag(mem2proc_tag),
+
+        .dcache2mem_addr(proc2mem_addr), // matching module port name
+        .dcache2mem_data(proc2mem_data),
+        .dcache2mem_command(proc2mem_command),
+        .dcache2mem_size(proc2mem_size),
+
+        .hit_data(hit_data),
+        .hit(hit),
         .data_tag(data_tag),
         .data_response(data_response),
-        .next_state(next_state), //for debugging
-        .state(state), //for debugging
-        .number_of_waits(number_of_waits), //for debugging
-        .next_number_of_waits(next_number_of_waits) //for debugging
-       
-    );
+        .next_state(next_state),
+        .state(state),
+        .number_of_waits(number_of_waits),
+        .next_number_of_waits(next_number_of_waits)
+);
 
     // clk_PERIOD is defined on the commandline by the makefile
     always begin

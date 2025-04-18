@@ -1,0 +1,29 @@
+ 
+****************************************
+check_design summary:
+Version:     U-2022.12-SP7
+Date:        Fri Apr 18 18:35:47 2025
+****************************************
+
+                   Name                                            Total
+--------------------------------------------------------------------------------
+Inputs/Outputs                                                     13
+    Unconnected ports (LINT-28)                                     6
+    Shorted outputs (LINT-31)                                       3
+    Constant outputs (LINT-52)                                      4
+--------------------------------------------------------------------------------
+
+Warning: In design 'stage_is', port 'clock' is not connected to any nets. (LINT-28)
+Warning: In design 'stage_is', port 'reset' is not connected to any nets. (LINT-28)
+Warning: In design 'stage_is', port 'rs_tag_out[3][5]' is not connected to any nets. (LINT-28)
+Warning: In design 'stage_is', port 'rs_tag_out[2][5]' is not connected to any nets. (LINT-28)
+Warning: In design 'stage_is', port 'rs_tag_out[1][5]' is not connected to any nets. (LINT-28)
+Warning: In design 'stage_is', port 'rs_tag_out[0][5]' is not connected to any nets. (LINT-28)
+Warning: In design 'stage_is', output port 'is_packet[RS_tag][5]' is connected directly to output port 'is_packet[RS_tag][2]'. (LINT-31)
+Warning: In design 'stage_is', output port 'is_packet[RS_tag][5]' is connected directly to output port 'is_packet[RS_tag][3]'. (LINT-31)
+Warning: In design 'stage_is', output port 'is_packet[RS_tag][5]' is connected directly to output port 'is_packet[RS_tag][4]'. (LINT-31)
+Warning: In design 'stage_is', output port 'is_packet[RS_tag][5]' is connected directly to 'logic 0'. (LINT-52)
+Warning: In design 'stage_is', output port 'is_packet[RS_tag][4]' is connected directly to 'logic 0'. (LINT-52)
+Warning: In design 'stage_is', output port 'is_packet[RS_tag][3]' is connected directly to 'logic 0'. (LINT-52)
+Warning: In design 'stage_is', output port 'is_packet[RS_tag][2]' is connected directly to 'logic 0'. (LINT-52)
+1

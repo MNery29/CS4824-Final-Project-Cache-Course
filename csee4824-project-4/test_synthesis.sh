@@ -1,10 +1,24 @@
 #!/bin/bash
 
-# List of modules to be tested
-# failing simv - mult rob cdb
+# all modules to test:
+# "pipeline.sv"
+
+# missing test benches:
+# "booth_mult_stage" "decoder" "h3hash" "icache" "lsq" "mult_stage" "psel_gen" "regfile" 
+# "stage_cp" "stage_ex" "stage_mem" "stage_rt" "zcache"
+
+# ========= Results Post-test! =====================================================
+# failing simv - mult cdb
 # failing synth - map_table
 # failing synthesis test (port mismatch) - reorder_buffer, stage_id
-TESTED_MODULES=("reservation_station" "dcache")
+
+# UNITS PASSING ALL TESTS! <3 YAYY: "reorder_buffer" "cdb" "dcache" "map_table" "reservation_station"
+# STAGES PASSING ALL TEST!!! YAYYY: "stage_id" "stage_if" "stage_is"
+
+# ONES WHERE I NEED SOME CLARIFICATION: 
+# --> mult, whats going on? what modules are actually used
+
+TESTED_MODULES=("reorder_buffer" "cdb" "dcache" "map_table" "reservation_station" "stage_id" "stage_if" "stage_is")
 
 # Loop through each module and run the make commands
 for module in "${TESTED_MODULES[@]}"

@@ -10,12 +10,12 @@ module tb_stage_is();
 
     // Reservation Station signals
     logic [`RS_SIZE-1:0] rs_ready_out;
-    logic [31:0] rs_opa_out     [`RS_SIZE];
-    logic [31:0] rs_opb_out     [`RS_SIZE];
-    logic [5:0]  rs_tag_out     [`RS_SIZE];
-    ALU_FUNC     rs_alu_func_out[`RS_SIZE];
-    logic [31:0] rs_npc_out     [`RS_SIZE];
-    logic [31:0] rs_inst_out    [`RS_SIZE];
+    logic [`RS_SIZE-1:0][31:0] rs_opa_out;
+    logic [`RS_SIZE-1:0][31:0] rs_opb_out;
+    logic [`RS_SIZE-1:0][5:0]  rs_tag_out;
+    ALU_FUNC [`RS_SIZE-1:0] rs_alu_func_out;
+    logic [`RS_SIZE-1:0][31:0] rs_npc_out;
+    logic [`RS_SIZE-1:0][31:0] rs_inst_out;
 
     // Functional unit ready
     logic fu_ready;

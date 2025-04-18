@@ -17,13 +17,14 @@ module stage_is (
     input logic reset,
 
     // Reservation Station signals
-    input logic [`RS_SIZE-1:0] rs_ready_out, // valid bits for reservation station
-    input  logic [31:0]         rs_opa_out   [`RS_SIZE], 
-    input  logic [31:0]         rs_opb_out   [`RS_SIZE],
-    input  logic [5:0]          rs_tag_out   [`RS_SIZE],
-    input ALU_FUNC             rs_alu_func_out[`RS_SIZE],       // ALU operation
-    input logic [31:0]         rs_npc_out     [`RS_SIZE],       // Next PC
-    input logic [31:0]         rs_inst_out    [`RS_SIZE],       // Instruction word
+    
+    input logic [`RS_SIZE-1:0]          rs_ready_out, // valid bits for reservation station
+    input logic [`RS_SIZE-1:0][31:0]    rs_opa_out,  // changed from input  logic [31:0]  rs_opa_out   [`RS_SIZE],
+    input  logic [`RS_SIZE-1:0][31:0]   rs_opb_out,
+    input  logic [`RS_SIZE-1:0][5:0]    rs_tag_out,
+    input ALU_FUNC [`RS_SIZE-1:0]       rs_alu_func_out,
+    input logic [`RS_SIZE-1:0][31:0]    rs_npc_out,       // Next PC
+    input logic [`RS_SIZE-1:0][31:0]    rs_inst_out,       // Instruction word
     input logic rd_mem, wr_mem, // read/write memory
 
     //Functional unit ready signal 

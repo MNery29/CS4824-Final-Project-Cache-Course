@@ -29,19 +29,19 @@
             Inclusivity and Diversity" (Refer to article 000036315 at
                         https://solvnetplus.synopsys.com)
 Initializing...
-Current time:       Wed Apr 16 02:36:51 2025
-Hostname:           cadpc11
+Current time:       Fri Apr 18 18:42:47 2025
+Hostname:           cadpc15
 CPU Model:          11th Gen Intel(R) Core(TM) i9-11900 @ 2.50GHz
-CPU Details:        Cores = 16 : Sockets = 1 : Cache Size = 16384 KB : Freq = 3.80 GHz
+CPU Details:        Cores = 16 : Sockets = 1 : Cache Size = 16384 KB : Freq = 4.00 GHz
 OS:                 Linux 4.18.0-553.44.1.el8_10.x86_64
-RAM:                 62 GB (Free  44 GB)
+RAM:                 62 GB (Free  40 GB)
 Swap:                31 GB (Free  31 GB)
 Work Filesystem:    /homes mounted to auto.homes
 Tmp Filesystem:     /tmp mounted to tmpfs
-Work Disk:          16773 GB (Free 6124 GB)
+Work Disk:          16773 GB (Free 6112 GB)
 Tmp Disk:            31 GB (Free  31 GB)
 
-CPU Load: 32%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6124 GB, Tmp Disk Free: 31 GB
+CPU Load: 40%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6112 GB, Tmp Disk Free: 31 GB
 ##########################
 # ---- Introduction ---- #
 ##########################
@@ -191,17 +191,22 @@ Loading db file '/tools/synopsys/syn/current/libraries/syn/standard.sldb'
 Running PRESTO HDLC
 
 Inferred memory devices in process
-	in routine reservation_station line 63 in file
+	in routine reservation_station line 74 in file
 		'../verilog/reservation_station.sv'.
 ===============================================================================
 |    Register Name    |   Type    | Width | Bus | MB | AR | AS | SR | SS | ST |
 ===============================================================================
-|      InUse_reg      | Flip-flop |   1   |  N  | N  | N  | N  | Y  | N  | N  |
+|      Inst_reg       | Flip-flop |  32   |  Y  | N  | N  | N  | Y  | N  | N  |
 |       OPa_reg       | Flip-flop |  32   |  Y  | N  | N  | N  | Y  | N  | N  |
 |       OPb_reg       | Flip-flop |  32   |  Y  | N  | N  | N  | Y  | N  | N  |
-|     DestTag_reg     | Flip-flop |   6   |  Y  | N  | N  | N  | Y  | N  | N  |
+|     OPaTag_reg      | Flip-flop |   5   |  Y  | N  | N  | N  | Y  | N  | N  |
+|     OPbTag_reg      | Flip-flop |   5   |  Y  | N  | N  | N  | Y  | N  | N  |
+|     DestTag_reg     | Flip-flop |   5   |  Y  | N  | N  | N  | Y  | N  | N  |
 |    OpaValid_reg     | Flip-flop |   1   |  N  | N  | N  | N  | Y  | N  | N  |
 |    OpbValid_reg     | Flip-flop |   1   |  N  | N  | N  | N  | Y  | N  | N  |
+|      InUse_reg      | Flip-flop |   1   |  N  | N  | N  | N  | Y  | N  | N  |
+|    alu_func_reg     | Flip-flop |   5   |  Y  | N  | N  | N  | Y  | N  | N  |
+|       NPC_reg       | Flip-flop |  32   |  Y  | N  | N  | N  | Y  | N  | N  |
 ===============================================================================
 Information:  Complex logic will not be considered for set/reset inference. (ELAB-2008)
 Presto compilation completed successfully. (reservation_station)
@@ -334,7 +339,7 @@ redirect $chk_file { check_design }
 # map_effort can be changed to high if you're ok with time increasing for better performance
 # or you can change from compile to compile_ultra for best performance, but likely increased time
 compile -map_effort medium
-CPU Load: 32%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6124 GB, Tmp Disk Free: 31 GB
+CPU Load: 40%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6112 GB, Tmp Disk Free: 31 GB
 Information: Evaluating DesignWare library utilization. (UISN-27)
 
 ============================================================================
@@ -355,15 +360,15 @@ Warning: Dont_touch on net 'reset' may be overridden by compile because it
 | Design Information                                      | Value                                  |
 ====================================================================================================
 | Number of Scenarios                                     | 0                                      |
-| Leaf Cell Count                                         | 115                                    |
+| Leaf Cell Count                                         | 205                                    |
 | Number of User Hierarchies                              | 0                                      |
-| Sequential Cell Count                                   | 73                                     |
+| Sequential Cell Count                                   | 151                                    |
 | Macro Count                                             | 0                                      |
 | Number of Power Domains                                 | 0                                      |
 | Number of Path Groups                                   | 4                                      |
 | Number of VT Class                                      | 0                                      |
 | Number of Clocks                                        | 1                                      |
-| Number of Dont Touch Cells                              | 6                                      |
+| Number of Dont Touch Cells                              | 8                                      |
 | Number of Dont Touch Nets                               | 1                                      |
 | Number of Size Only Cells                               | 0                                      |
 | Design with UPF Data                                    | false                                  |
@@ -373,7 +378,7 @@ Warning: Dont_touch on net 'reset' may be overridden by compile because it
 | set_fix_multiple_port_nets                              | -outputs -buffer_constants             |
 ====================================================================================================
 
-Information: There are 2 potential problems in your design. Please run 'check_design' for more information. (LINT-99)
+Information: There are 73 potential problems in your design. Please run 'check_design' for more information. (LINT-99)
 
 
 
@@ -399,19 +404,19 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:01      76.2      0.00       0.0       0.0                                0.00  
-    0:00:01      76.2      0.00       0.0       0.0                                0.00  
-    0:00:01      76.2      0.00       0.0       0.0                                0.00  
-    0:00:01      76.2      0.00       0.0       0.0                                0.00  
-    0:00:01      76.2      0.00       0.0       0.0                                0.00  
-    0:00:02      58.1      0.00       0.0       0.0                                0.00  
-    0:00:02      58.1      0.00       0.0       0.0                                0.00  
-    0:00:02      58.1      0.00       0.0       0.0                                0.00  
-    0:00:02      58.1      0.00       0.0       0.0                                0.00  
-    0:00:02      58.1      0.00       0.0       0.0                                0.00  
-    0:00:02      58.1      0.00       0.0       0.0                                0.00  
-    0:00:02      58.1      0.00       0.0       0.0                                0.00  
-    0:00:02      58.1      0.00       0.0       0.0                                0.00  
+    0:00:02     131.8      0.00       0.0       0.0                                0.00  
+    0:00:02     131.8      0.00       0.0       0.0                                0.00  
+    0:00:02     131.8      0.00       0.0       0.0                                0.00  
+    0:00:02     131.8      0.00       0.0       0.0                                0.00  
+    0:00:02     131.8      0.00       0.0       0.0                                0.00  
+    0:00:02      87.3      0.00       0.0       0.0                                0.00  
+    0:00:02      87.3      0.00       0.0       0.0                                0.00  
+    0:00:02      87.3      0.00       0.0       0.0                                0.00  
+    0:00:02      87.3      0.00       0.0       0.0                                0.00  
+    0:00:02      87.3      0.00       0.0       0.0                                0.00  
+    0:00:02      87.3      0.00       0.0       0.0                                0.00  
+    0:00:02      87.3      0.00       0.0       0.0                                0.00  
+    0:00:02      87.3      0.00       0.0       0.0                                0.00  
 
 
 
@@ -422,9 +427,9 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:02      58.1      0.00       0.0       0.0                                0.00  
-    0:00:02      58.1      0.00       0.0       0.0                                0.00  
-    0:00:02      54.9      0.00       0.0       0.0                                0.00  
+    0:00:02      87.3      0.00       0.0       0.0                                0.00  
+    0:00:02      87.3      0.00       0.0       0.0                                0.00  
+    0:00:02      80.7      0.00       0.0       0.0                                0.00  
 
 
   Beginning Design Rule Fixing  (min_path)
@@ -434,7 +439,7 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:02      54.9      0.00       0.0       0.0                             -399.91  
+    0:00:02      80.7      0.00       0.0       0.0                             -827.21  
 
 
   Beginning Critical Range Optimization
@@ -444,7 +449,7 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:02      54.9      0.00       0.0       0.0                             -399.91  
+    0:00:02      80.7      0.00       0.0       0.0                             -827.21  
 
 
   Beginning Area-Recovery Phase  (cleanup)
@@ -454,20 +459,18 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:02      54.9      0.00       0.0       0.0                             -399.91  
-    0:00:02      54.9      0.00       0.0       0.0                             -399.91  
-    0:00:02      53.0      0.00       0.0       0.0                             -399.91  
-    0:00:02      52.8      0.00       0.0       0.0                             -399.91  
-    0:00:02      52.6      0.00       0.0       0.0                             -399.91  
-    0:00:02      52.5      0.00       0.0       0.0                             -399.91  
-    0:00:02      52.5      0.00       0.0       0.0                             -399.91  
-    0:00:02      52.5      0.00       0.0       0.0                             -399.91  
-    0:00:02      52.5      0.00       0.0       0.0                             -399.91  
-    0:00:02      52.5      0.00       0.0       0.0                             -399.91  
-    0:00:02      52.5      0.00       0.0       0.0                             -399.91  
-    0:00:02      52.5      0.00       0.0       0.0                             -399.91  
-    0:00:02      52.5      0.00       0.0       0.0                             -399.91  
-    0:00:02      52.5      0.00       0.0       0.0                             -399.91  
+    0:00:02      80.7      0.00       0.0       0.0                             -827.21  
+    0:00:02      80.7      0.00       0.0       0.0                             -827.21  
+    0:00:02      80.6      0.00       0.0       0.0                             -827.21  
+    0:00:02      80.6      0.00       0.0       0.0                             -827.21  
+    0:00:02      80.6      0.00       0.0       0.0                             -827.21  
+    0:00:02      80.6      0.00       0.0       0.0                             -827.21  
+    0:00:02      80.6      0.00       0.0       0.0                             -827.21  
+    0:00:02      80.6      0.00       0.0       0.0                             -827.21  
+    0:00:02      80.6      0.00       0.0       0.0                             -827.21  
+    0:00:02      80.6      0.00       0.0       0.0                             -827.21  
+    0:00:02      80.6      0.00       0.0       0.0                             -827.21  
+    0:00:02      80.6      0.00       0.0       0.0                             -827.21  
 
 
   Beginning Critical Range Optimization
@@ -477,8 +480,8 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                              MIN DELAY 
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT             COST    
   --------- --------- --------- --------- --------- ------------------------- -----------
-    0:00:02      52.5      0.00       0.0       0.0                             -399.91  
-    0:00:02      52.5      0.00       0.0       0.0                             -399.91  
+    0:00:02      80.6      0.00       0.0       0.0                             -827.21  
+    0:00:02      80.7      0.00       0.0       0.0                             -827.21  
 Loading db file '/homes/user/fac/tk3070/tmp/synthesis/asap7sc7p5t_merged_RVT_FF_nldm_211120.db'
 
 
@@ -487,7 +490,7 @@ Note: Symbol # after min delay cost means estimated hold TNS across all active s
 
   Optimization Complete
   ---------------------
-CPU Load: 32%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6124 GB, Tmp Disk Free: 31 GB
+CPU Load: 40%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6112 GB, Tmp Disk Free: 31 GB
 Information: Total number of MV cells in the design.
 ----------------------------------------------------------------------------------------------------
  MV Cells                                           Total Number                                   
@@ -570,7 +573,7 @@ exit 0
 
 Memory usage for this session 235 Mbytes.
 Memory usage for this session including child processes 235 Mbytes.
-CPU usage for this session 4 seconds ( 0.00 hours ).
-Elapsed time for this session 7 seconds ( 0.00 hours ).
+CPU usage for this session 5 seconds ( 0.00 hours ).
+Elapsed time for this session 8 seconds ( 0.00 hours ).
 
 Thank you...

@@ -12,16 +12,14 @@ module cdb_svsim (
     input logic clock,
     input logic reset,
 
+            input CDB_PACKET cdb_in,
     
-    input logic [4:0] fu_tag,     input logic [63:0] fu_result,     input logic fu_valid, 
-    
-    output logic [63:0] cdb_data,     output logic [4:0] cdb_tag,     output logic cdb_valid 
+    output logic [31:0] cdb_data,     output logic [4:0] cdb_tag,     output logic cdb_valid 
 );
 
 
 
-  cdb cdb( {>>{ clock }}, {>>{ reset }}, {>>{ fu_tag }}, {>>{ fu_result }}, 
-        {>>{ fu_valid }}, {>>{ cdb_data }}, {>>{ cdb_tag }}, {>>{ cdb_valid }}
- );
+  cdb cdb( {>>{ clock }}, {>>{ reset }}, {>>{ cdb_in }}, {>>{ cdb_data }}, 
+        {>>{ cdb_tag }}, {>>{ cdb_valid }} );
 endmodule
 `endif

@@ -7,7 +7,7 @@ module testbench;
     logic [4:0] rs1_addr, rs2_addr, r_dest, regfile_rs1_addr, regfile_rs2_addr, retire_addr;
     logic [5:0] tag_in, cdb_tag_in, retire_tag;
     logic [6:0] rs1_tag, rs2_tag;
-    logic [7:0] tags_debug[31:0];
+    //logic [7:0] tags_debug[31:0]; //DEBUGGING
 
     map_table MT(
         .clock(clock),
@@ -25,8 +25,8 @@ module testbench;
         .rs1_tag(rs1_tag),
         .rs2_tag(rs2_tag),
         .regfile_rs1_addr(regfile_rs1_addr),
-        .regfile_rs2_addr(regfile_rs2_addr),
-        .tags_debug(tags_debug)
+        .regfile_rs2_addr(regfile_rs2_addr)
+        //.tags_debug(tags_debug) /DEBUGGING!
     );
 
     // CLOCK_PERIOD is defined on the commandline by the makefile
@@ -64,7 +64,7 @@ module testbench;
         tag_in = 6'b0; 
         cdb_tag_in = 6'b0; //Set CDB tag input to zero 
         @(negedge clock);
-        print_contents(tags_debug);
+        //print_contents(tags_debug); DEBUGGING
         reset = 1'b0; //Pull reset low 
         read_cdb = 1'b0; //Do not read from CDB
         load_entry = 1'b1; //Load a tag from RS
@@ -76,7 +76,7 @@ module testbench;
         tag_in = 6'b00001; 
         cdb_tag_in = 6'b0; //Set CDB tag input to zero 
         @(negedge clock);
-        print_contents(tags_debug);
+        //print_contents(tags_debug);
         read_cdb = 1'b0; //Do not read from CDB
         load_entry = 1'b1; //Do not load tag from RS
         retire_entry = 1'b0; //Do not retire entry 
@@ -87,7 +87,7 @@ module testbench;
         tag_in = 6'b00010; 
         cdb_tag_in = 6'b0; //Set CDB tag input to zero 
         @(negedge clock);
-        print_contents(tags_debug);
+        //print_contents(tags_debug);
         read_cdb = 1'b1; //Read from CDB
         load_entry = 1'b0; //Do not load tag from RS
         retire_entry = 1'b0; //Do not retire entry 
@@ -98,7 +98,7 @@ module testbench;
         tag_in = 6'b00000; 
         cdb_tag_in = 6'b000001; //Set CDB tag input to the tag at rs2
         @(negedge clock);
-        print_contents(tags_debug);
+        //print_contents(tags_debug);
         read_cdb = 1'b0; //Do not read from CDB
         load_entry = 1'b0; //Do not load tag from RS
         retire_entry = 1'b1; //Retire entry 
@@ -110,7 +110,7 @@ module testbench;
         tag_in = 6'b000001; 
         cdb_tag_in = 6'b000001; 
         @(negedge clock);
-        print_contents(tags_debug);
+        //print_contents(tags_debug);
         read_cdb = 1'b0; //Do not read from CDB
         load_entry = 1'b1; //Load tag from RS
         retire_entry = 1'b0; 
@@ -121,7 +121,7 @@ module testbench;
         tag_in = 6'b000010; 
         cdb_tag_in = 6'b0; 
         @(negedge clock);
-        print_contents(tags_debug);
+        //print_contents(tags_debug);
 
         $finish;
 

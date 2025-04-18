@@ -5,7 +5,7 @@ Warning: Design 'dcache' contains 2 high-fanout nets. A fanout number of 1000 wi
 Report : design
 Design : dcache
 Version: U-2022.12-SP7
-Date   : Wed Apr 16 02:43:32 2025
+Date   : Fri Apr 18 18:42:02 2025
 ****************************************
 
 Design allows ideal nets on clock nets.
@@ -71,7 +71,7 @@ Design Parameters:
 Report : area
 Design : dcache
 Version: U-2022.12-SP7
-Date   : Wed Apr 16 02:43:32 2025
+Date   : Fri Apr 18 18:42:02 2025
 ****************************************
 
 Library(s) Used:
@@ -107,7 +107,7 @@ Report : timing
         -transition_time
 Design : dcache
 Version: U-2022.12-SP7
-Date   : Wed Apr 16 02:43:32 2025
+Date   : Fri Apr 18 18:42:02 2025
 ****************************************
 
  * Some/all delay information is back-annotated.
@@ -119,7 +119,7 @@ Wire Load Model Mode: top
 
   Startpoint: proc2Dcache_addr[1]
               (input port)
-  Endpoint: proc2mem_addr[3]
+  Endpoint: dcache2mem_addr[10]
             (output port)
   Path Group: input_grp
   Path Type: max
@@ -177,22 +177,22 @@ Wire Load Model Mode: top
   U17729/A (NOR4xp25_ASAP7_75t_R)         30.12      0.00     299.65 f
   U17729/Y (NOR4xp25_ASAP7_75t_R)         34.01     22.30     321.94 r
   N55 (net)                      1                   0.00     321.94 r
-  U6192/A (NAND2xp5_ASAP7_75t_R)          34.01      0.00     321.94 r
-  U6192/Y (NAND2xp5_ASAP7_75t_R)          18.92     15.29     337.24 f
-  n201 (net)                     2                   0.00     337.24 f
+  U6193/A (NAND2xp5_ASAP7_75t_R)          34.01      0.00     321.94 r
+  U6193/Y (NAND2xp5_ASAP7_75t_R)          18.92     15.29     337.24 f
+  n168 (net)                     2                   0.00     337.24 f
   U6189/A (NAND3xp33_ASAP7_75t_R)         18.92      0.00     337.24 f
   U6189/Y (NAND3xp33_ASAP7_75t_R)         26.59     10.51     347.74 r
-  n6 (net)                       1                   0.00     347.74 r
+  n181 (net)                     1                   0.00     347.74 r
   U13489/A (HB1xp67_ASAP7_75t_R)          26.59      0.00     347.74 r
   U13489/Y (HB1xp67_ASAP7_75t_R)          12.71     19.67     367.42 r
-  n17194 (net)                   3                   0.00     367.42 r
+  n16857 (net)                   3                   0.00     367.42 r
   U13243/A (HB1xp67_ASAP7_75t_R)          12.71      0.00     367.42 r
   U13243/Y (HB1xp67_ASAP7_75t_R)          43.36     31.18     398.60 r
-  n17195 (net)                  13                   0.00     398.60 r
-  U13612/A (NOR2xp33_ASAP7_75t_R)         43.36      0.00     398.60 r
-  U13612/Y (NOR2xp33_ASAP7_75t_R)         14.52     14.77     413.37 f
-  proc2mem_addr[3] (net)         1                   0.00     413.37 f
-  proc2mem_addr[3] (out)                  14.52      0.00     413.37 f
+  n16858 (net)                  13                   0.00     398.60 r
+  U13613/A (NOR2xp33_ASAP7_75t_R)         43.36      0.00     398.60 r
+  U13613/Y (NOR2xp33_ASAP7_75t_R)         14.52     14.77     413.37 f
+  dcache2mem_addr[10] (net)      1                   0.00     413.37 f
+  dcache2mem_addr[10] (out)               14.52      0.00     413.37 f
   data arrival time                                           413.37
 
   max_delay                                       1000.00    1000.00
@@ -207,7 +207,7 @@ Wire Load Model Mode: top
 
   Startpoint: proc2Dcache_addr[1]
               (input port)
-  Endpoint: proc2mem_addr[2]
+  Endpoint: dcache2mem_addr[1]
             (output port)
   Path Group: input_grp
   Path Type: max
@@ -265,22 +265,22 @@ Wire Load Model Mode: top
   U17729/A (NOR4xp25_ASAP7_75t_R)         30.12      0.00     299.65 f
   U17729/Y (NOR4xp25_ASAP7_75t_R)         34.01     22.30     321.94 r
   N55 (net)                      1                   0.00     321.94 r
-  U6192/A (NAND2xp5_ASAP7_75t_R)          34.01      0.00     321.94 r
-  U6192/Y (NAND2xp5_ASAP7_75t_R)          18.92     15.29     337.24 f
-  n201 (net)                     2                   0.00     337.24 f
+  U6193/A (NAND2xp5_ASAP7_75t_R)          34.01      0.00     321.94 r
+  U6193/Y (NAND2xp5_ASAP7_75t_R)          18.92     15.29     337.24 f
+  n168 (net)                     2                   0.00     337.24 f
   U6189/A (NAND3xp33_ASAP7_75t_R)         18.92      0.00     337.24 f
   U6189/Y (NAND3xp33_ASAP7_75t_R)         26.59     10.51     347.74 r
-  n6 (net)                       1                   0.00     347.74 r
+  n181 (net)                     1                   0.00     347.74 r
   U13489/A (HB1xp67_ASAP7_75t_R)          26.59      0.00     347.74 r
   U13489/Y (HB1xp67_ASAP7_75t_R)          12.71     19.67     367.42 r
-  n17194 (net)                   3                   0.00     367.42 r
+  n16857 (net)                   3                   0.00     367.42 r
   U13243/A (HB1xp67_ASAP7_75t_R)          12.71      0.00     367.42 r
   U13243/Y (HB1xp67_ASAP7_75t_R)          43.36     31.18     398.60 r
-  n17195 (net)                  13                   0.00     398.60 r
+  n16858 (net)                  13                   0.00     398.60 r
   U13611/A (NOR2xp33_ASAP7_75t_R)         43.36      0.00     398.60 r
   U13611/Y (NOR2xp33_ASAP7_75t_R)         14.52     14.77     413.37 f
-  proc2mem_addr[2] (net)         1                   0.00     413.37 f
-  proc2mem_addr[2] (out)                  14.52      0.00     413.37 f
+  dcache2mem_addr[1] (net)       1                   0.00     413.37 f
+  dcache2mem_addr[1] (out)                14.52      0.00     413.37 f
   data arrival time                                           413.37
 
   max_delay                                       1000.00    1000.00
@@ -295,7 +295,7 @@ Wire Load Model Mode: top
 
   Startpoint: cache_tag_reg[34][0]
               (rising edge-triggered flip-flop)
-  Endpoint: proc2mem_addr[3]
+  Endpoint: dcache2mem_addr[10]
             (output port)
   Path Group: output_grp
   Path Type: max
@@ -329,22 +329,22 @@ Wire Load Model Mode: top
   U17729/A (NOR4xp25_ASAP7_75t_R)                   30.12      0.00     195.60 f
   U17729/Y (NOR4xp25_ASAP7_75t_R)                   34.01     22.30     217.89 r
   N55 (net)                                1                   0.00     217.89 r
-  U6192/A (NAND2xp5_ASAP7_75t_R)                    34.01      0.00     217.89 r
-  U6192/Y (NAND2xp5_ASAP7_75t_R)                    18.92     15.29     233.19 f
-  n201 (net)                               2                   0.00     233.19 f
+  U6193/A (NAND2xp5_ASAP7_75t_R)                    34.01      0.00     217.89 r
+  U6193/Y (NAND2xp5_ASAP7_75t_R)                    18.92     15.29     233.19 f
+  n168 (net)                               2                   0.00     233.19 f
   U6189/A (NAND3xp33_ASAP7_75t_R)                   18.92      0.00     233.19 f
   U6189/Y (NAND3xp33_ASAP7_75t_R)                   26.59     10.51     243.69 r
-  n6 (net)                                 1                   0.00     243.69 r
+  n181 (net)                               1                   0.00     243.69 r
   U13489/A (HB1xp67_ASAP7_75t_R)                    26.59      0.00     243.69 r
   U13489/Y (HB1xp67_ASAP7_75t_R)                    12.71     19.67     263.36 r
-  n17194 (net)                             3                   0.00     263.36 r
+  n16857 (net)                             3                   0.00     263.36 r
   U13243/A (HB1xp67_ASAP7_75t_R)                    12.71      0.00     263.36 r
   U13243/Y (HB1xp67_ASAP7_75t_R)                    43.36     31.18     294.54 r
-  n17195 (net)                            13                   0.00     294.54 r
-  U13612/A (NOR2xp33_ASAP7_75t_R)                   43.36      0.00     294.54 r
-  U13612/Y (NOR2xp33_ASAP7_75t_R)                   14.52     14.77     309.31 f
-  proc2mem_addr[3] (net)                   1                   0.00     309.31 f
-  proc2mem_addr[3] (out)                            14.52      0.00     309.31 f
+  n16858 (net)                            13                   0.00     294.54 r
+  U13613/A (NOR2xp33_ASAP7_75t_R)                   43.36      0.00     294.54 r
+  U13613/Y (NOR2xp33_ASAP7_75t_R)                   14.52     14.77     309.31 f
+  dcache2mem_addr[10] (net)                1                   0.00     309.31 f
+  dcache2mem_addr[10] (out)                         14.52      0.00     309.31 f
   data arrival time                                                     309.31
 
   max_delay                                                 1000.00    1000.00
@@ -359,7 +359,7 @@ Wire Load Model Mode: top
 
   Startpoint: cache_tag_reg[34][0]
               (rising edge-triggered flip-flop)
-  Endpoint: proc2mem_addr[2]
+  Endpoint: dcache2mem_addr[1]
             (output port)
   Path Group: output_grp
   Path Type: max
@@ -393,22 +393,22 @@ Wire Load Model Mode: top
   U17729/A (NOR4xp25_ASAP7_75t_R)                   30.12      0.00     195.60 f
   U17729/Y (NOR4xp25_ASAP7_75t_R)                   34.01     22.30     217.89 r
   N55 (net)                                1                   0.00     217.89 r
-  U6192/A (NAND2xp5_ASAP7_75t_R)                    34.01      0.00     217.89 r
-  U6192/Y (NAND2xp5_ASAP7_75t_R)                    18.92     15.29     233.19 f
-  n201 (net)                               2                   0.00     233.19 f
+  U6193/A (NAND2xp5_ASAP7_75t_R)                    34.01      0.00     217.89 r
+  U6193/Y (NAND2xp5_ASAP7_75t_R)                    18.92     15.29     233.19 f
+  n168 (net)                               2                   0.00     233.19 f
   U6189/A (NAND3xp33_ASAP7_75t_R)                   18.92      0.00     233.19 f
   U6189/Y (NAND3xp33_ASAP7_75t_R)                   26.59     10.51     243.69 r
-  n6 (net)                                 1                   0.00     243.69 r
+  n181 (net)                               1                   0.00     243.69 r
   U13489/A (HB1xp67_ASAP7_75t_R)                    26.59      0.00     243.69 r
   U13489/Y (HB1xp67_ASAP7_75t_R)                    12.71     19.67     263.36 r
-  n17194 (net)                             3                   0.00     263.36 r
+  n16857 (net)                             3                   0.00     263.36 r
   U13243/A (HB1xp67_ASAP7_75t_R)                    12.71      0.00     263.36 r
   U13243/Y (HB1xp67_ASAP7_75t_R)                    43.36     31.18     294.54 r
-  n17195 (net)                            13                   0.00     294.54 r
+  n16858 (net)                            13                   0.00     294.54 r
   U13611/A (NOR2xp33_ASAP7_75t_R)                   43.36      0.00     294.54 r
   U13611/Y (NOR2xp33_ASAP7_75t_R)                   14.52     14.77     309.31 f
-  proc2mem_addr[2] (net)                   1                   0.00     309.31 f
-  proc2mem_addr[2] (out)                            14.52      0.00     309.31 f
+  dcache2mem_addr[1] (net)                 1                   0.00     309.31 f
+  dcache2mem_addr[1] (out)                          14.52      0.00     309.31 f
   data arrival time                                                     309.31
 
   max_delay                                                 1000.00    1000.00
@@ -429,13 +429,13 @@ Report : constraint
         -max_delay
 Design : dcache
 Version: U-2022.12-SP7
-Date   : Wed Apr 16 02:43:32 2025
+Date   : Fri Apr 18 18:42:02 2025
 ****************************************
 
 
   Startpoint: proc2Dcache_addr[1]
               (input port)
-  Endpoint: proc2mem_addr[2]
+  Endpoint: dcache2mem_addr[1]
             (output port)
   Path Group: input_grp
   Path Type: max
@@ -460,12 +460,12 @@ Date   : Wed Apr 16 02:43:32 2025
   U17696/Y (OAI22xp33_ASAP7_75t_R)        16.20     278.30 r
   U17703/Y (NAND5xp2_ASAP7_75t_R)         21.35     299.65 f
   U17729/Y (NOR4xp25_ASAP7_75t_R)         22.30     321.94 r
-  U6192/Y (NAND2xp5_ASAP7_75t_R)          15.29     337.24 f
+  U6193/Y (NAND2xp5_ASAP7_75t_R)          15.29     337.24 f
   U6189/Y (NAND3xp33_ASAP7_75t_R)         10.51     347.74 r
   U13489/Y (HB1xp67_ASAP7_75t_R)          19.67     367.42 r
   U13243/Y (HB1xp67_ASAP7_75t_R)          31.18     398.60 r
   U13611/Y (NOR2xp33_ASAP7_75t_R)         14.77     413.37 f
-  proc2mem_addr[2] (out)                   0.00     413.37 f
+  dcache2mem_addr[1] (out)                 0.00     413.37 f
   data arrival time                                 413.37
 
   max_delay                             1000.00    1000.00
@@ -480,7 +480,7 @@ Date   : Wed Apr 16 02:43:32 2025
 
   Startpoint: cache_tag_reg[34][0]
               (rising edge-triggered flip-flop)
-  Endpoint: proc2mem_addr[2]
+  Endpoint: dcache2mem_addr[1]
             (output port)
   Path Group: output_grp
   Path Type: max
@@ -497,12 +497,12 @@ Date   : Wed Apr 16 02:43:32 2025
   U17696/Y (OAI22xp33_ASAP7_75t_R)                  16.20     174.24 r
   U17703/Y (NAND5xp2_ASAP7_75t_R)                   21.35     195.60 f
   U17729/Y (NOR4xp25_ASAP7_75t_R)                   22.30     217.89 r
-  U6192/Y (NAND2xp5_ASAP7_75t_R)                    15.29     233.19 f
+  U6193/Y (NAND2xp5_ASAP7_75t_R)                    15.29     233.19 f
   U6189/Y (NAND3xp33_ASAP7_75t_R)                   10.51     243.69 r
   U13489/Y (HB1xp67_ASAP7_75t_R)                    19.67     263.36 r
   U13243/Y (HB1xp67_ASAP7_75t_R)                    31.18     294.54 r
   U13611/Y (NOR2xp33_ASAP7_75t_R)                   14.77     309.31 f
-  proc2mem_addr[2] (out)                             0.00     309.31 f
+  dcache2mem_addr[1] (out)                           0.00     309.31 f
   data arrival time                                           309.31
 
   max_delay                                       1000.00    1000.00
@@ -521,7 +521,7 @@ Date   : Wed Apr 16 02:43:32 2025
 Report : resources
 Design : dcache
 Version: U-2022.12-SP7
-Date   : Wed Apr 16 02:43:32 2025
+Date   : Fri Apr 18 18:42:02 2025
 ****************************************
 
 Resource Sharing Report for design dcache in file ../verilog/dcache.sv
@@ -532,8 +532,8 @@ Resource Sharing Report for design dcache in file ../verilog/dcache.sv
 ===============================================================================
 | r87      | DW01_cmp6    | width=26   |               | eq_100               |
 | r89      | DW01_inc     | width=4    |               | add_127              |
-| r91      | DW01_cmp6    | width=4    |               | ne_140               |
-| r93      | DW01_dec     | width=4    |               | sub_141              |
+| r91      | DW01_cmp6    | width=4    |               | ne_142               |
+| r93      | DW01_dec     | width=4    |               | sub_143              |
 ===============================================================================
 
 
@@ -546,7 +546,7 @@ Warning: Design 'dcache' contains 3 high-fanout nets. A fanout number of 1000 wi
 Report : reference
 Design : dcache
 Version: U-2022.12-SP7
-Date   : Wed Apr 16 02:43:33 2025
+Date   : Fri Apr 18 18:42:04 2025
 ****************************************
 
 Attributes:

@@ -29,19 +29,19 @@
             Inclusivity and Diversity" (Refer to article 000036315 at
                         https://solvnetplus.synopsys.com)
 Initializing...
-Current time:       Wed Apr 16 02:42:51 2025
-Hostname:           cadpc11
+Current time:       Fri Apr 18 18:41:16 2025
+Hostname:           cadpc15
 CPU Model:          11th Gen Intel(R) Core(TM) i9-11900 @ 2.50GHz
-CPU Details:        Cores = 16 : Sockets = 1 : Cache Size = 16384 KB : Freq = 3.81 GHz
+CPU Details:        Cores = 16 : Sockets = 1 : Cache Size = 16384 KB : Freq = 4.00 GHz
 OS:                 Linux 4.18.0-553.44.1.el8_10.x86_64
-RAM:                 62 GB (Free  44 GB)
+RAM:                 62 GB (Free  40 GB)
 Swap:                31 GB (Free  31 GB)
 Work Filesystem:    /homes mounted to auto.homes
 Tmp Filesystem:     /tmp mounted to tmpfs
-Work Disk:          16773 GB (Free 6123 GB)
+Work Disk:          16773 GB (Free 6114 GB)
 Tmp Disk:            31 GB (Free  31 GB)
 
-CPU Load: 35%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6123 GB, Tmp Disk Free: 31 GB
+CPU Load: 37%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6114 GB, Tmp Disk Free: 31 GB
 ##########################
 # ---- Introduction ---- #
 ##########################
@@ -208,7 +208,7 @@ Inferred memory devices in process
 ===========================================================================
 
 Inferred memory devices in process
-	in routine dcache line 153 in file
+	in routine dcache line 155 in file
 		'../verilog/dcache.sv'.
 ===============================================================================
 |    Register Name    |   Type    | Width | Bus | MB | AR | AS | SR | SS | ST |
@@ -232,7 +232,7 @@ Statistics for MUX_OPs
 |    dcache/99     |   64   |   64    |      6       |
 |    dcache/100    |   64   |   26    |      6       |
 |    dcache/100    |   64   |    1    |      6       |
-|    dcache/187    |   4    |   32    |      2       |
+|    dcache/189    |   4    |   32    |      2       |
 ======================================================
 Warning:  ../verilog/dcache.sv:98: Netlist for always_comb block contains a latch. (ELAB-974)
 Information:  Complex logic will not be considered for set/reset inference. (ELAB-2008)
@@ -381,7 +381,7 @@ redirect $chk_file { check_design }
 # map_effort can be changed to high if you're ok with time increasing for better performance
 # or you can change from compile to compile_ultra for best performance, but likely increased time
 compile -map_effort medium
-CPU Load: 35%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6123 GB, Tmp Disk Free: 31 GB
+CPU Load: 37%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6114 GB, Tmp Disk Free: 31 GB
 Information: Evaluating DesignWare library utilization. (UISN-27)
 
 ============================================================================
@@ -478,20 +478,20 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                            
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT         
   --------- --------- --------- --------- --------- -------------------------
-    0:00:24    4640.0      0.00       0.0       0.0                          
-    0:00:24    4640.0      0.00       0.0       0.0                          
-    0:00:24    4640.0      0.00       0.0       0.0                          
-    0:00:24    4640.0      0.00       0.0       0.0                          
-    0:00:24    4640.0      0.00       0.0       0.0                          
-    0:00:28    3439.9      0.00       0.0       0.0                          
-    0:00:28    3438.0      0.00       0.0       0.0                          
-    0:00:31    3438.0      0.00       0.0       0.0                          
-    0:00:31    3438.0      0.00       0.0       0.0                          
-    0:00:31    3438.0      0.00       0.0       0.0                          
-    0:00:31    3438.0      0.00       0.0       0.0                          
-    0:00:31    3438.0      0.00       0.0       0.0                          
-    0:00:31    3438.0      0.00       0.0       0.0                          
-    0:00:31    3438.0      0.00       0.0       0.0                          
+    0:00:28    4640.0      0.00       0.0       0.0                          
+    0:00:28    4640.0      0.00       0.0       0.0                          
+    0:00:28    4640.0      0.00       0.0       0.0                          
+    0:00:28    4640.0      0.00       0.0       0.0                          
+    0:00:28    4640.0      0.00       0.0       0.0                          
+    0:00:32    3439.9      0.00       0.0       0.0                          
+    0:00:32    3438.0      0.00       0.0       0.0                          
+    0:00:34    3438.0      0.00       0.0       0.0                          
+    0:00:34    3438.0      0.00       0.0       0.0                          
+    0:00:35    3438.0      0.00       0.0       0.0                          
+    0:00:35    3438.0      0.00       0.0       0.0                          
+    0:00:35    3438.0      0.00       0.0       0.0                          
+    0:00:35    3438.0      0.00       0.0       0.0                          
+    0:00:35    3438.0      0.00       0.0       0.0                          
 
 
 
@@ -502,9 +502,9 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                            
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT         
   --------- --------- --------- --------- --------- -------------------------
-    0:00:31    3438.0      0.00       0.0       0.0                          
-    0:00:31    3438.0      0.00       0.0       0.0                          
-    0:00:31    3438.0      0.00       0.0       0.0                          
+    0:00:35    3438.0      0.00       0.0       0.0                          
+    0:00:35    3438.0      0.00       0.0       0.0                          
+    0:00:35    3438.0      0.00       0.0       0.0                          
 
 
   Beginning Critical Range Optimization
@@ -514,7 +514,7 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                            
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT         
   --------- --------- --------- --------- --------- -------------------------
-    0:00:31    3438.0      0.00       0.0       0.0                          
+    0:00:35    3438.0      0.00       0.0       0.0                          
 
 
   Beginning Area-Recovery Phase  (cleanup)
@@ -524,20 +524,20 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                            
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT         
   --------- --------- --------- --------- --------- -------------------------
-    0:00:31    3438.0      0.00       0.0       0.0                          
-    0:00:31    3438.0      0.00       0.0       0.0                          
-    0:00:34    3434.5      0.00       0.0       0.0                          
-    0:00:34    3431.6      0.00       0.0       0.0                          
-    0:00:35    3425.0      0.00       0.0       0.0                          
-    0:00:35    3425.0      0.00       0.0       0.0                          
-    0:00:35    3425.0      0.00       0.0       0.0                          
-    0:00:35    3425.0      0.00       0.0       0.0                          
-    0:00:35    3425.0      0.00       0.0       0.0                          
-    0:00:35    3425.0      0.00       0.0       0.0                          
-    0:00:35    3425.0      0.00       0.0       0.0                          
-    0:00:35    3425.0      0.00       0.0       0.0                          
-    0:00:35    3425.0      0.00       0.0       0.0                          
-    0:00:35    3425.0      0.00       0.0       0.0                          
+    0:00:35    3438.0      0.00       0.0       0.0                          
+    0:00:35    3438.0      0.00       0.0       0.0                          
+    0:00:37    3434.5      0.00       0.0       0.0                          
+    0:00:38    3431.6      0.00       0.0       0.0                          
+    0:00:38    3425.0      0.00       0.0       0.0                          
+    0:00:38    3425.0      0.00       0.0       0.0                          
+    0:00:38    3425.0      0.00       0.0       0.0                          
+    0:00:39    3425.0      0.00       0.0       0.0                          
+    0:00:39    3425.0      0.00       0.0       0.0                          
+    0:00:39    3425.0      0.00       0.0       0.0                          
+    0:00:39    3425.0      0.00       0.0       0.0                          
+    0:00:39    3425.0      0.00       0.0       0.0                          
+    0:00:39    3425.0      0.00       0.0       0.0                          
+    0:00:39    3425.0      0.00       0.0       0.0                          
 
 
   Beginning Critical Range Optimization
@@ -547,8 +547,8 @@ Information: Command 'do_operand_isolation' is obsolete and is being ignored.  P
    ELAPSED            WORST NEG   SETUP    DESIGN                            
     TIME      AREA      SLACK     COST    RULE COST         ENDPOINT         
   --------- --------- --------- --------- --------- -------------------------
-    0:00:35    3425.0      0.00       0.0       0.0                          
-    0:00:36    3168.6      0.00       0.0       0.0                          
+    0:00:39    3425.0      0.00       0.0       0.0                          
+    0:00:40    3168.6      0.00       0.0       0.0                          
 Loading db file '/homes/user/fac/tk3070/tmp/synthesis/asap7sc7p5t_merged_RVT_FF_nldm_211120.db'
 
 
@@ -560,7 +560,7 @@ Note: Symbol # after min delay cost means estimated hold TNS across all active s
 Warning: Design 'dcache' contains 2 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
      Net 'clk': 5938 load(s), 1 driver(s)
      Net 'n12092': 5931 load(s), 1 driver(s)
-CPU Load: 37%, Ram Free: 44 GB, Swap Free: 31 GB, Work Disk Free: 6123 GB, Tmp Disk Free: 31 GB
+CPU Load: 38%, Ram Free: 40 GB, Swap Free: 31 GB, Work Disk Free: 6113 GB, Tmp Disk Free: 31 GB
 Information: Total number of MV cells in the design.
 ----------------------------------------------------------------------------------------------------
  MV Cells                                           Total Number                                   
@@ -644,7 +644,7 @@ exit 0
 
 Memory usage for this session 362 Mbytes.
 Memory usage for this session including child processes 362 Mbytes.
-CPU usage for this session 42 seconds ( 0.01 hours ).
-Elapsed time for this session 45 seconds ( 0.01 hours ).
+CPU usage for this session 47 seconds ( 0.01 hours ).
+Elapsed time for this session 50 seconds ( 0.01 hours ).
 
 Thank you...
