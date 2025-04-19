@@ -40,6 +40,13 @@
 // ASSUMPTIONS MADE BY MY LSQ
 // stores and loads are stored in one queue (together)
 
+module lsq_adder#(
+)(
+    input logic [31:0] a,
+    input logic [31:0] b
+);
+    assign sum = a + b;
+endmodule
 
 module lsq#(
     parameter LSQ_SIZE = 8,
@@ -49,7 +56,7 @@ module lsq#(
     input logic clk,
     input logic reset,
 
-    input logic [63:0]dcache_data_out, // data coming back from cache
+    input logic [63:0] dcache_data_out, // data coming back from cache
     input logic [3:0] dcache_tag, // high when valid
     input logic [3:0] dcache_response, // 0 = can't accept, other=tag of transaction
 

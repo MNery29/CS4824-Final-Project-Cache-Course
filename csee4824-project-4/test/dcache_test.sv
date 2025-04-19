@@ -8,6 +8,7 @@ module testbench;
     logic[`XLEN-1:0] proc2Dcache_addr;
     logic [1:0] proc2Dcache_command;
     logic [3:0] mem2proc_response; // 0 = can't accept, other=tag of transaction
+    logic [63:0] proc2Dcache_data; // data for current command (if store)
     logic [63:0] mem2proc_data;     // data resulting from a load
     logic [3:0] mem2proc_tag;       // 0 = no value, other=tag of transaction
 
@@ -22,7 +23,6 @@ module testbench;
     logic [3:0] data_response;
     logic [3:0] number_of_waits;
     logic [3:0] next_number_of_waits;
-    logic [1:0] proc2Dcache_command; // `BUS_NONE `BUS_LOAD or `BUS_STORE
     logic next_state;
     logic state;
 
@@ -32,6 +32,7 @@ module testbench;
         .reset(reset),
 
         .proc2Dcache_addr(proc2Dcache_addr),
+        .proc2Dcache_data(proc2Dcache_data),
         .proc2Dcache_command(proc2Dcache_command),
 
         .mem2dcache_response(mem2proc_response), // matching module port name
@@ -73,9 +74,9 @@ module testbench;
     endtask
 
     initial begin
-        $monitor("Time:%4.0f\n clock:%b\n reset:%b\n proc2Dcache_addr:%h\n mem2proc_response:%b\n mem2proc_data:%h\n mem2proc_tag:%b\n proc2mem_addr:%h\n proc2mem_data:%h\n proc2mem_command:%b\n proc2mem_size:%b\n hit_data:%h\n hit:%b\n data_tag:%b\n data_response:%b\n next_state:%b\n state:%b\n number_of_waits:%b\n next_number_of_waits:%b\n",
+        $monitor("Time:%4.0f\n clock:%b\n reset:%b\n proc2Dcache_addr:%h\n proc2Dcache_data:%h\n mem2proc_response:%b\n mem2proc_data:%h\n mem2proc_tag:%b\n proc2mem_addr:%h\n proc2mem_data:%h\n proc2mem_command:%b\n proc2mem_size:%b\n hit_data:%h\n hit:%b\n data_tag:%b\n data_response:%b\n next_state:%b\n state:%b\n number_of_waits:%b\n next_number_of_waits:%b\n",
             $time, clk, reset,
-            proc2Dcache_addr,
+            proc2Dcache_addr, proc2Dcache_data,
             mem2proc_response, mem2proc_data, mem2proc_tag,
             proc2mem_addr, proc2mem_data, proc2mem_command, proc2mem_size,
             hit_data, hit, data_tag, data_response, next_state, state,
@@ -112,164 +113,99 @@ module testbench;
         // The dcache design expects mem2proc_response != 0 to accept the request
         // Then a cycle or two later, mem2proc_tag != 0 + mem2proc_data
         // will cause the cache to store it.
-        $display("---- Memory responds with 'response=1' for the load request ----");
-        mem2proc_response = 4'b0001;  // means memory has accepted and tagged the request
+        //------------------------------------------------------
+        // 1. LOAD miss (addr 0x0010) -> memory fetch -> HIT check
+        //------------------------------------------------------
+        $display("\n-- 1. LOAD miss addr=0x10 --");
+        proc2Dcache_addr    = 32'h0000_0010;
+        proc2Dcache_command = BUS_LOAD;
         @(negedge clk);
-        show_signals();
+        // expect MISS => dcache should issue BUS_LOAD to memory
+        assert(proc2mem_command == BUS_LOAD)
+            else $fatal("Expected BUS_LOAD to memory on miss");
 
-        // Then we can set mem2proc_response back to 0, and later set mem2proc_tag
-        // to the same value (1) with the data. This mimics the memory sending data back.
-        mem2proc_response = 4'b0000;
-        @(negedge clk);
-        show_signals();
-
-
-        // Now memory says: "Here is your data for tag=1"
-        $display("---- Memory is returning data for tag=1 ----");
-        mem2proc_tag  = 4'b0001;
-        mem2proc_data = 64'hDEAD_BEEF_0000_0010; // sample data
-        @(negedge clk);
-        show_signals();
-
-
-        // After 1 cycle, clear the mem2proc_tag to indicate no more data
-        mem2proc_tag  = 4'b0000;
-        mem2proc_data = 64'h0;
-        @(negedge clk);
-        show_signals();
-
-        //----------------------------------------------------------------
-        // Example 2: Read the same address => expect a HIT now
-        //----------------------------------------------------------------
-        $display("---- Reading the same address => should be a hit ----");
-        proc2Dcache_addr = 32'h0000_0010;
-        proc2Dcache_command = BUS_LOAD; // load command
-        @(negedge clk);
-        show_signals();
-
-        // Wait a cycle or two
-        repeat (2) @(negedge clk);
+        // memory accepts with tag=1
+        mem2proc_response = 4'd1;
         proc2Dcache_command = BUS_NONE;
-        show_signals();
-
-        //----------------------------------------------------------------
-        // Example 3: Different address => new MISS
-        //----------------------------------------------------------------
-        $display("---- Reading a different address => expect another MISS ----");
-        proc2Dcache_addr = 32'h0000_0020;
-        proc2Dcache_command = BUS_LOAD; // load command
         @(negedge clk);
-        show_signals();
+        mem2proc_response = '0; // clear
+        @(negedge clk);
 
-        repeat(2) @(negedge clk);
+        // memory returns data (tag 1)
+        mem2proc_tag  = 4'd1;
+        mem2proc_data = 64'hDEAD_BEEF_0000_0010;
+        @(negedge clk);
+        mem2proc_tag  = '0;
+        mem2proc_data = '0;
+        @(negedge clk);
+
+        // now the line should be in cache; LOAD again => HIT
+        proc2Dcache_addr    = 32'h0000_0010;
+        proc2Dcache_command = BUS_LOAD;
+        @(negedge clk);
+        assert(hit && hit_data == 64'hDEAD_BEEF_0000_0010)
+            else $fatal("Expected load hit with correct data after fill");
         proc2Dcache_command = BUS_NONE;
-        show_signals();
-
-        //Reset 
-        clk               = 0;
-        reset             = 1;
-        proc2Dcache_addr  = 32'h00000000;
-        mem2proc_response = 4'b0;
-        mem2proc_data     = 64'h0;
-        mem2proc_tag      = 4'b0;
-
-        //wait a couple cycles
-        repeat (2) @(negedge clk);
-        show_signals();
-        reset = 0;
-
-        //------------------------------------
-        // 2) Issue FIRST MISS (address A)
-        //------------------------------------
-        $display("---- Issue FIRST MISS (addr=0x1000) ----");
-        proc2Dcache_addr = 32'h0000_1000; 
-        proc2Dcache_command = BUS_LOAD; // load command
         @(negedge clk);
-        show_signals();
 
-        // Memory says: "I accept that request with tag=1"
-        $display("---- Memory ACCEPTS first request: response=1 ----");
-        mem2proc_response = 4'b0001; 
-        proc2Dcache_command = BUS_NONE; // load command
+        //------------------------------------------------------
+        // 2. STORE hit (overwrite same line) + verify via LOAD
+        //------------------------------------------------------
+        $display("\n-- 2. STORE hit addr=0x10 --");
+        proc2Dcache_addr    = 32'h0000_0010;
+        proc2Dcache_data   = 64'hCAFE_BABE_CAFE_BABE;
+        proc2Dcache_command = BUS_STORE;
         @(negedge clk);
-        show_signals();
-
-        // Now we clear response back to 0 
-        $display("---- Memory done accepting (response=0) ----");
-        mem2proc_response = 4'b0000;
+        // Expect HIT (write‑through => immediate mem access)
+        assert(hit) else $fatal("Expected store hit");
+        // cache may mark block dirty but should not raise BUS_STORE immediately
+        assert(proc2mem_command == BUS_STORE)
+            else $fatal("Unexpected memory transaction on store hit");
+        proc2Dcache_command = BUS_NONE;
         @(negedge clk);
-        show_signals();
 
-        // *** Notice we do NOT provide data for tag=1 yet. ***
-        // That means the first miss is still 'in flight.'
-        // The cache is presumably waiting for mem2proc_tag=1 + data.
-
-        //------------------------------------
-        // 3) Issue SECOND MISS (address B)
-        //    while the first is still waiting
-        //------------------------------------
-        $display("---- Issue SECOND MISS (addr=0x2000) ----");
-        proc2Dcache_addr = 32'h0000_2000;
-        proc2Dcache_command = BUS_LOAD; // load command
+        // LOAD back – should return the new data we just wrote
+        proc2Dcache_addr    = 32'h0000_0010;
+        proc2Dcache_command = BUS_LOAD;
         @(negedge clk);
-        show_signals();
-
-        // Memory says: "I accept that request with tag=2"
-        $display("---- Memory ACCEPTS second request: response=2 ----");
-        mem2proc_response = 4'b0010;
-        proc2Dcache_command = BUS_NONE; // load command
+        assert(hit && hit_data == 64'hCAFE_BABE_CAFE_BABE)
+            else $fatal("Store data not returned on subsequent load");
+        proc2Dcache_command = BUS_NONE;
         @(negedge clk);
-        show_signals();
 
-        // Clear the response again
-        mem2proc_response = 4'b0000;
+        //------------------------------------------------------
+        // 3. STORE miss (addr 0x0020) – tests write‑allocate path
+        //------------------------------------------------------
+        $display("\n-- 3. STORE miss addr=0x20 --");
+        proc2Dcache_addr    = 32'h0000_0020;
+        proc2Dcache_data   = 64'hFEED_FACE_FEED_FACE;
+        proc2Dcache_command = BUS_STORE;
         @(negedge clk);
-        show_signals();
+        // On miss the cache should allocate line: expect BUS_STORE to memory
+        assert(proc2mem_command == BUS_STORE)
+            else $fatal("Expected cache to fetch line on store miss (write‑allocate)");
+        // Memory accepts tag=2
+        mem2proc_response = 4'd2;
+        proc2Dcache_command = BUS_NONE;
+        @(negedge clk);
+        mem2proc_response = '0;
+        @(negedge clk);
+        // Memory returns data so cache can merge write
+        mem2proc_tag  = 4'd2;
+        mem2proc_data = 64'hDEAD_BEEF_0000_0020;
+        @(negedge clk);
+        mem2proc_tag  = '0;
+        mem2proc_data = '0;
+        @(negedge clk);
+        // After allocation + write, subsequent LOAD should hit new value
+        proc2Dcache_addr    = 32'h0000_0020;
+        proc2Dcache_command = BUS_LOAD;
+        @(negedge clk);
+        assert(hit && hit_data == 64'hFEED_FACE_FEED_FACE)
+            else $fatal("Store miss data not observed on later load");
+        proc2Dcache_command = BUS_NONE;
+        @(negedge clk);
 
-        //------------------------------------
-        // 4) Return DATA for FIRST MISS (tag=1)
-        //------------------------------------
-        $display("---- Returning data for FIRST MISS (tag=1) ----");
-        mem2proc_tag  = 4'b0001;
-        mem2proc_data = 64'hDEAD_BEEF_0000_1000;
-        @(negedge clk);
-        show_signals();
-
-        // Clear mem2proc_tag
-        mem2proc_tag  = 4'b0000;
-        mem2proc_data = 64'h0;
-        @(negedge clk);
-        show_signals();
-
-        //------------------------------------
-        // 5) Return DATA for SECOND MISS (tag=2)
-        //------------------------------------
-        $display("---- Returning data for SECOND MISS (tag=2) ----");
-        mem2proc_tag  = 4'b0010;
-        mem2proc_data = 64'hFEED_FACE_0000_2000;
-        @(negedge clk);
-        show_signals();
-
-        // Clear again
-        mem2proc_tag  = 4'b0000;
-        mem2proc_data = 64'h0;
-        @(negedge clk);
-        show_signals();
-
-        //------------------------------------
-        // 6) Check that both addresses now HIT
-        //------------------------------------
-        $display("---- Reading address 0x1000 => expect HIT ----");
-        proc2Dcache_addr = 32'h0000_1000;
-        proc2Dcache_command = BUS_LOAD; // load command
-        @(negedge clk);
-        show_signals();
-
-        $display("---- Reading address 0x2000 => expect HIT ----");
-        proc2Dcache_addr = 32'h0000_2000;
-        proc2Dcache_command = BUS_LOAD; // load command
-        @(negedge clk);
-        show_signals();
 
         //------------------------------------
         // Done
