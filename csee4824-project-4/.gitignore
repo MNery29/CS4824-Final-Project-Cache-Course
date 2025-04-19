@@ -10,5 +10,5 @@ simv_testing/
 *.simv
 synth/
 
-verdi_config_file
 ucli.key
+verdi_config_file
