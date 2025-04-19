@@ -4,18 +4,21 @@
 # "pipeline.sv"
 
 # missing test benches:
-# "booth_mult_stage" "decoder" "h3hash" "icache" "lsq" "mult_stage" "psel_gen" "regfile" 
-# "stage_cp" "stage_ex" "stage_mem" "stage_rt" "zcache"
+# "booth_mult_stage" "decoder" "h3hash" "lsq" "mult_stage" "psel_gen" "regfile" 
+# "zcache" 
+# "stage_ex" "stage_mem" "stage_rt"
 
 # ========= Results Post-test! =====================================================
 
-# UNITS PASSING ALL TESTS! <3 YAYY: "reorder_buffer" "cdb" "dcache" "map_table" "reservation_station"
-# STAGES PASSING ALL TEST!!! YAYYY: "stage_id" "stage_if" "stage_is"
+# UNITS PASSING ALL TESTS! <3 YAYY: "reorder_buffer" "cdb" "dcache" "map_table" "reservation_station" "icache"
+# STAGES PASSING ALL TEST!!! YAYYY: "stage_id" "stage_if" "stage_is" "stage_cp"
+#("reorder_buffer" "cdb" "dcache" "map_table" "reservation_station" "icache" "stage_id" "stage_if" "stage_is")
 
 # ONES WHERE I NEED SOME CLARIFICATION: 
 # --> mult, whats going on? what modules are actually used
+# --> zcache, genvar issues i think im really confused lowkey 
 
-TESTED_MODULES=("reorder_buffer" "cdb" "dcache" "map_table" "reservation_station" "stage_id" "stage_if" "stage_is")
+TESTED_MODULES=("stage_ex")
 
 # Loop through each module and run the make commands
 for module in "${TESTED_MODULES[@]}"

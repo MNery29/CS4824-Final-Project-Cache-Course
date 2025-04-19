@@ -22,8 +22,8 @@ module zcache #(
     parameter integer SETS = 32
 )
 (
-    input clk;
-    input reset;
+    input clk,
+    input reset,
     
     input [`XLEN-1:0] proc2Dcache_addr,
 
@@ -34,7 +34,7 @@ module zcache #(
     output [`XLEN-1:0] proc2mem_addr,
     output [63:0]      proc2mem_data, // address for current command
     output [1:0]       proc2mem_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
-    output MEM_SIZE    proc2mem_size,
+    output MEM_SIZE    proc2mem_size
 
 );
     logic [WAYS*SETS_WIDTH-1:0] hashed_indices;
@@ -44,7 +44,7 @@ module zcache #(
         .hashed_indices (hashed_indices)
     );
 
-    logic [`64 * WAYS * SETS-1:0] cache_data;
+    logic [64 * WAYS * SETS - 1:0] cache_data;
     logic[WAYS * SETS-1:0] cache_data_valid;
     logic[`XLEN * WAYS * SETS-1:0] cache_data_tag;
 

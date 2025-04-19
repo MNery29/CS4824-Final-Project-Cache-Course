@@ -10,7 +10,7 @@
 
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
-`include "verilog/rob.svh"
+`include "verilog/reorder_buffer.sv"
 
 module stage_cp (
 

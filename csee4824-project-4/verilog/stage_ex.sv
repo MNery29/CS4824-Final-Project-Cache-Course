@@ -45,7 +45,7 @@ module mul_unit (
     input IS_EX_PACKET req,
 
     output logic         busy,
-    output EX_CP_PACKET out_packet,
+    output EX_CP_PACKET out_packet
 );
     // Right now, we are not using the op_codes, we are just doing
     // regular o' signed multiplication
