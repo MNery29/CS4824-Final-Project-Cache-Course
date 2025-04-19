@@ -9,3 +9,6 @@ simv_testing/
 *.simv_daidir/
 *.simv
 synth/
+
+verdi_config_file
+ucli.key
