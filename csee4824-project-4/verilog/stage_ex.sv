@@ -78,7 +78,7 @@ module mul_unit (
     // State transition
     always_comb begin
         case (state)
-            M_IDLE: nstate = (valid) ? M_RUN : M_IDLE;
+            M_IDLE: nstate = (req.issue_valid) ? M_RUN : M_IDLE; //was set as just 'valid' changed to req.issue_valid
             M_RUN : nstate = (mul_done) ? M_DONE : M_RUN;
             M_DONE: nstate = M_IDLE;
             default: nstate = M_IDLE;
@@ -122,20 +122,22 @@ module fu_cluster #(
 
     // ---------- Simple combinational ALU ----------
     logic [63:0] simple_res;
-    logic signed [`XLEN-1:0] A,B;
-    begin
-        A = p.OPA; B = p.OPB;
-        unique case(p.alu_func)
+    logic signed [`XLEN-1:0] A, B;
+
+    always_comb begin //from just begin statement to always_comb
+        A = in_pkt.OPA; // what is p... changed to in_pkt
+        B = in_pkt.OPB;
+        unique case(in_pkt.alu_func)
             ALU_ADD : simple_res = A + B;
             ALU_SUB : simple_res = A - B;
             ALU_AND : simple_res = A & B;
             ALU_OR  : simple_res = A | B;
             ALU_XOR : simple_res = A ^ B;
             ALU_SLT : simple_res = (A < B);
-            ALU_SLTU: simple_res = (p.OPA < p.OPB);
-            ALU_SLL : simple_res = p.OPA << p.OPB[4:0];
-            ALU_SRL : simple_res = p.OPA >> p.OPB[4:0];
-            ALU_SRA : simple_res = A >>> p.OPB[4:0];
+            ALU_SLTU: simple_res = (in_pkt.OPA < in_pkt.OPB);
+            ALU_SLL : simple_res = in_pkt.OPA << in_pkt.OPB[4:0];
+            ALU_SRL : simple_res = in_pkt.OPA >> in_pkt.OPB[4:0];
+            ALU_SRA : simple_res = A >>> in_pkt.OPB[4:0];
             default : simple_res = `XLEN'hDEAD_BEEF;
         endcase
     end
@@ -149,7 +151,7 @@ module fu_cluster #(
     EX_CP_PACKET         mul_out  [NUM_MULS];
     IS_EX_PACKET         mul_req;
 
-    assign mul_req = (in_pkt.valid && is_mul) ? in_pkt : '0;
+    assign mul_req = (in_pkt.issue_valid && is_mul) ? in_pkt : '0;
 
     genvar i;
     generate
@@ -164,14 +166,25 @@ module fu_cluster #(
         end
     endgenerate
 
-    logic any_mul_free = |~mul_busy;
+    //logic any_mul_free = |~mul_busy; syntax errors
+
+    logic any_mul_free;
+
+    always_comb begin
+        any_mul_free = 0;
+        for (int i = 0; i < NUM_MULS; i++) begin
+            if (!mul_busy[i]) begin
+                any_mul_free = 1;
+            end
+        end
+    end
 
     // ---------- Ready / result select ----------
-    assign issue_ready = in_pkt.valid && (is_mul ? any_mul_free : 1'b1);
+    assign issue_ready = in_pkt.issue_valid && (is_mul ? any_mul_free : 1'b1);
 
     always_comb begin
         if (!is_mul) begin
-            out_pkt.valid   = in_pkt.valid;
+            out_pkt.valid   = in_pkt.issue_valid;
             out_pkt.rob_tag = in_pkt.rob_tag;
             out_pkt.value   = simple_res;
         end else begin
@@ -353,7 +366,7 @@ module stage_ex (
         .take(take_conditional)
     );
 
-    assign cdb_out.valid = is_ex_reg.valid  //&& !id_ex_reg.halt && !id_ex_reg.illegal;
+    assign cdb_out.valid = is_ex_reg.valid;  //&& !id_ex_reg.halt && !id_ex_reg.illegal;
     assign cdb_out.tag = is_ex_reg.rob_tag;
     assign cdb_out.value = ex_packet.alu_result;
 

@@ -18,7 +18,7 @@
 # --> mult, whats going on? what modules are actually used
 # --> zcache, genvar issues i think im really confused lowkey 
 
-TESTED_MODULES=("stage_cp")
+TESTED_MODULES=("stage_ex")
 
 # Loop through each module and run the make commands
 for module in "${TESTED_MODULES[@]}"
