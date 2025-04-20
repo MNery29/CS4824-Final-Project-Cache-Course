@@ -64,7 +64,7 @@ typedef struct packed {
 
 module lsq#(
     parameter LSQ_SIZE = 8,
-    parameter LSQ_SIZE_W = 3 // log2(LSQ_SIZE)
+    parameter LSQ_SIZE_W = 2 // log2(LSQ_SIZE) = 3 but 3 -1 =2
 )
 (
     input logic clk,
@@ -73,6 +73,7 @@ module lsq#(
     input logic [63:0] dcache_data_out, // data coming back from cache
     input logic [3:0] dcache_tag, // high when valid
     input logic [3:0] dcache_response, // 0 = can't accept, other=tag of transaction
+    input logic dcache_hit, // 1 if hit, 0 if miss
 
     input ROB_RETIRE_PACKET rob_retire_in, //so stores know when they are allowed to write
     input ROB_DISPATCH_PACKET rob_dispatch_in, // so loads know when they are allowed to read / tags of instructions
@@ -87,18 +88,27 @@ module lsq#(
 
     output logic store_ready, // let ROB know that store ready to write
     output logic [4:0] store_ready_tag, // tag of store ready to write
-    output logic stall_dispatch // stall dispatch if lsq is full
+    output logic stall_dispatch,// stall dispatch if lsq is full
+
+    output logic cache_in_flight, //debugging
+    output logic head_ready_for_mem, // debugging
+
+    output logic [LSQ_SIZE_W:0] head_ptr, //points to OLDEST entry
+    output logic [LSQ_SIZE_W:0] tail_ptr //points to next free entry
 );
 
     lsq_entry_t lsq [LSQ_SIZE-1:0];
-    logic [LSQ_SIZE_W:0] head_ptr; //points to OLDEST entry
-    logic [LSQ_SIZE_W:0] tail_ptr; //points to next free entry
+    // logic [LSQ_SIZE_W:0] head_ptr; //points to OLDEST entry
+    // logic [LSQ_SIZE_W:0] tail_ptr; //points to next free entry
 
     // track whether we have an outstanding D‐cache request
     // now right now, we can only track ONE
-    logic cache_in_flight;
+    // logic cache_in_flight;
     logic [3:0] cache_tag_in_flight;
     logic [LSQ_SIZE_W:0] cache_index_in_flight;
+    
+
+    assign cache_index_in_flight = head_ptr;
 
     
     logic is_mem_op;
@@ -125,13 +135,69 @@ module lsq#(
     // assign stall if it is full
     assign stall_dispatch = full;
 
+     // assign dcache_command = BUS_NONE;
+    // assign dcache_addr    = 32'b0;
+    // info about the head
+    lsq_entry_t head_entry; 
+    assign head_entry = lsq[head_ptr];
+
+    //this determines whether we are ready to send a request to the cache
+    // the requirements are: if entry is load, then if we have address from CDB, we are ready to go
+    // if entry is store, then we need to have the address AND
+    // permission from our replay buffer (retired)
+    // logic head_ready_for_mem;
+    assign head_ready_for_mem = (head_entry.valid
+                                 && head_entry.address_valid
+                                 && ( !head_entry.is_store
+                                      || (head_entry.store_data_valid && head_entry.retired ) ));
+
+
+    assign store_ready = ( head_entry.valid
+                           && head_entry.is_store
+                           && head_entry.retired
+                           && head_entry.address_valid
+                           && head_entry.store_data_valid
+                           && !cache_in_flight );
+    assign store_ready_tag = head_entry.rob_tag;
+
+    logic [1:0]  dcache_cmd_next;
+    logic [31:0] dcache_addr_next;
+    logic [63:0] dcache_data_next;
+    always_comb begin
+        dcache_cmd_next  = BUS_NONE;
+        dcache_addr_next = 32'b0;
+        dcache_data_next = 64'b0;
+
+        if (!cache_in_flight  && head_ready_for_mem) begin
+            if (head_entry.is_store) begin
+                dcache_cmd_next  = BUS_STORE;
+                dcache_addr_next = head_entry.address;
+                dcache_data_next = head_entry.store_data;
+            end
+            else begin
+                dcache_cmd_next  = BUS_LOAD;
+                dcache_addr_next = head_entry.address;
+                // data_next = 0 for loads
+            end
+        end
+    end
+
+    assign dcache_command = dcache_cmd_next;
+    assign dcache_addr    = dcache_addr_next;
+    assign dcache_data    = dcache_data_next;
+    
+    logic load_completed;
+
+    logic [63:0] data_to_broadcast;
+
     always_ff @(posedge clk or posedge reset) begin
         if (reset) begin
-            head_ptr        <= '0;
             tail_ptr        <= '0;
-            cache_in_flight <= 1'b0;
-            cache_tag_in_flight <= 4'b0;
-            cache_index_in_flight <= '0;
+            head_ptr        <= '0;
+            cache_in_flight         <= 1'b0;
+            cache_tag_in_flight     <= 4'b0;
+            load_completed          <= 1'b0;
+            data_to_broadcast       <= 64'b0;
 
             for (int i = 0; i < LSQ_SIZE; i++) begin
                 lsq[i].valid             <= 1'b0;
@@ -141,6 +207,43 @@ module lsq#(
             end
         end 
         else begin
+            //this is for checking if there is a request in flight (we should wait for this to finish beofre)
+            //blocking method
+            // no load completes this cycle
+            load_completed <= 1'b0;
+
+            // ff we just sent a request and the cache accepted it (dcache_tag != 0),
+            // then record it as "in flight"
+            if (head_ready_for_mem && (dcache_response != 0)) begin
+                cache_in_flight       <= 1'b1;
+                cache_tag_in_flight   <= dcache_tag;
+                // cache_index_in_flight <= head_ptr;
+            end
+            
+
+
+            // ff a response arrives that matches our in-flight tag, the transaction completes
+            if ( (dcache_tag == cache_tag_in_flight && 
+                  dcache_tag != 0) || (head_ready_for_mem && dcache_hit == 1'b1) )
+            begin
+                // ff it's a load, broadcast the data for exactly one cycle
+                if (!lsq[cache_index_in_flight].is_store) begin
+                    load_completed <= 1'b1;
+                end
+                data_to_broadcast <= dcache_data_out;
+
+                // pop the LSQ entry since it is completed
+                lsq[cache_index_in_flight].valid <= 1'b0;
+
+                // advance pointer
+                head_ptr <= next_head_ptr;
+
+                // clear state
+                cache_in_flight     <= 1'b0;
+                cache_tag_in_flight <= 4'b0;
+            end
+            else begin
+            end
             // enqueue if we have a mem op and there's space
             if (is_mem_op && !full) begin
                 lsq[tail_ptr].valid      <= 1'b1;
@@ -152,7 +255,7 @@ module lsq#(
 
                 // We'll store a 4-bit address_tag from the lower bits of rob_tag (or some other scheme).
                 // Must match how `priv_addr_in.tag` will be produced by EX.
-                lsq[tail_ptr].address_tag <= is_ex_in.rob_tag[3:0];
+                lsq[tail_ptr].address_tag <= is_ex_in.rob_tag;
                 lsq[tail_ptr].address_valid <= 1'b0;
                 lsq[tail_ptr].address       <= 32'hDEAD_BEEF;  // placeholder
 
@@ -205,112 +308,60 @@ module lsq#(
     end
 
 
-    assign dcache_command = BUS_NONE;
-    assign dcache_addr    = 32'b0;
-
-
-    // info about the head
-    lsq_entry_t head_entry = lsq[head_ptr];
-
-    //this determines whether we are ready to send a request to the cache
-    // the requirements are: if entry is load, then if we have address from CDB, we are ready to go
-    // if entry is store, then we need to have the address AND
-    // permission from our replay buffer (retired)
-    logic head_ready_for_mem;
-    assign head_ready_for_mem = (head_entry.valid
-                                 && head_entry.address_valid
-                                 && ( !head_entry.is_store
-                                      || (head_entry.store_data_valid && head_entry.retired ) ));
-
-
-    assign store_ready = ( head_entry.valid
-                           && head_entry.is_store
-                           && head_entry.retired
-                           && head_entry.address_valid
-                           && head_entry.store_data_valid
-                           && !cache_in_flight );
-    assign store_ready_tag = head_entry.rob_tag;
-
-    logic [1:0]  dcache_cmd_next;
-    logic [31:0] dcache_addr_next;
-    logic [63:0] dcache_data_next;
-    always_comb begin
-        dcache_cmd_next  = BUS_NONE;
-        dcache_addr_next = 32'b0;
-        dcache_data_next = 64'b0;
-
-        if (!cache_in_flight && head_ready_for_mem) begin
-            if (head_entry.is_store) begin
-                dcache_cmd_next  = BUS_STORE;
-                dcache_addr_next = head_entry.address;
-                dcache_data_next = head_entry.store_data;
-            end
-            else begin
-                dcache_cmd_next  = BUS_LOAD;
-                dcache_addr_next = head_entry.address;
-                // data_next = 0 for loads
-            end
-        end
-    end
-
-    assign dcache_command = dcache_cmd_next;
-    assign dcache_addr    = dcache_addr_next;
-    assign dcache_data    = dcache_data_next;
-
     //TODO:
     // in flight cache tracking, we need to track the memories reqeust that are inflight
     //in flight cache tracking
-    logic load_completed;
-    always_ff @(posedge clk or posedge reset) begin
-        if (reset) begin
-            cache_in_flight         <= 1'b0;
-            cache_tag_in_flight     <= 4'b0;
-            cache_index_in_flight   <= '0;
-            load_completed          <= 1'b0;
-        end 
-        else begin
-            // no load completes this cycle
-            load_completed <= 1'b0;
+    // always_ff @(posedge clk or posedge reset) begin
+    //     if (reset) begin
+    //         head_ptr        <= '0;
+    //         cache_in_flight         <= 1'b0;
+    //         cache_tag_in_flight     <= 4'b0;
+    //         cache_index_in_flight   <= '0;
+    //         load_completed          <= 1'b0;
+    //     end 
+    //     else begin
+    //         // no load completes this cycle
+    //         load_completed <= 1'b0;
 
-            // ff we just sent a request and the cache accepted it (dcache_tag != 0),
-            // then record it as "in flight"
-            if (!cache_in_flight && head_ready_for_mem && (dcache_tag != 4'b0)) begin
-                cache_in_flight       <= 1'b1;
-                cache_tag_in_flight   <= dcache_tag;
-                cache_index_in_flight <= head_ptr;
-            end
+    //         // ff we just sent a request and the cache accepted it (dcache_tag != 0),
+    //         // then record it as "in flight"
+    //         if (head_ready_for_mem && (dcache_tag != 4'b0)) begin
+    //             cache_in_flight       <= 1'b1;
+    //             cache_tag_in_flight   <= dcache_tag;
+    //             // cache_index_in_flight <= head_ptr;
+    //         end
 
-            // ff a response arrives that matches our in-flight tag, the transaction completes
-            if ( cache_in_flight 
-                 && (dcache_response == cache_tag_in_flight)
-                 && (dcache_response != 4'b0) ) 
-            begin
-                // ff it's a load, broadcast the data for exactly one cycle
-                if (!lsq[cache_index_in_flight].is_store) begin
-                    load_completed <= 1'b1;
-                end
+    //         // ff a response arrives that matches our in-flight tag, the transaction completes
+    //         if ( (dcache_response == cache_tag_in_flight)
+    //              && (dcache_response != 4'b0) ) 
+    //         begin
+    //             // ff it's a load, broadcast the data for exactly one cycle
+    //             if (!lsq[cache_index_in_flight].is_store) begin
+    //                 load_completed <= 1'b1;
+    //             end
 
-                // pop the LSQ entry since it is completed
-                lsq[cache_index_in_flight].valid <= 1'b0;
+    //             // pop the LSQ entry since it is completed
+    //             lsq[cache_index_in_flight].valid <= 1'b0;
 
-                // advance pointer
-                head_ptr <= next_head_ptr;
+    //             // advance pointer
+    //             head_ptr <= next_head_ptr;
+    //             cache_index_in_flight <= next_head_ptr;
 
-                // clear state
-                cache_in_flight     <= 1'b0;
-                cache_tag_in_flight <= 4'b0;
-            end
-        end
-    end
+    //             // clear state
+    //             cache_in_flight     <= 1'b0;
+    //             cache_tag_in_flight <= 4'b0;
+    //         end
+    //     end
+    // end
 
     assign cdb_out.valid = load_completed;
+    // -1 is a hacky way to get the load that was just completed (this is very hacky)
+    // only works if it is indeed blocking
     assign cdb_out.tag   = load_completed 
-                           ? lsq[cache_index_in_flight].rob_tag
+                           ? lsq[cache_index_in_flight-1].rob_tag
                            : 5'b0;
     // return 32 bits from the 64-bit D-cache line
-    assign cdb_out.value = load_completed
-                           ? dcache_data_out[31:0]
-                           : 32'b0;
+    assign cdb_out.value = data_to_broadcast[31:0];
 
 
 

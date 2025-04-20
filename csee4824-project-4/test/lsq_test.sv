@@ -10,6 +10,7 @@ module testbench_lsq;
     logic [1:0]                 dcache_command;
     logic [`XLEN-1:0]           dcache_addr;
     logic [63:0]                dcache_data;
+    logic dcache_hit;
 
     // dcache -> LSQ signals
     logic [63:0]                dcache_data_out;  
@@ -29,19 +30,23 @@ module testbench_lsq;
     logic [4:0]                 store_ready_tag;
     logic                       stall_dispatch;
 
+    logic cache_in_flight;
+    logic head_ready_for_mem;
+
+    logic [2:0] head_ptr;
+    logic [2:0] tail_ptr;
+
     // -----------------------------
     // Instantiate LSQ
     // -----------------------------
-    lsq #(
-        .LSQ_SIZE(8),
-        .LSQ_SIZE_W(3)
-    ) uut_lsq (
+    lsq uut_lsq (
         .clk               (clk),
         .reset             (reset),
 
         .dcache_data_out   (dcache_data_out),
         .dcache_tag        (dcache_tag),
         .dcache_response   (dcache_response),
+        .dcache_hit        (dcache_hit),
 
         .rob_retire_in     (rob_retire_in),
         .rob_dispatch_in   (rob_dispatch_in),
@@ -56,7 +61,13 @@ module testbench_lsq;
 
         .store_ready       (store_ready),
         .store_ready_tag   (store_ready_tag),
-        .stall_dispatch    (stall_dispatch)
+        .stall_dispatch    (stall_dispatch),
+
+        .cache_in_flight   (cache_in_flight),
+        .head_ready_for_mem(head_ready_for_mem),
+
+        .head_ptr(head_ptr),
+        .tail_ptr(tail_ptr)
     );
 
 
@@ -85,6 +96,8 @@ module testbench_lsq;
         $display("    -- cdb_out(valid=%b, tag=%0d, value=0x%08h)",
                  cdb_out.valid, cdb_out.tag, cdb_out.value);
         $display("    -- store_ready=%b (tag=%0d)", store_ready, store_ready_tag);
+        $display("    -- cache_in_flight=%b head_ready_for_mem=%b head_ptr=%h tail_ptr=%h", 
+                 cache_in_flight, head_ready_for_mem, head_ptr, tail_ptr);
         $display("-------------------------------------------------------------------------------");
     endtask
 
@@ -94,10 +107,11 @@ module testbench_lsq;
     initial begin
         // Monitor these signals continuously
         $monitor($time, 
-            " :: clk=%b reset=%b | dcache_cmd=%b dcache_addr=0x%h dcache_data=0x%h",
-            clk, reset, dcache_command, dcache_addr, dcache_data);
+            " :: clk=%b reset=%b | dcache_cmd=%b dcache_addr=0x%h dcache_data=0x%h \n -- cache_in_flight=%b head_ready_for_mem=%b stall_dispatch=%b head_ptr=%h tail_ptr=%h dcache_hit=%b dcache_data_out=0x%h \n -- cdb_out(valid=%b, tag=%0d, value=0x%08h)",
+            clk, reset, dcache_command, dcache_addr, dcache_data, cache_in_flight, head_ready_for_mem, stall_dispatch, head_ptr, tail_ptr, dcache_hit, dcache_data_out, cdb_out.valid, cdb_out.tag, cdb_out.value);
 
         // Initialize
+        clk               = 0;
         reset           = 1;
         dcache_tag      = 4'b0;
         dcache_response = 4'b0;
@@ -112,12 +126,12 @@ module testbench_lsq;
         priv_addr_in     = '{addr:'0, tag:'0, valid:0};
 
         // Wait a couple of cycles in reset
-        repeat (2) @(negedge clk);
+        repeat (2) @(posedge clk);
         show_signals();
 
         // Deassert reset
         reset = 0;
-        @(negedge clk);
+        @(posedge clk);
         show_signals();
 
         // --------------------------------------------------
@@ -129,12 +143,12 @@ module testbench_lsq;
         is_ex_in.rd_mem      = 1;
         is_ex_in.wr_mem      = 0;
         is_ex_in.rob_tag     = 5;   // LSQ will store address_tag=5
-        @(negedge clk);
+        @(posedge clk);
 
         // Turn off issue_valid
         is_ex_in.issue_valid = 0;
         is_ex_in.rd_mem      = 0;
-        @(negedge clk);
+        @(posedge clk);
         show_signals();
 
         // Provide the address via priv_addr_in (tag=5 => matches LSQ entry)
@@ -142,10 +156,10 @@ module testbench_lsq;
         priv_addr_in.valid = 1;
         priv_addr_in.tag   = 4'd5;  
         priv_addr_in.addr  = 32'h0000_1000;
-        @(negedge clk);
+        @(posedge clk);
         // Turn off
         priv_addr_in.valid = 0;
-        @(negedge clk);
+        @(posedge clk);
         show_signals();
 
         // LSQ should now attempt to send a LOAD to the dcache if no store_data is needed
@@ -154,7 +168,7 @@ module testbench_lsq;
             $display("DCACHE command = %b, sending dcache_tag=1 (ACCEPT)", dcache_command);
             dcache_tag <= 4'd1;
         end
-        @(negedge clk);
+        @(posedge clk);
 
         // Turn off acceptance
         dcache_tag <= 4'b0;
@@ -162,14 +176,14 @@ module testbench_lsq;
 
         // Now the LSQ is waiting for completion => we eventually provide dcache_response=1
         $display("--- Provide dcache_response=1, with data=0xDEAD_BEEF_1234_0000 ---");
-        dcache_response <= 4'd1;
+        dcache_hit <= 1; // Emulate a hit
         dcache_data_out <= 64'hDEAD_BEEF_1234_0000;
-        @(negedge clk);
+        @(posedge clk);
 
         // Turn off response
-        dcache_response <= 4'b0;
+        dcache_hit <= 0;
         dcache_data_out <= 64'h0;
-        @(negedge clk);
+        @(posedge clk);
         show_signals();
 
         // We expect cdb_out.valid=1 for one cycle with tag=5 and value=0x1234_0000
@@ -190,19 +204,19 @@ module testbench_lsq;
         is_ex_in.rd_mem      = 0;
         is_ex_in.wr_mem      = 1;
         is_ex_in.rob_tag     = 6;
-        @(negedge clk);
+        @(posedge clk);
         // Turn off
         is_ex_in.issue_valid = 0;
         is_ex_in.wr_mem      = 0;
-        @(negedge clk);
+        @(posedge clk);
 
         // Provide address via priv_addr_in.tag=6 => 0x2000
         priv_addr_in.valid = 1;
         priv_addr_in.tag   = 4'd6;
         priv_addr_in.addr  = 32'h0000_2000;
-        @(negedge clk);
+        @(posedge clk);
         priv_addr_in.valid = 0;
-        @(negedge clk);
+        @(posedge clk);
         show_signals();
 
         // Provide store data from cdb_in (tag=6), e.g. 32'hABCD_1234
@@ -210,18 +224,18 @@ module testbench_lsq;
         cdb_in.valid = 1;
         cdb_in.tag   = 5'd6;
         cdb_in.value = 32'hABCD_1234;
-        @(negedge clk);
+        @(posedge clk);
         cdb_in.valid = 0;
-        @(negedge clk);
+        @(posedge clk);
         show_signals();
 
         // Mark store as retired => rob_retire_in(mem_valid=1, tag=6)
         $display("--- Mark store as retired => LSQ can now send store to dcache ---");
         rob_retire_in.mem_valid = 1;
         rob_retire_in.tag       = 6;
-        @(negedge clk);
+        @(posedge clk);
         rob_retire_in.mem_valid = 0;
-        @(negedge clk);
+        @(posedge clk);
         show_signals();
 
         // LSQ should now attempt a STORE => we emulate acceptance with dcache_tag=2
@@ -229,16 +243,16 @@ module testbench_lsq;
             $display("DCACHE store command seen => set dcache_tag=2 (accepted)");
             dcache_tag <= 4'd2;
         end
-        @(negedge clk);
+        @(posedge clk);
         dcache_tag <= 4'd0;
-        @(negedge clk);
+        @(posedge clk);
         show_signals();
 
         // Complete the store => dcache_response=2
         dcache_response <= 4'd2;
-        @(negedge clk);
+        @(posedge clk);
         dcache_response <= 4'd0;
-        @(negedge clk);
+        @(posedge clk);
         show_signals();
 
         // No cdb_out expected for store completion
