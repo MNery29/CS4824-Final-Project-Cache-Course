@@ -8,7 +8,9 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
+`timescale 1ns/1ps
 `include "verilog/sys_defs.svh"
+`include "verilog/ISA.svh"
 
 module pipeline (
     input        clock,             // System clock
@@ -48,8 +50,8 @@ module pipeline (
     //////////////////////////////////////////////////
     //                ID Stage Wires                //
     //////////////////////////////////////////////////
-    ID_IS_PACKET      id_is_packet;
-    ID_IS_PACKET      id_is_reg;
+    ID_IS_PACKET      id_is_packet; // NOT INCLUDED IN stage_id.sv
+    ID_IS_PACKET      id_is_reg; // NOT INCLUDED IN stage_id.sv FIX
     logic [45:0]      id_rob_debug[31:0];
     logic [11:0]      id_rob_pointers;
     logic [7:0]       id_mt_tags[31:0];
@@ -131,12 +133,12 @@ module pipeline (
     //////////////////////////////////////////////////
     //               LSQ Wires                     //
     //////////////////////////////////////////////////
-    logic [63:0]dcache_data_out, // data coming back from cache
-    logic [3:0] dcache_tag, // high when valid
-    logic [3:0] dcache_response, // 0 = can't accept, other=tag of transaction]
-    logic [1:0] dcache_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
+    logic [63:0]dcache_data_out; // data coming back from cache
+    logic [3:0] dcache_tag; // high when valid
+    logic [3:0] dcache_response; // 0 = can't accept, other=tag of transaction]
+    logic [1:0] dcache_command; // `BUS_NONE `BUS_LOAD or `BUS_STORE
     logic [63:0] dcache_data; // data going to cache for store
-    logic [`XLEN-1:0] dcache_addr, // sending address to dcache
+    logic [`XLEN-1:0] dcache_addr; // sending address to dcache
 
     //////////////////////////////////////////////////
     //           Temporary Branch Logic             //
@@ -255,9 +257,9 @@ module pipeline (
     //////////////////////////////////////////////////
     always_ff @(posedge clock or posedge reset) begin
         if (reset) begin
-            id_is_reg <= '0;
+            id_is_reg <= '0; // IS ID Packet not defined yet FIX
         end else begin
-            id_is_reg <= id_is_packet;
+            id_is_reg <= id_is_packet; // IS ID Packet not defined yet FIX
         end
     end
 

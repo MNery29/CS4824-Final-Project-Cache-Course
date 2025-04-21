@@ -9,6 +9,7 @@ simv_testing/
 *.simv.daidir/
 *.simv
 synth/
+*.mem
 
 ucli.key
 verdi_config_file
