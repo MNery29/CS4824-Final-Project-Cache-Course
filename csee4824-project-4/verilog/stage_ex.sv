@@ -301,7 +301,7 @@ module stage_ex (
     input logic clk, rst,
     input IS_EX_PACKET is_ex_reg,
 
-    input ID_EX_PACKET id_ex_reg,
+    // input ID_EX_PACKET id_ex_reg,
 
     output EX_MEM_PACKET ex_packet,
     output EX_CP_PACKET ex_cp_packet,
@@ -313,8 +313,8 @@ module stage_ex (
     logic take_conditional;
 
     // Pass-throughs
-    assign ex_packet.NPC          = is_ex_reg.NPC;
-    assign ex_packet.rs2_value    = id_ex_reg.rs2_value;
+    // assign ex_packet.NPC          = is_ex_reg.NPC;
+    assign ex_packet.rs2_value    = is_ex_req.OPB;
     assign ex_packet.rd_mem       = is_ex_reg.rd_mem;
     assign ex_packet.wr_mem       = is_ex_reg.wr_mem;
     // assign ex_packet.dest_reg_idx = id_ex_reg.dest_reg_idx;
@@ -339,7 +339,7 @@ module stage_ex (
         case (id_ex_reg.opa_select)
             OPA_IS_RS1:  opa_mux_out = is_ex_reg.OPA; // before it was: id_ex_reg.rs1_value;
             OPA_IS_NPC:  opa_mux_out = is_ex_reg.NPC;
-            OPA_IS_PC:   opa_mux_out = id_ex_reg.PC;
+            OPA_IS_PC:   opa_mux_out = is_ex_reg.NPC; // just marking as NPC for now, cuz idk if this is really necessary
             OPA_IS_ZERO: opa_mux_out = 0;
             default:     opa_mux_out = `XLEN'hdeadface; // dead face
         endcase

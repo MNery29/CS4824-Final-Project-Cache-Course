@@ -325,17 +325,17 @@ typedef struct packed {
  */
 typedef struct packed {
     logic [`XLEN-1:0] alu_result;
-    logic [`XLEN-1:0] NPC;
+    // logic [`XLEN-1:0] NPC;
 
-    logic             take_branch; // Is this a taken branch?
+    // logic             take_branch; // Is this a taken branch?
     // Pass-through from decode stage
     logic [`XLEN-1:0] rs2_value;
     logic             rd_mem;
     logic             wr_mem;
-    logic [4:0]       dest_reg_idx;
-    logic             halt;
-    logic             illegal;
-    logic             csr_op;
+    // logic [4:0]       dest_reg_idx;
+    // logic             halt;
+    // logic             illegal;
+    // logic             csr_op;
     logic             rd_unsigned; // Whether proc2Dmem_data is signed or unsigned
     MEM_SIZE          mem_size;
     logic             valid;

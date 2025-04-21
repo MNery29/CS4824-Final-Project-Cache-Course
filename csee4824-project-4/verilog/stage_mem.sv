@@ -12,17 +12,47 @@
 
 `include "verilog/sys_defs.svh"
 
+// typedef struct packed {
+//     logic [`XLEN-1:0] alu_result;
+//     logic [`XLEN-1:0] NPC;
+
+//     logic             take_branch; // Is this a taken branch?
+//     // Pass-through from decode stage
+//     logic [`XLEN-1:0] rs2_value;
+//     logic             rd_mem;
+//     logic             wr_mem;
+//     logic [4:0]       dest_reg_idx;
+//     logic             halt;
+//     logic             illegal;
+//     logic             csr_op;
+//     logic             rd_unsigned; // Whether proc2Dmem_data is signed or unsigned
+//     MEM_SIZE          mem_size;
+//     logic             valid;
+// } EX_MEM_PACKET;
+
+// typedef struct packed {
+//     logic valid;
+//     logic [`XLEN-1:0] alu_result;
+//     logic [`XLEN-1:0] rs2_value;
+//     logic             rd_mem;
+//     logic             wr_mem;
+//     MEM_SIZE          mem_size;
+// } EX_MEM_PACKET
+
+
 module stage_mem (
     input EX_MEM_PACKET ex_mem_reg,
     // the BUS_LOAD response will magically be present in the *same* cycle it's requested (0ns latency)
     // this will not be true in project 4 (100ns latency)
     input [`XLEN-1:0]   Dmem2proc_data,
+    
 
     output MEM_WB_PACKET     mem_packet,
     output logic [1:0]       proc2Dmem_command, // The memory command
     output MEM_SIZE          proc2Dmem_size,    // Size of data to read or write
     output logic [`XLEN-1:0] proc2Dmem_addr,    // Address sent to Data memory
     output logic [`XLEN-1:0] proc2Dmem_data     // Data sent to Data memory
+    output 
 );
 
     logic [`XLEN-1:0] read_data;
