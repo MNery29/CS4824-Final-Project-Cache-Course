@@ -101,10 +101,10 @@ module lsq#(
     // logic [LSQ_SIZE_W:0] head_ptr; //points to OLDEST entry
     // logic [LSQ_SIZE_W:0] tail_ptr; //points to next free entry
 
-    // track whether we have an outstanding D‐cache request
-    // now right now, we can only track ONE
-    // logic cache_in_flight;
-    logic [3:0] cache_tag_in_flight;
+    // track whether we have an outstanding D‐cache request (or multiple since we have a nonblocking cache)
+    logic [4:0] cache_tag_in_flight [3:0]; //indexed by dcache_tag (3 bits)
+    logic cache_in_flight_valid [3:0]; //indexed by dcache_tag (3 bits)
+
     logic [LSQ_SIZE_W:0] cache_index_in_flight;
     
 
@@ -163,12 +163,14 @@ module lsq#(
     logic [1:0]  dcache_cmd_next;
     logic [31:0] dcache_addr_next;
     logic [63:0] dcache_data_next;
+
+    logic [4:0] tag_to_broadcast;
     always_comb begin
         dcache_cmd_next  = BUS_NONE;
         dcache_addr_next = 32'b0;
         dcache_data_next = 64'b0;
 
-        if (!cache_in_flight  && head_ready_for_mem) begin
+        if (head_ready_for_mem) begin
             if (head_entry.is_store) begin
                 dcache_cmd_next  = BUS_STORE;
                 dcache_addr_next = head_entry.address;
@@ -194,8 +196,6 @@ module lsq#(
         if (reset) begin
             tail_ptr        <= '0;
             head_ptr        <= '0;
-            cache_in_flight         <= 1'b0;
-            cache_tag_in_flight     <= 4'b0;
             load_completed          <= 1'b0;
             data_to_broadcast       <= 64'b0;
 
@@ -204,6 +204,7 @@ module lsq#(
                 lsq[i].retired           <= 1'b0;
                 lsq[i].address_valid     <= 1'b0;
                 lsq[i].store_data_valid  <= 1'b0;
+                cache_in_flight_valid[i] <= 1'b0;
             end
         end 
         else begin
@@ -214,33 +215,58 @@ module lsq#(
 
             // ff we just sent a request and the cache accepted it (dcache_tag != 0),
             // then record it as "in flight"
-            if (head_ready_for_mem && (dcache_response != 0)) begin
-                cache_in_flight       <= 1'b1;
-                cache_tag_in_flight   <= dcache_tag;
-                // cache_index_in_flight <= head_ptr;
+            // we want to handle stores seperately
+            if (head_ready_for_mem && !lsq[next_head_ptr-1].is_store) begin
+
+                if (dcache_tag != 0) begin
+                    lsq[next_head_ptr-1].valid <= 1'b0;
+
+                    //means a miss
+                    cache_in_flight       <= 1'b1;
+                    cache_tag_in_flight[dcache_tag] <= lsq[next_head_ptr-1].rob_tag;
+                    cache_in_flight_valid[dcache_tag] <= 1'b1;
+
+                    // but we still want the pointer to advance
+                    // so we can send the next request
+                    head_ptr <= next_head_ptr;
+                end
+
+                if (dcache_hit) begin
+                    lsq[next_head_ptr-1].valid <= 1'b0;
+
+                    //means a hit
+                    // we dont have to track the cache_in_flight, data is already there
+                    load_completed <= 1'b1;
+                    data_to_broadcast <= dcache_data_out;
+                    tag_to_broadcast <= lsq[next_head_ptr-1].rob_tag;
+
+                    // advance pointer
+                    head_ptr <= next_head_ptr;
+
+                end
+                
             end
-            
+            if (head_ready_for_mem && (dcache_response != 0) && lsq[head_ptr].is_store) begin
+                // we dont have to track request
+                // but we do need to wait for dcache_response != 0 as a handshake
+                lsq[next_head_ptr-1].valid <= 1'b0;
+
+                head_ptr <= next_head_ptr;
+            end
+
 
 
             // ff a response arrives that matches our in-flight tag, the transaction completes
-            if ( (dcache_tag == cache_tag_in_flight && 
-                  dcache_tag != 0) || (head_ready_for_mem && dcache_hit == 1'b1) )
+            if ( (dcache_tag != 0) && cache_in_flight_valid[dcache_tag])
             begin
                 // ff it's a load, broadcast the data for exactly one cycle
-                if (!lsq[cache_index_in_flight].is_store) begin
-                    load_completed <= 1'b1;
-                end
+                load_completed <= 1'b1;
+
+
                 data_to_broadcast <= dcache_data_out;
+                tag_to_broadcast <= cache_tag_in_flight[dcache_tag];
+                cache_in_flight_valid[dcache_tag] <= 1'b0;
 
-                // pop the LSQ entry since it is completed
-                lsq[cache_index_in_flight].valid <= 1'b0;
-
-                // advance pointer
-                head_ptr <= next_head_ptr;
-
-                // clear state
-                cache_in_flight     <= 1'b0;
-                cache_tag_in_flight <= 4'b0;
             end
             else begin
             end
