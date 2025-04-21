@@ -30,12 +30,13 @@ module stage_mem (
     assign mem_packet.result = (ex_mem_reg.rd_mem) ? read_data : ex_mem_reg.alu_result;
 
     // Pass-throughs
-    assign mem_packet.NPC          = ex_mem_reg.NPC;
-    assign mem_packet.valid        = ex_mem_reg.valid;
-    assign mem_packet.halt         = ex_mem_reg.halt;
-    assign mem_packet.illegal      = ex_mem_reg.illegal;
-    assign mem_packet.dest_reg_idx = ex_mem_reg.dest_reg_idx;
-    assign mem_packet.take_branch  = ex_mem_reg.take_branch;
+    // no need for pass throughs
+    // assign mem_packet.NPC          = ex_mem_reg.NPC;
+    // assign mem_packet.valid        = ex_mem_reg.valid;
+    // assign mem_packet.halt         = ex_mem_reg.halt;
+    // assign mem_packet.illegal      = ex_mem_reg.illegal;
+    // assign mem_packet.dest_reg_idx = ex_mem_reg.dest_reg_idx;
+    // assign mem_packet.take_branch  = ex_mem_reg.take_branch;
 
     // Outputs from the processor to memory
     assign proc2Dmem_command = (ex_mem_reg.valid && ex_mem_reg.wr_mem) ? BUS_STORE :

@@ -289,12 +289,22 @@ endmodule // conditional_branch
 //     logic wr_mem;
 // } IS_EX_PACKET;
 
+
+// typedef struct packed {
+//     logic [4:0]  rob_tag;   // Where in the ROB the result belongs
+//     logic [63:0] value;     // Result to commit
+//     logic        done;      // Result is ready
+//     logic valid; //whether this packet is valid yet
+// } EX_CP_PACKET;
+
 module stage_ex (
     input logic clk, rst,
     input IS_EX_PACKET is_ex_reg,
+
     input ID_EX_PACKET id_ex_reg,
 
     output EX_MEM_PACKET ex_packet,
+    output EX_CP_PACKET ex_cp_packet,
     //broad cast value + tag to cbd, so reorder buffer can be updated
     output CDB_PACKET cdb_out
 );
@@ -307,7 +317,7 @@ module stage_ex (
     assign ex_packet.rs2_value    = id_ex_reg.rs2_value;
     assign ex_packet.rd_mem       = is_ex_reg.rd_mem;
     assign ex_packet.wr_mem       = is_ex_reg.wr_mem;
-    assign ex_packet.dest_reg_idx = id_ex_reg.dest_reg_idx;
+    // assign ex_packet.dest_reg_idx = id_ex_reg.dest_reg_idx;
 
     // assign ex_packet.halt         = id_ex_reg.halt;
     // assign ex_packet.illegal      = id_ex_reg.illegal;
@@ -370,8 +380,13 @@ module stage_ex (
         .take(take_conditional)
     );
 
-    assign cdb_out.valid = id_ex_reg.valid;  //&& !id_ex_reg.halt && !id_ex_reg.illegal;
+    assign cdb_out.valid = is_ex_reg.issue_valid;  //&& !id_ex_reg.halt && !id_ex_reg.illegal;
     assign cdb_out.tag = is_ex_reg.rob_tag;
     assign cdb_out.value = ex_packet.alu_result;
+
+    assign ex_cp_packet.valid = is_ex_reg.issue_valid;
+    assign ex_cp_packet.rob_tag = is_ex_reg.rob_tag;
+    assign ex_cp_packet.value = ex_packet.alu_result;
+    assign ex_cp_packet.done = is_ex_reg.issue_valid;
 
 endmodule // stage_ex
