@@ -32,7 +32,7 @@ module booth_mult_stage #(
 
     output logic [2*data_length-1:0] product_sum, 
     output logic out_phantom_bit,
-    output [data_length-1:0] next_mcand, // this is the next QR
+    output logic [data_length-1:0] next_mcand, // this is the next QR
     output logic done
 );
 
@@ -48,7 +48,7 @@ module booth_mult_stage #(
                 2'b01: work[TRIPLE_W-1:data_length+1] = work[TRIPLE_W-1:data_length+1] + $signed(mcand);
                 2'b10: work[TRIPLE_W-1:data_length+1] = work[TRIPLE_W-1:data_length+1] - $signed(mcand);
                 default: begin
-                end;
+                end
             endcase
             work = work >>> 1;
         end

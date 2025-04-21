@@ -386,7 +386,7 @@ typedef struct packed {
     logic [5:0]  RS_tag;      // Optional: ID of issuing RS
     ALU_FUNC alu_func;    // ALU operation selector
     logic [31:0] NPC;         // Next PC (for branch evaluation)
-    logic [31:0] inst;        // Raw instruction bits
+    INST              inst;        // Raw instruction bits
     logic        issue_valid; // This packet is valid to execute
     logic rd_mem;
     logic wr_mem;

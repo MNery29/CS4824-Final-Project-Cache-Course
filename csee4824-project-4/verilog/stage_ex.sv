@@ -12,6 +12,8 @@
 
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
+`include "verilog/mult.sv"
+`include "verilog/booth_mult_stage.sv"
 
 // ALU function code input
 // probably want to leave these alone
@@ -91,7 +93,7 @@ module mul_unit (
             state <= M_IDLE;
         end else begin
             state <= nstate;
-            if (req.valid && state == M_IDLE) begin
+            if (req.issue_valid && state == M_IDLE) begin
                 opa_q <= req.OPA;
                 opb_q <= req.OPB;
                 tag_q <= req.rob_tag;
@@ -288,7 +290,9 @@ endmodule // conditional_branch
 // } IS_EX_PACKET;
 
 module stage_ex (
+    input logic clk, rst,
     input IS_EX_PACKET is_ex_reg,
+    input ID_EX_PACKET id_ex_reg,
 
     output EX_MEM_PACKET ex_packet,
     //broad cast value + tag to cbd, so reorder buffer can be updated
@@ -300,10 +304,10 @@ module stage_ex (
 
     // Pass-throughs
     assign ex_packet.NPC          = is_ex_reg.NPC;
-    assign ex_packet.rs2_value    = is_ex_reg.rs2_value;
+    assign ex_packet.rs2_value    = id_ex_reg.rs2_value;
     assign ex_packet.rd_mem       = is_ex_reg.rd_mem;
     assign ex_packet.wr_mem       = is_ex_reg.wr_mem;
-    assign ex_packet.dest_reg_idx = is_ex_reg.dest_reg_idx;
+    assign ex_packet.dest_reg_idx = id_ex_reg.dest_reg_idx;
 
     // assign ex_packet.halt         = id_ex_reg.halt;
     // assign ex_packet.illegal      = id_ex_reg.illegal;
@@ -323,9 +327,9 @@ module stage_ex (
     // ALU opA mux
     always_comb begin
         case (id_ex_reg.opa_select)
-            OPA_IS_RS1:  opa_mux_out = is_ex_req.OPA; // before it was: id_ex_reg.rs1_value;
+            OPA_IS_RS1:  opa_mux_out = is_ex_reg.OPA; // before it was: id_ex_reg.rs1_value;
             OPA_IS_NPC:  opa_mux_out = is_ex_reg.NPC;
-            OPA_IS_PC:   opa_mux_out = is_ex_reg.PC;
+            OPA_IS_PC:   opa_mux_out = id_ex_reg.PC;
             OPA_IS_ZERO: opa_mux_out = 0;
             default:     opa_mux_out = `XLEN'hdeadface; // dead face
         endcase
@@ -334,7 +338,7 @@ module stage_ex (
     // ALU opB mux
     always_comb begin
         case (id_ex_reg.opb_select)
-            OPB_IS_RS2:   opb_mux_out =  is_ex_req.OPB; //id_ex_reg.rs2_value;
+            OPB_IS_RS2:   opb_mux_out =  is_ex_reg.OPB; //id_ex_reg.rs2_value;
             OPB_IS_I_IMM: opb_mux_out = `RV32_signext_Iimm(id_ex_reg.inst);
             OPB_IS_S_IMM: opb_mux_out = `RV32_signext_Simm(id_ex_reg.inst);
             OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(id_ex_reg.inst);
@@ -366,7 +370,7 @@ module stage_ex (
         .take(take_conditional)
     );
 
-    assign cdb_out.valid = is_ex_reg.valid;  //&& !id_ex_reg.halt && !id_ex_reg.illegal;
+    assign cdb_out.valid = id_ex_reg.valid;  //&& !id_ex_reg.halt && !id_ex_reg.illegal;
     assign cdb_out.tag = is_ex_reg.rob_tag;
     assign cdb_out.value = ex_packet.alu_result;
 
