@@ -50,6 +50,10 @@ module reorder_buffer(
     //rob full signal, for stalling/hazards   
     output rob_full,
 
+    //outputs for if the ROB has something ready to retire
+    output logic rob_ready,
+    output logic rob_valid,
+
     //debug
     // output logic [45:0] rob_debug [31:0],
     output logic [11:0] rob_pointers
@@ -74,6 +78,10 @@ module reorder_buffer(
     assign rob_to_rs_value2 = rob_to_rs_read2 ? rob_values[rob_read_tag2] : 32'b0;
 
 
+    //check if ROB has something ready to retire
+    assign rob_ready = (rob_status[head[`ROB_TAG_BITS-1:0]] == READY);
+    assign rob_valid = (rob_status[head[`ROB_TAG_BITS-1:0]] != EMPTY);
+    
     //DISPATCH OUTPUT
     assign rob_dispatch_out.tag   = tail[`ROB_TAG_BITS-1:0];
     assign rob_dispatch_out.valid = (rob_dispatch_in.valid && !rob_full);

@@ -19,6 +19,9 @@ input logic reset,
 //inputs from ROB
 input ROB_RETIRE_PACKET rob_retire_packet, // packet from ROB
 
+input logic rob_ready, // ready bit from ROB
+input logic rob_valid, // valid bit from ROB
+
 // Commit control 
 input logic branch_mispredict, // branch mispredict bit from ROB
 
@@ -37,7 +40,7 @@ always_ff @(posedge clock) begin
         //cleare all retire outputs
         retire_value <= 64'b0;
         retire_dest <= 5'b0;
-        retire_valid <= 1'b0;
+        retire_valid_out <= 1'b0;
 
         //clear all mem outputs
         mem_addr <= 64'b0;
