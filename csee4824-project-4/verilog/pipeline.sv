@@ -331,6 +331,7 @@ module pipeline (
         .proc2Dmem_addr    (dcache_addr),
         .proc2Dmem_data    (dcache_data)
     );
+    
     //////////////////////////////////////////////////
     //                LSQ Stage                     //
     //////////////////////////////////////////////////

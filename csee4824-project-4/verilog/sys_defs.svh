@@ -402,6 +402,13 @@ typedef struct packed {
     logic valid; //whether this packet is valid yet
 } EX_CP_PACKET;
 
+//this private addr packet will only be READ by LSQ's and only be written to by functional units
+// this is to prevent other modules from mistaking the tag as register values
+typedef struct packed {
+    logic [`XLEN-1:0]       addr;      // data coming back from cache
+    logic [3:0]        tag;        // tag of the transaction
+    logic              valid;      // if entry is occupied
+} priv_addr_packet;
 
 //MODULE PACKETS: PACKETS FROM MODULES AS OUTPUT
 
