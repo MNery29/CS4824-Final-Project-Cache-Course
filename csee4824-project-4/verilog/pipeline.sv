@@ -50,13 +50,24 @@ module pipeline (
     //////////////////////////////////////////////////
     //                ID Stage Wires                //
     //////////////////////////////////////////////////
-    ID_IS_PACKET      id_is_packet; // NOT INCLUDED IN stage_id.sv
-    ID_IS_PACKET      id_is_reg; // NOT INCLUDED IN stage_id.sv FIX
-    logic [45:0]      id_rob_debug[31:0];
-    logic [11:0]      id_rob_pointers;
-    logic [7:0]       id_mt_tags[31:0];
-    logic [74:0]      id_rs_debug;
-    logic [`RS_SIZE-1:0] rs_issue_enable;
+    //ID_IS_PACKET      id_is_packet; // NOT INCLUDED IN stage_id.sv
+    //ID_IS_PACKET      id_is_reg; // NOT INCLUDED IN stage_id.sv FIX
+    //logic [45:0]      id_rob_debug[31:0];
+    //logic [11:0]      id_rob_pointers;
+    //logic [7:0]       id_mt_tags[31:0];
+    //logic [74:0]      id_rs_debug;
+    //logic [`RS_SIZE-1:0] rs_issue_enable;'
+
+    logic [31:0] id_opA, id_opB;
+    logic [`ROB_TAG_BITS-1:0] id_tag;
+    ALU_OPA_SELECT id_opa_select;
+    ALU_OPB_SELECT id_opb_select;
+    logic id_has_dest_reg;
+    logic [4:0] id_dest_reg_idx;
+    logic id_rd_mem, id_wr_mem;
+    ALU_FUNC id_alu_func;
+    ROB_RETIRE_PACKET id_rob_retire_out;
+
 
     //////////////////////////////////////////////////
     //                IS Stage Wires                //
@@ -232,36 +243,68 @@ module pipeline (
     //////////////////////////////////////////////////
     //               Decode Stage                   //
     //////////////////////////////////////////////////
+    //stage_id stage_id_0 (
+    //    .clock(clock),
+    //    .reset(reset),
+    //    .if_id_reg(if_id_reg),
+
+     //   .cdb_valid(cdb_packet.valid), // NEW
+    //    .cdb_tag(cdb_packet.tag),     // NEW
+    //    .cdb_value(cdb_packet.value), // (optional, if needed)
+
+    //    .id_is_packet(id_is_packet), // this packet goes TO issue stage
+
+    //    .rs1_issue(rs_issue_enable[0]),  // pass the rs_issue_enable signal
+    //    .rs1_clear(rs_issue_enable[0]),  // for now, clearing on issue 
+
+    //    .rob_debug(id_rob_debug),
+    //    .rob_pointers_debug(id_rob_pointers),
+    //    .mt_tags_debug(id_mt_tags),
+    //    .rs_debug(id_rs_debug)
+    //);
+
     stage_id stage_id_0 (
-        .clock(clock),
-        .reset(reset),
-        .if_id_reg(if_id_reg),
+    .clock(clock),
+    .reset(reset),
+    .if_id_reg(if_id_reg),
 
-        .cdb_valid(cdb_packet.valid), // NEW
-        .cdb_tag(cdb_packet.tag),     // NEW
-        .cdb_value(cdb_packet.value), // (optional, if needed)
+    .cdb_valid(cdb_packet.valid),
+    .cdb_tag(cdb_packet.tag),
+    .cdb_value(cdb_packet.value),
 
-        .id_is_packet(id_is_packet), // this packet goes TO issue stage
+    .mt_retire_entry(1'b0), // TODO: connect properly
+    .rs1_issue(rs_issue_enable[0]),
+    .rs1_clear(rs_issue_enable[0]),
 
-        .rs1_issue(rs_issue_enable[0]),  // pass the rs_issue_enable signal
-        .rs1_clear(rs_issue_enable[0]),  // for now, clearing on issue 
+    .rob_retire_entry(1'b0), // TODO: connect properly
+    .rob_clear(1'b0),        // TODO: connect properly
 
-        .rob_debug(id_rob_debug),
-        .rob_pointers_debug(id_rob_pointers),
-        .mt_tags_debug(id_mt_tags),
-        .rs_debug(id_rs_debug)
+    .opA(id_opA),
+    .opB(id_opB),
+    .output_tag(id_tag),
+
+    .opa_select(id_opa_select),
+    .opb_select(id_opb_select),
+    .has_dest_reg(id_has_dest_reg),
+    .dest_reg_idx(id_dest_reg_idx),
+    .rd_mem(id_rd_mem),
+    .wr_mem(id_wr_mem),
+    .alu_func(id_alu_func),
+    .rob_retire_out(id_rob_retire_out),
+
+    .rob_pointers_debug(id_rob_pointers)
     );
 
     //////////////////////////////////////////////////
     //         ID/IS Pipeline Register              //
     //////////////////////////////////////////////////
-    always_ff @(posedge clock or posedge reset) begin
-        if (reset) begin
-            id_is_reg <= '0; // IS ID Packet not defined yet FIX
-        end else begin
-            id_is_reg <= id_is_packet; // IS ID Packet not defined yet FIX
-        end
-    end
+    //always_ff @(posedge clock or posedge reset) begin
+    //    if (reset) begin
+    //        id_is_reg <= '0; // IS ID Packet not defined yet FIX
+    //    end else begin
+    //        id_is_reg <= id_is_packet; // IS ID Packet not defined yet FIX
+    //    end
+    //end
 
 
 
@@ -298,17 +341,19 @@ module pipeline (
     //////////////////////////////////////////////////
     //                Execute Stage                 //
     //////////////////////////////////////////////////
+    EX_CP_PACKET ex_cp_packet;
+
     stage_ex stage_ex_0 (
         .id_ex_reg(is_ex_reg),
         .ex_packet(ex_packet),
-
-        .cdb_out(cdb_packet_ex), // output packet to CDB
+        .ex_cp_packet(ex_cp_packet),
+        .cdb_out(cdb_packet_ex) // output packet to CDB
     );
     
-    logic EX_MEM_PACKET ex_mem_reg;
+    EX_MEM_PACKET ex_mem_reg;
     always_ff @(posedge clock or posedge reset) begin
         if (reset) begin
-            ex_mem_req <= '0;
+            ex_mem_reg <= '0;
         end else begin
             ex_mem_reg <= ex_packet;
         end
@@ -425,6 +470,7 @@ module pipeline (
     //////////////////////////////////////////////////
     //            CP/RT Pipeline Register           //
     //////////////////////////////////////////////////
+    ROB_RETIRE_PACKET cp_rt_reg;
     always_ff @(posedge clock or posedge reset) begin
         if (reset)
             cp_rt_reg <= '0;
@@ -449,9 +495,10 @@ module pipeline (
     );
 
 
-    `DEFINE OWN_NONE = 2'b00;
-    `DEFINE OWN_D    = 2'b01;
-    `DEFINE OWN_I    = 2'b10;
+    `define OWN_NONE 2'b00
+    `define OWN_D    2'b01
+    `define OWN_I    2'b10
+
 
 
     //////////////////////////////////////////////////
@@ -490,7 +537,7 @@ module pipeline (
     end
 
 
-    module mem (
+    mem mem_0 (
         .clock(clock),
         .proc2mem_addr(proc2mem_addr),
         .proc2mem_data(proc2mem_data),
@@ -503,7 +550,7 @@ module pipeline (
         .mem2proc_tag(mem2proc_tag)
     );
 
-    always_ff @(posedge clk or posedge reset) begin
+    always_ff @(posedge clock or posedge reset) begin
         if (reset)
             owner_q <= `OWN_NONE;
         // for now, we have to wait for data to respond, so not just tag
