@@ -15,6 +15,7 @@ module reservation_station(
     input [31:0]   rs_npc_in,    // Next PC (from fetch/decode)
     input [31:0]   rs_inst_in,     // Full instruction bits
     input ALU_FUNC rs_alu_func_in, // ALU function input for instruction
+    input rd_mem, wr_mem, // read/write memory
     
     input [`ROB_TAG_BITS-1:0] rs_rob_tag,      // Tag input for instruction (ROB tail pointer)
     input [31:0] rs_cdb_in,       // Data from the CDB - FU operation result 
@@ -39,6 +40,8 @@ module reservation_station(
     output [`ROB_TAG_BITS-1:0]  rs_tag_out,             // Out: ROB tag
     output ALU_FUNC rs_alu_func_out,      // Out: ALU func
     output [31:0]  rs_npc_out,            // Out: NPC
+    output rs_rd_mem_out,
+    output rs_wr_mem_out,
     output [31:0]  rs_inst_out,           // Out: instruction bits
     output       rs_avail_out,            // Is this entry available?
     output [74:0] rs_debug
@@ -54,6 +57,7 @@ logic InUse; // RS entry is in use
 ALU_FUNC alu_func; //internal ALU track
 logic[31:0] NPC; //internal NPC track
 logic [31:0] Inst; //internal instruction track
+logic internal_rd_mem, internal_wr_mem; //internal memory track
 
 // Outputs
 assign rs_avail_out = !InUse;
@@ -64,6 +68,8 @@ assign rs_tag_out   = DestTag;
 assign rs_alu_func_out = alu_func;
 assign rs_npc_out       = NPC;
 assign rs_inst_out      = Inst;
+assign rs_rd_mem_out = internal_rd_mem;
+assign rs_wr_mem_out = internal_wr_mem;
 
 // Load from CDB if tag matches
 wire LoadAFromCDB = (rs_cdb_tag == OPaTag) && !OpaValid && InUse && rs_cdb_valid;
@@ -84,6 +90,8 @@ always_ff @(posedge clock) begin
         alu_func     <= ALU_ADD;
         NPC      <= 32'b0;
         Inst     <= 32'b0;
+        internal_rd_mem <= 1'b0;
+        internal_wr_mem <= 1'b0;
     end else begin
         // Load new instruction
         if (rs_load_in && !InUse) begin
@@ -99,6 +107,8 @@ always_ff @(posedge clock) begin
             alu_func <= rs_alu_func_in;
             NPC      <= rs_npc_in;
             Inst     <= rs_inst_in;
+            internal_rd_mem <= rd_mem;
+            internal_wr_mem <= wr_mem;
 
         end else begin
             // CDB broadcasts update operand readiness
@@ -124,6 +134,8 @@ always_ff @(posedge clock) begin
                 NPC <= 32'b0;
                 Inst <= 32'b0;
                 InUse <= 0;
+                internal_rd_mem <= 1'b0;
+                internal_wr_mem <= 1'b0;
             end
         end
     end

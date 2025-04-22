@@ -144,13 +144,27 @@ module pipeline (
     //////////////////////////////////////////////////
     //               LSQ Wires                     //
     //////////////////////////////////////////////////
+
+    
+    logic priv_addr_packet priv_addr_pack; // packet to send to memory stage
     logic [63:0]dcache_data_out; // data coming back from cache
     logic [3:0] dcache_tag; // high when valid
     logic [3:0] dcache_response; // 0 = can't accept, other=tag of transaction]
+    logic dcache_hit; // 1 if hit, 0 if miss
     logic [1:0] dcache_command; // `BUS_NONE `BUS_LOAD or `BUS_STORE
     logic [63:0] dcache_data; // data going to cache for store
     logic [`XLEN-1:0] dcache_addr; // sending address to dcache
 
+    logic [4:0] mem_tag, // from rt stage
+    logic mem_valid, // from rt stage
+
+    logic store_ready;
+    logic [4:0] store_ready_tag; // tag of store ready to write
+    logic stall_dispatch; // stall dispatch if lsq is full
+    logic cache_in_flight; //debugging
+    logic head_ready_for_mem; // debugging
+    logic [LSQ_SIZE_W:0] head_ptr; //points to OLDEST entry debugging
+    logic [LSQ_SIZE_W:0] tail_ptr; //points to next free entry debugging
     //////////////////////////////////////////////////
     //           Temporary Branch Logic             //
     //////////////////////////////////////////////////
@@ -279,6 +293,10 @@ module pipeline (
     .rob_retire_entry(1'b0), // TODO: connect properly
     .rob_clear(1'b0),        // TODO: connect properly
 
+    .rob_dest_reg(retire_dest_out),
+    .rob_to_regfile_value(retire_value_out),
+    .rob_regfile_valid(retire_valid_out),
+
     .opA(id_opA),
     .opB(id_opB),
     .output_tag(id_tag),
@@ -363,21 +381,21 @@ module pipeline (
     //              Memory Stage                    //
     //////////////////////////////////////////////////
 
-    //this is temporary while we wait for LSQ stage to be complete
-    // we will connect with LSQ wires
+    // //this is temporary while we wait for LSQ stage to be complete
+    // // we will connect with LSQ wires
 
-    stage_mem stage_mem_0 (
-         // Inputs
-        .ex_mem_reg     (ex_mem_reg),
-        .Dmem2proc_data (dcache_data_out), 
+    // stage_mem stage_mem_0 (
+    //      // Inputs
+    //     .ex_mem_reg     (ex_mem_reg),
+    //     .Dmem2proc_data (dcache_data_out), 
 
-        // Outputs
-        .mem_packet        (mem_packet),
-        .proc2Dmem_command (dcache_command),
-        // .proc2Dmem_size    (dcache_size),
-        .proc2Dmem_addr    (dcache_addr),
-        .proc2Dmem_data    (dcache_data)
-    );
+    //     // Outputs
+    //     .mem_packet        (mem_packet),
+    //     .proc2Dmem_command (dcache_command),
+    //     // .proc2Dmem_size    (dcache_size),
+    //     .proc2Dmem_addr    (dcache_addr),
+    //     .proc2Dmem_data    (dcache_data)
+    // );
     
     //////////////////////////////////////////////////
     //                LSQ Stage                     //
@@ -385,6 +403,12 @@ module pipeline (
     // so my idea for LSQ stage is the following:
     // we will issue the instruction in the reservation station
     // 
+  
+    lsq lsq_0 (
+        .clock(clock),
+        .reset(reset),
+       
+    );
 
     //////////////////////////////////////////////////
     //           EX/CP Pipeline Register            //

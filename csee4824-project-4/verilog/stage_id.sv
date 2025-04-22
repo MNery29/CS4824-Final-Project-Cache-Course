@@ -238,12 +238,15 @@ module stage_id (
     output ALU_OPB_SELECT opb_select,
     output logic has_dest_reg,
     output logic [4:0] dest_reg_idx,
-    output logic rd_mem, wr_mem,
-    output ALU_FUNC alu_func,
+    output ALU_FUNC alu_func_out,
     output ROB_RETIRE_PACKET rob_retire_out // matches port type exactly
 
-);
 
+    output logic rd_mem_out, wr_mem_out,
+
+);
+    logic rd_mem, wr_mem;
+    ALU_FUNC alu_func;
     logic [6:0] opcode;
     assign opcode = if_id_reg.inst[6:0];
 
@@ -399,9 +402,14 @@ module stage_id (
         .rs_opa_valid(rs1_opa_valid),
         .rs_opb_valid(rs1_opb_valid),
         .rs_alu_func_in(alu_func),
+        .rd_mem(rd_mem),
+        .wr_mem(wr_mem),
         .rs_load_in(rs1_load_entry),
         .rs_use_enable(rs1_issue),
         .rs_free_in(rs1_clear),
+        .rs_alu_func_out(alu_func_out),
+        .rs_rd_mem_out(rd_mem_out),
+        .rs_wr_mem_out(wr_mem_out),
         .rs_ready_out(rs1_ready),
         .rs_opa_out(opA),
         .rs_opb_out(opB),
@@ -451,6 +459,8 @@ module stage_id (
         .opa_select(opa_select),
         .opb_select(opb_select),
         .alu_func(alu_func),
+        .rd_mem(rd_mem),
+        .wr_mem(wr_mem),
         .has_dest(has_dest_reg)
     );
 

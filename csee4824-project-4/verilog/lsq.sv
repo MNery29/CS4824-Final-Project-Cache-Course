@@ -75,8 +75,8 @@ module lsq#(
     input logic [3:0] dcache_response, // 0 = can't accept, other=tag of transaction
     input logic dcache_hit, // 1 if hit, 0 if miss
 
-    input ROB_RETIRE_PACKET rob_retire_in, //so stores know when they are allowed to write
-    input ROB_DISPATCH_PACKET rob_dispatch_in, // so loads know when they are allowed to read / tags of instructions
+    input [4:0] mem_tag, // from rt stage
+    input mem_valid, // from rt stage
     input IS_EX_PACKET is_ex_in, // packet from issue stage
     input CDB_PACKET cdb_in, // packet from CDB stage
     input priv_addr_packet priv_addr_in, // packet from execute stage (giving us the address)
@@ -93,8 +93,8 @@ module lsq#(
     output logic cache_in_flight, //debugging
     output logic head_ready_for_mem, // debugging
 
-    output logic [LSQ_SIZE_W:0] head_ptr, //points to OLDEST entry
-    output logic [LSQ_SIZE_W:0] tail_ptr //points to next free entry
+    output logic [LSQ_SIZE_W:0] head_ptr, //points to OLDEST entry debugging
+    output logic [LSQ_SIZE_W:0] tail_ptr //points to next free entry debugging
 );
 
     lsq_entry_t lsq [LSQ_SIZE-1:0];
@@ -293,12 +293,12 @@ module lsq#(
                 // Bump tail
                 tail_ptr <= next_tail_ptr;
             end
-            // stores become "retired" when the ROB indicates so
+            // stores become "retired" when the rt stage indicates so
             // if the ROB says this tag is done, mark that LSQ entry as retired
-            if (rob_retire_in.mem_valid) begin
+            if (mem_valid) begin
                 for (int j = 0; j < LSQ_SIZE; j++) begin
                     if (lsq[j].valid && lsq[j].is_store &&
-                        (lsq[j].rob_tag == rob_retire_in.tag[4:0])) 
+                        (lsq[j].rob_tag == mem_tag)) 
                     begin
                         lsq[j].retired <= 1'b1;
                     end

@@ -382,7 +382,7 @@ module stage_ex (
     assign priv_addr_out.tag = is_ex_reg.rob_tag;
     assign priv_addr_out.addr = ex_packet.alu_result;
 
-    assign ex_cp_packet.valid = is_ex_reg.issue_valid;
+    assign ex_cp_packet.valid = is_ex_reg.issue_valid && !is_mem_op;
     assign ex_cp_packet.rob_tag = is_ex_reg.rob_tag;
     assign ex_cp_packet.value = ex_packet.alu_result;
     assign ex_cp_packet.done = is_ex_reg.issue_valid;
