@@ -57,7 +57,7 @@ always_ff @(posedge clock) begin
             //nothing to retire - set to default
             retire_value <= 64'b0;
             retire_dest <= 5'b0;
-            retire_valid <= 1'b0;
+            retire_valid_out <= 1'b0;
         end
     end
 end
