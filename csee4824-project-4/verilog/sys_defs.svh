@@ -402,7 +402,7 @@ typedef struct packed {
     logic valid; //whether this packet is valid yet
 } EX_CP_PACKET;
 
-typedef struct packetd{
+typedef struct packed{
     logic [4:0] rob_tag;  // Where in the ROB the result belongs
     logic [31:0] store_data;
     logic [4:0] store_tag;
