@@ -305,9 +305,9 @@ module pipeline (
     .opb_select(id_opb_select),
     .has_dest_reg(id_has_dest_reg),
     .dest_reg_idx(id_dest_reg_idx),
-    .rd_mem(id_rd_mem),
-    .wr_mem(id_wr_mem),
-    .alu_func(id_alu_func),
+    .rd_mem_out(id_rd_mem),
+    .wr_mem_out(id_wr_mem),
+    .alu_func_out(id_alu_func),
     .rob_retire_out(id_rob_retire_out),
 
     .rob_pointers_debug(id_rob_pointers)
@@ -339,6 +339,8 @@ module pipeline (
         .rs_alu_func_out(id_is_packet.alu_func),
         .rs_npc_out(id_is_packet.NPC),
         .rs_inst_out(id_is_packet.inst),
+        .rd_mem(id_rd_mem),
+        .wr_mem(id_wr_mem),
         .fu_ready(fu_ready),
         .issue_valid(issue_valid),
         .is_packet(is_packet),

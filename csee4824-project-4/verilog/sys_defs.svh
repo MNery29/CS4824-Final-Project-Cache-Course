@@ -402,6 +402,15 @@ typedef struct packed {
     logic valid; //whether this packet is valid yet
 } EX_CP_PACKET;
 
+typedef struct packetd{
+    logic [4:0] rob_tag;  // Where in the ROB the result belongs
+    logic [31:0] store_data; // this is either the data to be written to memory or the data to be written to the register file
+    logic store_data_valid;
+    logic rd_mem;
+    logic wr_mem;
+    logic valid;
+} LSQ_PACKET;
+
 //this private addr packet will only be READ by LSQ's and only be written to by functional units
 // this is to prevent other modules from mistaking the tag as register values
 typedef struct packed {

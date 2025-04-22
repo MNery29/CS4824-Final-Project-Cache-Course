@@ -77,7 +77,7 @@ module lsq#(
 
     input [4:0] mem_tag, // from rt stage
     input mem_valid, // from rt stage
-    input IS_EX_PACKET is_ex_in, // packet from issue stage
+    input LSQ_PACKET lsq_packet_in, // packet from issue stage
     input CDB_PACKET cdb_in, // packet from CDB stage
     input priv_addr_packet priv_addr_in, // packet from execute stage (giving us the address)
 
@@ -117,8 +117,8 @@ module lsq#(
 
     // basically determines whether it is store or read
     always_comb begin
-        is_store_op = is_ex_in.issue_valid && is_ex_in.wr_mem;
-        is_load_op  = is_ex_in.issue_valid && is_ex_in.rd_mem;
+        is_store_op = lsq_packet.valid && lsq_packet.wr_mem;
+        is_load_op  = lsq_packet.valid && lsq_packet.rd_mem;
         is_mem_op   = is_store_op || is_load_op;
     end
 
@@ -277,17 +277,17 @@ module lsq#(
                 lsq[tail_ptr].retired    <= 1'b0;
 
                 // Store the 5-bit ROB tag for retirement & final broadcasting
-                lsq[tail_ptr].rob_tag    <= is_ex_in.rob_tag;
+                lsq[tail_ptr].rob_tag    <= lsq_packet.rob_tag;
 
                 // We'll store a 4-bit address_tag from the lower bits of rob_tag (or some other scheme).
                 // Must match how `priv_addr_in.tag` will be produced by EX.
-                lsq[tail_ptr].address_tag <= is_ex_in.rob_tag;
+                lsq[tail_ptr].address_tag <= lsq_packet.rob_tag;
                 lsq[tail_ptr].address_valid <= 1'b0;
                 lsq[tail_ptr].address       <= 32'hDEAD_BEEF;  // placeholder
 
                 // For store data, we also track its tag. The CDB has a 5-bit tag:
-                lsq[tail_ptr].store_data_tag   <= is_ex_in.rob_tag;  
-                lsq[tail_ptr].store_data_valid <= 1'b0;
+                lsq[tail_ptr].store_data_tag   <= lsq_packet.store_data;  
+                lsq[tail_ptr].store_data_valid <= lsq_packet.store_data_valid;
                 lsq[tail_ptr].store_data       <= 64'hDEAD_BEEF_DEAD_BEEF; 
 
                 // Bump tail

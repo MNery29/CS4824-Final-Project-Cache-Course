@@ -224,6 +224,8 @@ module stage_id (
     input [4:0] rob_dest_reg,
     input [31:0] rob_to_regfile_value,
     input rob_regfile_valid,
+
+    input lsq_free,
     
     output logic [31:0] opA,
     output logic [31:0] opB,
@@ -241,8 +243,10 @@ module stage_id (
     output ALU_FUNC alu_func_out,
     output ROB_RETIRE_PACKET rob_retire_out // matches port type exactly
 
-
     output logic rd_mem_out, wr_mem_out,
+
+    // information to send to LSQ about current instruction
+    output LSQ_PACKET lsq_packet
 
 );
     logic rd_mem, wr_mem;
@@ -257,7 +261,7 @@ module stage_id (
     logic rob_full;
     logic rs1_available;
 
-    assign dispatch_ok = (!rob_full) && (rs1_available);
+    assign dispatch_ok = (!rob_full) && (rs1_available) && (lsq_free);
 
     logic mt_load_entry, rob_load_entry, rs1_load_entry;
     assign mt_load_entry  = dispatch_ok && if_id_reg.valid;
@@ -294,6 +298,7 @@ module stage_id (
     logic rob_regfile_valid;
     logic [`ROB_TAG_BITS-1:0] rob_tag_out;
     logic [`ROB_TAG_BITS-1:0] rob_retire_tag_out;
+
 
     //packets
     DISPATCH_ROB_PACKET rob_dispatch_packet;
@@ -463,5 +468,11 @@ module stage_id (
         .wr_mem(wr_mem),
         .has_dest(has_dest_reg)
     );
+    assign lsq_packet.valid = if_id_reg.valid;
+    assign lsq_packet.rd_mem = rd_mem;
+    assign lsq_packet.wr_mem = wr_mem;
+    assign lsq_packet.store_data = rs1_opb_in;
+    assign lsq_packet.store_data.valid = rs1_opb_valid;
+    assign lsq_packet.rob_tag = rob_tag_out;
 
 endmodule 
