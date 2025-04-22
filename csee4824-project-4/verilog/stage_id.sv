@@ -219,6 +219,11 @@ module stage_id (
 
     input rob_retire_entry,
     input rob_clear,
+
+    //data from retire stage
+    input [4:0] rob_dest_reg,
+    input [31:0] rob_to_regfile_value,
+    input rob_regfile_valid,
     
     output logic [31:0] opA,
     output logic [31:0] opB,

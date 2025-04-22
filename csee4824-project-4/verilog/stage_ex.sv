@@ -303,20 +303,18 @@ module stage_ex (
 
     // input ID_EX_PACKET id_ex_reg,
 
-    output EX_MEM_PACKET ex_packet,
+    // output EX_MEM_PACKET ex_packet,
     output EX_CP_PACKET ex_cp_packet,
     //broad cast value + tag to cbd, so reorder buffer can be updated
-    output CDB_PACKET cdb_out
+    output priv_addr_packet priv_addr_out
+
 );
 
     logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
     logic take_conditional;
 
-    // Pass-throughs
-    // assign ex_packet.NPC          = is_ex_reg.NPC;
-    assign ex_packet.rs2_value    = is_ex_req.OPB;
-    assign ex_packet.rd_mem       = is_ex_reg.rd_mem;
-    assign ex_packet.wr_mem       = is_ex_reg.wr_mem;
+
+    assign is_mem_op = is_ex_reg.rd_mem || is_ex_reg.wr_mem;
     // assign ex_packet.dest_reg_idx = id_ex_reg.dest_reg_idx;
 
     // assign ex_packet.halt         = id_ex_reg.halt;
@@ -380,9 +378,9 @@ module stage_ex (
         .take(take_conditional)
     );
 
-    assign cdb_out.valid = is_ex_reg.issue_valid;  //&& !id_ex_reg.halt && !id_ex_reg.illegal;
-    assign cdb_out.tag = is_ex_reg.rob_tag;
-    assign cdb_out.value = ex_packet.alu_result;
+    assign priv_addr_out.valid = is_ex_reg.issue_valid && is_mem_op;
+    assign priv_addr_out.tag = is_ex_reg.rob_tag;
+    assign priv_addr_out.addr = ex_packet.alu_result;
 
     assign ex_cp_packet.valid = is_ex_reg.issue_valid;
     assign ex_cp_packet.rob_tag = is_ex_reg.rob_tag;
