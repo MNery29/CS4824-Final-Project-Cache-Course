@@ -424,9 +424,6 @@ module stage_id (
         .rob_cdb_in(rob_cdb_packet),
         .retire_entry(rob_retire_entry),
         .rob_clear(rob_clear),
-        //.reg_dest(rob_dest_reg), UNDEFINED
-        //.reg_value(rob_to_regfile_value), UNDEFINED
-        //.reg_valid(rob_regfile_valid), UNDEFINED
         .rob_retire_out(rob_retire_out),
         .rob_to_rs_value1(rob_to_rs_value1),
         .rob_to_rs_value2(rob_to_rs_value2),
