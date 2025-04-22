@@ -471,8 +471,9 @@ module stage_id (
     assign lsq_packet.valid = if_id_reg.valid;
     assign lsq_packet.rd_mem = rd_mem;
     assign lsq_packet.wr_mem = wr_mem;
-    assign lsq_packet.store_data = rs1_opb_in;
+    assign lsq_packet.store_data = rs1_opb_valid ? rs1_opb_in : 32'b0;
     assign lsq_packet.store_data.valid = rs1_opb_valid;
+    assign lsq_packet.store_data.tag = rs1_ogb_valid ? 5'b0 : rs1_opb_in[4:0]; //omit MSB
     assign lsq_packet.rob_tag = rob_tag_out;
 
 endmodule 

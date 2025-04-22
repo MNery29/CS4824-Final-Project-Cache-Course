@@ -404,7 +404,8 @@ typedef struct packed {
 
 typedef struct packetd{
     logic [4:0] rob_tag;  // Where in the ROB the result belongs
-    logic [31:0] store_data; // this is either the data to be written to memory or the data to be written to the register file
+    logic [31:0] store_data;
+    logic [4:0] store_tag;
     logic store_data_valid;
     logic rd_mem;
     logic wr_mem;

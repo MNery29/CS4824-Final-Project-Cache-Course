@@ -286,9 +286,9 @@ module lsq#(
                 lsq[tail_ptr].address       <= 32'hDEAD_BEEF;  // placeholder
 
                 // For store data, we also track its tag. The CDB has a 5-bit tag:
-                lsq[tail_ptr].store_data_tag   <= lsq_packet.store_data;  
+                lsq[tail_ptr].store_data_tag   <= lsq_packet.store_data_tag;  
                 lsq[tail_ptr].store_data_valid <= lsq_packet.store_data_valid;
-                lsq[tail_ptr].store_data       <= 64'hDEAD_BEEF_DEAD_BEEF; 
+                lsq[tail_ptr].store_data       <= lsq_packet.store_data; 
 
                 // Bump tail
                 tail_ptr <= next_tail_ptr;
