@@ -34,8 +34,6 @@ output logic retire_valid_out, // valid bit to register file
 // output logic [63:0] mem_addr, // memory address to write to
 output logic [4:0] mem_tag,
 output logic mem_valid // memory valid bit
-
-
 );
 
 always_ff @(posedge clock) begin

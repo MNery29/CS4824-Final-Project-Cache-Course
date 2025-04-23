@@ -34,6 +34,9 @@ module reorder_buffer(
     input retire_entry,
     input rob_clear, //flush all entries 
 
+    input store_retire, //store retire signal from LSQ
+    input store_tag, //tag from LSQ
+
 
     //output to send to Dispatch stage
     output ROB_DISPATCH_PACKET rob_dispatch_out,
@@ -153,6 +156,11 @@ module reorder_buffer(
             if (rob_cdb_in.valid) begin
                 rob_values[rob_cdb_in.tag] <= rob_cdb_in.value;
                 rob_status[rob_cdb_in.tag] <= READY;
+            end
+
+            if (store_retire) begin
+                rob_values[store_tag] <= 32'b0;
+                rob_status[store_tag] <= READY;
             end
 
             // Retire stage

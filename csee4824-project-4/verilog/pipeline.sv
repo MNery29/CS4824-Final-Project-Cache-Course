@@ -545,9 +545,10 @@ module pipeline (
         .retire_value(retire_value_out),
         .retire_dest(retire_dest_out),
         .retire_valid_out(retire_valid_out),
-        .mem_addr(mem_addr_out),
-        .mem_valid(mem_valid_out)
+        .mem_tag(mem_tag),
+        .mem_valid(mem_valid)
     );
+
 
 
     `define OWN_NONE 2'b00
