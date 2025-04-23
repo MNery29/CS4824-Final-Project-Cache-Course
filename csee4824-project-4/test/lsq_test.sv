@@ -48,9 +48,6 @@ module testbench_lsq;
     // Instantiate LSQ
     //-------------------------------------------------------------------------
     lsq #(
-        .LSQ_SIZE      (8),
-        .LSQ_SIZE_W    (2),
-        .NONBLOCKING   (0)
     ) uut_lsq (
         // Global
         .clk                 (clk),
@@ -208,12 +205,10 @@ module testbench_lsq;
         @(posedge clk);
         show_signals();
 
-        // LSQ should now send a LOAD to the dcache
-        // We'll emulate the cache accepting it by setting dcache_tag=1 if command != BUS_NONE
-        if (dcache_command != BUS_NONE) begin
-            $display("DCACHE sees LOAD => setting dcache_tag=1 (ACCEPT)...");
-            dcache_tag <= 4'd1;
-        end
+        // if (dcache_command != BUS_NONE) begin
+        //     $display("DCACHE sees LOAD => setting dcache_tag=1 (ACCEPT)...");
+        //     dcache_response <= 4'd1;
+        // end
         @(posedge clk);
 
         // Turn off acceptance
@@ -308,6 +303,204 @@ module testbench_lsq;
         // No cdb_out expected for a store
         if (cdb_out.valid)
             $display("WARNING: Store incorrectly broadcast a result?");
+        
+                //--------------------------------------------------------------------------
+        // 3) Two consecutive loads to test blocking
+        //--------------------------------------------------------------------------
+        $display("\n--- Test 3: Two consecutive loads to test blocking behavior ---");
+
+        // First load: rob_tag=7
+        $display("--- Enqueue LOAD with rob_tag=7 ---");
+        lsq_packet_in.valid          = 1;
+        lsq_packet_in.rd_mem         = 1;
+        lsq_packet_in.wr_mem         = 0;
+        lsq_packet_in.rob_tag        = 7;
+        lsq_packet_in.store_data     = 64'h0;
+        lsq_packet_in.store_data_tag = 5'd0;
+        lsq_packet_in.store_data_valid = 0;
+        @(posedge clk);
+
+        // Turn off the first load packet
+        lsq_packet_in.valid  = 0;
+        lsq_packet_in.rd_mem = 0;
+        @(posedge clk);
+        show_signals();
+
+        // Provide the address for rob_tag=7 (priv_addr_in.tag=7 => 0x3000)
+        $display("--- Provide address (0x3000) via priv_addr_in.tag=7 ---");
+        priv_addr_in.valid = 1;
+        priv_addr_in.tag   = 7; 
+        priv_addr_in.addr  = 32'h0000_3000;
+        @(posedge clk);
+        priv_addr_in.valid = 0;
+        @(posedge clk);
+        show_signals();
+
+        // Second load: rob_tag=8 (issued immediately after the first load)
+        $display("--- Enqueue another LOAD with rob_tag=8 (should block behind the first load) ---");
+        lsq_packet_in.valid          = 1;
+        lsq_packet_in.rd_mem         = 1;
+        lsq_packet_in.wr_mem         = 0;
+        lsq_packet_in.rob_tag        = 8;
+        lsq_packet_in.store_data     = 64'h0;
+        lsq_packet_in.store_data_tag = 5'd0;
+        lsq_packet_in.store_data_valid = 0;
+        @(posedge clk);
+
+        // Turn off the second load packet
+        lsq_packet_in.valid  = 0;
+        lsq_packet_in.rd_mem = 0;
+        @(posedge clk);
+        show_signals();
+
+        // Now, LSQ tries to send the first load (rob_tag=7). Emulate acceptance:
+        if (dcache_command == BUS_LOAD) begin
+            $display("DCACHE sees first LOAD (rob_tag=7) => Accepting with dcache_tag=3");
+            dcache_response <= 3; // handshake acceptance
+            dcache_tag <= 0;
+        end
+        @(posedge clk);
+
+        // Turn off acceptance
+        dcache_response <= 4'd0;
+        @(posedge clk);
+        show_signals();
+
+        // Do NOT immediately provide a hit. This simulates a multi-cycle wait or miss.
+        // The second load (rob_tag=8) should remain blocked (dcache_command=BUS_NONE)
+        // because NONBLOCKING=0 in LSQ. Wait a few cycles to confirm that the LSQ
+        // does NOT send out the second load.
+        $display("--- Waiting a few cycles with no dcache hit to illustrate blocking ---");
+        repeat (3) @(posedge clk);
+        show_signals();
+
+        // Finally, provide a hit & data for the first load
+        $display("--- Emulate a dcache hit => first load completes => data=0xFACE_CAFE_5678_0000 ---");
+        dcache_tag       <= 3;
+        dcache_data_out  <= 64'hFACE_CAFE_5678_0000;
+        @(posedge clk);
+
+        // Turn off the hit
+        dcache_tag       <= 0;
+        dcache_data_out  <= 64'h0;
+        @(posedge clk);
+        show_signals();
+
+        // Check that we got cdb_out for rob_tag=7
+        if (cdb_out.valid && (cdb_out.tag == 7) && (cdb_out.value == 32'h5678_0000))
+            $display("LOAD completion for rob_tag=7 broadcast correctly");
+        else
+            $display("WARNING: Did not see expected load completion for rob_tag=7");
+
+       
+        @(posedge clk);
+        dcache_response <= 4'd0;
+        @(posedge clk);
+        show_signals();
+
+        // Provide address for rob_tag=8 => 0x4000 (if you haven't already). 
+        // But typically, you'd do this sooner, as soon as the EX stage produces it.
+        // For demonstration, let's do it right now:
+        $display("--- Provide address (0x4000) via priv_addr_in.tag=8 ---");
+        priv_addr_in.valid = 1;
+        priv_addr_in.tag   = 8;
+        priv_addr_in.addr  = 32'h0000_4000;
+        @(posedge clk);
+        priv_addr_in.valid = 0;
+        @(posedge clk);
+        show_signals();
+
+         // Now that the first load is completed, LSQ should issue the second load (rob_tag=8).
+        if (dcache_command == BUS_LOAD) begin
+            $display("DCACHE sees second LOAD (rob_tag=8) => Accepting with dcache_tag=4");
+            dcache_response <= 1;
+        end
+        @(posedge clk);
+        dcache_response <= 0;
+
+        // Provide dcache hit for the second load
+        dcache_tag       <= 1;
+        dcache_data_out  <= 64'hF00D_BEEF_9999_1111;
+        @(posedge clk);
+
+        dcache_tag       <= 0;
+        dcache_data_out  <= 64'h0;
+        @(posedge clk);
+        show_signals();
+
+        // Check that cdb_out is for rob_tag=8
+        if (cdb_out.valid && (cdb_out.tag == 8) && (cdb_out.value == 32'h9999_1111))
+            $display("LOAD completion for rob_tag=8 broadcast correctly");
+        else
+            $display("WARNING: Did not see expected load completion for rob_tag=8");
+
+        //--------------------------------------------------------------------------
+        // 4) Another load scenario: show multi-cycle wait for dcache response
+        //--------------------------------------------------------------------------
+        $display("\n--- Test 4: A single load that stalls multiple cycles waiting for response ---");
+
+        // Enqueue LOAD with rob_tag=9
+        lsq_packet_in.valid          = 1;
+        lsq_packet_in.rd_mem         = 1;
+        lsq_packet_in.wr_mem         = 0;
+        lsq_packet_in.rob_tag        = 9;
+        lsq_packet_in.store_data     = 64'h0;
+        lsq_packet_in.store_data_tag = 5'd0;
+        lsq_packet_in.store_data_valid = 0;
+        @(posedge clk);
+
+        // Turn off the packet
+        lsq_packet_in.valid  = 0;
+        lsq_packet_in.rd_mem = 0;
+        @(posedge clk);
+        show_signals();
+
+        // Provide address for rob_tag=9 => 0x5000
+        $display("--- Provide address (0x5000) via priv_addr_in.tag=9 ---");
+        priv_addr_in.valid = 1;
+        priv_addr_in.tag   = 9;
+        priv_addr_in.addr  = 32'h0000_5000;
+        @(posedge clk);
+        priv_addr_in.valid = 0;
+        @(posedge clk);
+        show_signals();
+
+        // LSQ issues the load. Emulate acceptance with dcache_tag=5, but do NOT
+        // immediately set dcache_hit. We'll wait a few cycles to simulate a stall/miss.
+        if (dcache_command == BUS_LOAD) begin
+            $display("DCACHE sees LOAD for rob_tag=9 => Accepting with dcache_tag=5");
+            dcache_tag <= 4'd5;
+        end
+        @(posedge clk);
+
+        // Turn off acceptance
+        dcache_tag <= 4'd0;
+        @(posedge clk);
+        show_signals();
+
+        $display("--- Wait multiple cycles, no hit => simulating a long-latency memory access ---");
+        repeat (5) @(posedge clk);
+        show_signals();
+
+        // Finally, provide the hit & data for the load
+        $display("--- Long-latency load completes => data=0xCAFE_0000_BEE0_0001 ---");
+        dcache_hit       <= 1;
+        dcache_data_out  <= 64'hCAFE_0000_BEE0_0001;
+        @(posedge clk);
+
+        dcache_hit       <= 0;
+        dcache_data_out  <= 64'h0;
+        @(posedge clk);
+        show_signals();
+
+        // Verify cdb_out for rob_tag=9
+        if (cdb_out.valid && (cdb_out.tag == 9) && (cdb_out.value == 32'hBEE0_0001))
+            $display("LOAD completion for rob_tag=9 broadcast as expected");
+        else
+            $display("WARNING: Did not see expected completion for rob_tag=9");
+
+        //--------------------------------------------------------------------------
+
 
         //----------------------------------------------------------------------
         // Done

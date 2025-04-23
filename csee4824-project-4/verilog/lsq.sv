@@ -224,16 +224,16 @@ module lsq#(
             // we want to handle stores seperately
             if (head_ready_for_mem && !lsq[next_head_ptr-1].is_store) begin
 
-                if (dcache_tag != 0) begin
+                if (dcache_response != 0) begin
                     if (NONBLOCKING) begin
                         lsq[next_head_ptr-1].valid <= 1'b0;
                     end
 
                     //means a miss
                     cache_in_flight       <= 1'b1; // this is rly only used for blocking case
-                    cache_tag_in_flight[dcache_tag] <= lsq[next_head_ptr-1].rob_tag;
-                    cache_in_flight_valid[dcache_tag] <= 1'b1;
-                    cache_offset_in_flight[dcache_tag] <= lsq[next_head_ptr-1].address[2]; // 0 for lower half, 1 for upper half
+                    cache_tag_in_flight[dcache_response] <= lsq[next_head_ptr-1].rob_tag;
+                    cache_in_flight_valid[dcache_response] <= 1'b1;
+                    cache_offset_in_flight[dcache_response] <= lsq[next_head_ptr-1].address[2]; // 0 for lower half, 1 for upper half
 
 
                     // but we still want the pointer to advance
@@ -273,6 +273,8 @@ module lsq#(
             begin
                 if (!NONBLOCKING) begin
                     lsq[next_head_ptr-1].valid <= 1'b0;
+                    cache_in_flight <= 1'b0;
+                    head_ptr <= next_head_ptr;
                 end
                 // ff it's a load, broadcast the data for exactly one cycle
                 load_completed <= 1'b1;
@@ -281,10 +283,6 @@ module lsq#(
                 data_to_broadcast <= cache_offset_in_flight[dcache_tag] ? dcache_data_out[63:32] : dcache_data_out[31:0];
                 tag_to_broadcast <= cache_tag_in_flight[dcache_tag];
                 cache_in_flight_valid[dcache_tag] <= 1'b0;
-                if (!NONBLOCKING) begin
-                    cache_in_flight <= 1'b0;
-                    head_ptr <= next_head_ptr;
-                end
 
             end
             else begin
