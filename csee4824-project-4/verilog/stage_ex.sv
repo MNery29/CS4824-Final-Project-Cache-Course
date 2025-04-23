@@ -300,10 +300,12 @@ endmodule // conditional_branch
 module stage_ex (
     input logic clk, rst,
     input IS_EX_PACKET is_ex_reg,
+    input cdb_packet_busy,
 
     // input ID_EX_PACKET id_ex_reg,
 
     // output EX_MEM_PACKET ex_packet,
+    output alu_busy,
     output EX_CP_PACKET ex_cp_packet,
     //broad cast value + tag to cbd, so reorder buffer can be updated
     output priv_addr_packet priv_addr_out
@@ -320,11 +322,15 @@ module stage_ex (
     // assign ex_packet.halt         = id_ex_reg.halt;
     // assign ex_packet.illegal      = id_ex_reg.illegal;
     // assign ex_packet.csr_op       = id_ex_reg.csr_op;
-    assign ex_packet.valid        = is_ex_reg.issue_valid;
+    assign ex_cp_packet.valid        = is_ex_reg.issue_valid;
 
     // Break out the signed/unsigned bit and memory read/write size
-    assign ex_packet.rd_unsigned  = is_ex_reg.inst.r.funct3[2]; // 1 if unsigned, 0 if signed
-    assign ex_packet.mem_size     = MEM_SIZE'(is_ex_reg.inst.r.funct3[1:0]);
+    // assign ex_cp_packet.rd_unsigned  = is_ex_reg.inst.r.funct3[2]; // 1 if unsigned, 0 if signed
+    // assign ex_cp_packet.mem_size     = MEM_SIZE'(is_ex_reg.inst.r.funct3[1:0]);
+
+    assign alu_busy = cdb_packet_busy;
+
+    EX_CP_PACKET last_packet;
 
     // ultimate "take branch" signal:
     // unconditional, or conditional and the condition is true
@@ -364,7 +370,7 @@ module stage_ex (
         .func(is_ex_reg.alu_func),
 
         // Output
-        .result(ex_packet.alu_result)
+        .result(ex_cp_packet.value)
     );
 
     // Instantiate the conditional branch module
@@ -380,11 +386,25 @@ module stage_ex (
 
     assign priv_addr_out.valid = is_ex_reg.issue_valid && is_mem_op;
     assign priv_addr_out.tag = is_ex_reg.rob_tag;
-    assign priv_addr_out.addr = ex_packet.alu_result;
+    assign priv_addr_out.addr = ex_cp_packet.value;
 
-    assign ex_cp_packet.valid = is_ex_reg.issue_valid && !is_mem_op;
-    assign ex_cp_packet.rob_tag = is_ex_reg.rob_tag;
-    assign ex_cp_packet.value = ex_packet.alu_result;
-    assign ex_cp_packet.done = is_ex_reg.issue_valid;
+    assign ex_cp_packet.valid = cdb_packet_busy ? last_packet.valid : is_ex_reg.issue_valid && !is_mem_op;
+    assign ex_cp_packet.rob_tag = cdb_packet_busy ? last_packet.rob_tag : is_ex_reg.rob_tag;
+    assign ex_cp_packet.value = cdb_packet_busy ? last_packet.value : ex_cp_packet.value;
+    assign ex_cp_packet.done = cdb_packet_busy ? last_packet.done : is_ex_reg.issue_valid && !is_mem_op;
+
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst) begin
+            last_packet.valid <= 0;
+            last_packet.rob_tag <= 0;
+            last_packet.value <= 0;
+            last_packet.done <= 0;
+        end else begin
+            last_packet.valid <= is_ex_reg.issue_valid && !is_mem_op;
+            last_packet.rob_tag <= is_ex_reg.rob_tag;
+            last_packet.value <= ex_packet.alu_result;
+            last_packet.done <= is_ex_reg.issue_valid;
+        end
+    end
 
 endmodule // stage_ex

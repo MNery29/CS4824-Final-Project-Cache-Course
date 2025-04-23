@@ -85,6 +85,7 @@ module pipeline (
     ID_EX_PACKET id_ex_reg;   // The ID to EX stage register
     EX_MEM_PACKET ex_packet;  // Output Packet
     CDB_PACKET cdb_packet_ex;
+    logic cdb_busy;
 
     //////////////////////////////////////////////////
     //                CP Stage Wires                //
@@ -371,8 +372,10 @@ module pipeline (
     stage_ex stage_ex_0 (
         .clk(clock),
         .rst(reset),
+        .cdb_packet_busy(cdb_busy),
         .is_ex_reg(is_ex_reg),
         .ex_cp_packet(ex_packet),
+        .ex_rejected(cdb_busy),
         .priv_addr_out(priv_addr_packet)
     );
 
@@ -452,7 +455,9 @@ module pipeline (
         .clock(clock),
         .reset(reset),
         .ex_cp_packet(ex_cp_reg), // input packet from EX stage
-        .cdb_packet_out(cdb_packet)
+        .lsq_cp_packet(cdb_lsq), // input packet from LSQ stage
+        .cdb_packet_out(cdb_packet),
+        .ex_rejected(cdb_busy)
     );
 
     //////////////////////////////////////////////////

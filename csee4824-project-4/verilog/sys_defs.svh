@@ -397,7 +397,7 @@ typedef struct packed {
 // This is used to send the result of an instruction to the commit stage
 typedef struct packed {
     logic [4:0]  rob_tag;   // Where in the ROB the result belongs
-    logic [63:0] value;     // Result to commit
+    logic [31:0] value;     // Result to commit
     logic        done;      // Result is ready
     logic valid; //whether this packet is valid yet
 } EX_CP_PACKET;
