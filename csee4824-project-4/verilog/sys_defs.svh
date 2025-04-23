@@ -44,7 +44,7 @@
 
 // number of reservation stations: 
 
-`define RS_SIZE 4
+`define RS_SIZE 1
 
 ///////////////////////////////
 // ---- Basic Constants ---- //

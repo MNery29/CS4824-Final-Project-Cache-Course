@@ -45,7 +45,6 @@ module pipeline (
     logic [`XLEN-1:0] branch_target;
     logic             stall_if;
     IF_ID_PACKET      if_packet;
-    IF_ID_PACKET      if_id_reg;
     
     //////////////////////////////////////////////////
     //                ID Stage Wires                //
@@ -70,6 +69,7 @@ module pipeline (
     logic id_rd_mem, id_wr_mem;
     ALU_FUNC id_alu_func;
     ROB_RETIRE_PACKET id_rob_retire_out;
+    logic rob_ready, rob_valid;
 
     LSQ_PACKET lsq_packet;
 
@@ -80,7 +80,7 @@ module pipeline (
     IS_EX_PACKET      is_packet;
     IS_EX_PACKET      is_ex_reg;
     logic             issue_valid;
-    logic fu_ready = 1'b1; // For now, always ready
+    logic fu_ready;
 
     //////////////////////////////////////////////////
     //                 EX Stage Wires               //
@@ -89,6 +89,9 @@ module pipeline (
     EX_MEM_PACKET ex_packet;  // Output Packet
     CDB_PACKET cdb_packet_ex;
     logic cdb_busy;
+    logic fu_busy; //this will stall the RS issue if ex stage is busy / full
+    assign fu_ready = !fu_busy;
+
 
     //////////////////////////////////////////////////
     //                CP Stage Wires                //
@@ -169,8 +172,8 @@ module pipeline (
     logic lsq_free; // stall dispatch if lsq is full
     logic cache_in_flight; //debugging
     logic head_ready_for_mem; // debugging
-    logic [LSQ_SIZE_W:0] head_ptr; //points to OLDEST entry debugging
-    logic [LSQ_SIZE_W:0] tail_ptr; //points to next free entry debugging
+    logic [2:0] head_ptr; //points to OLDEST entry debugging
+    logic [2:0] tail_ptr; //points to next free entry debugging
     //////////////////////////////////////////////////
     //           Temporary Branch Logic             //
     //////////////////////////////////////////////////
@@ -251,6 +254,7 @@ module pipeline (
     //////////////////////////////////////////////////
     //         IF/ID Pipeline Register              //
     //////////////////////////////////////////////////
+    IF_ID_PACKET      if_id_reg;
     always_ff @(posedge clock or posedge reset) begin
         if (reset) begin
             if_id_reg <= '0;
@@ -293,22 +297,26 @@ module pipeline (
         .cdb_value(cdb_packet.value),
         .lsq_free(lsq_free),
 
-        .rs1_issue(rs_issue_enable[0]),
-        .rs1_clear(rs_issue_enable[0]),
+        .fu_busy(fu_busy),
+        .rs1_clear(rs_issue_enable[0]), //this means its the first register
 
         .rob_retire_entry(1'b0), // TODO: connect properly
         .rob_clear(1'b0),        // TODO: connect properly
 
+        .store_retire(store_ready),
+        .store_tag(store_tag),
+
         .rob_dest_reg(retire_dest_out),
         .rob_to_regfile_value(retire_value_out),
         .rob_regfile_valid(retire_valid_out),
+
+        .lsq_free(lsq_free),
 
         .opA(id_opA),
         .opB(id_opB),
         .output_tag(id_tag),
         .rs1_npc_out(npc_out),
         .rs1_ready(rs1_ready),
-        .rs1_inst_out(rs1_inst_out),
 
         .opa_select(id_opa_select),
         .opb_select(id_opb_select),
@@ -316,8 +324,10 @@ module pipeline (
         .dest_reg_idx(id_dest_reg_idx),
         .rd_mem_out(id_rd_mem),
         .wr_mem_out(id_wr_mem),
+        .rob_ready(rob_ready),
+        .rob_valid(rob_valid),
         .alu_func_out(id_alu_func),
-        .rob_retire_out(id_rob_retire_out),
+        .rob_retire_out(rob_retire_packet),
 
         .rob_pointers_debug(id_rob_pointers),
 
@@ -381,6 +391,7 @@ module pipeline (
         .is_ex_reg(is_ex_reg),
         .ex_cp_packet(ex_packet),
         .ex_rejected(cdb_busy),
+        .alu_busy(fu_busy),
         .priv_addr_out(priv_addr_packet)
     );
 
@@ -425,7 +436,7 @@ module pipeline (
         .mem_valid(mem_valid),
 
         .lsq_packet_in(lsq_packet),
-        .cdb_in(cdb_packet_ex), //check
+        .cdb_in(cdb_packet), //check
         .priv_addr_in(priv_addr_packet),
 
         .cdb_out(cdb_lsq), // broadcast load data
@@ -465,9 +476,6 @@ module pipeline (
         .ex_rejected(cdb_busy)
     );
 
-    //////////////////////////////////////////////////
-    //               CDB Broadcast                  //
-    //////////////////////////////////////////////////
 
     
     //////////////////////////////////////////////////
@@ -549,6 +557,8 @@ module pipeline (
         .clock(clock),
         .reset(reset),
         .rob_retire_packet(cp_rt_reg),
+        .rob_ready(rob_ready),
+        .rob_valid(rob_valid),
         .branch_mispredict(1'b0),
         .retire_value(retire_value_out),
         .retire_dest(retire_dest_out),

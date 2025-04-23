@@ -27,7 +27,7 @@ module reservation_station(
     input        rs_opb_valid,    // Operand B is valid
     
     input        rs_load_in,      // Load new instruction, indicates whether to intake new instruction
-    input        rs_use_enable,   // Issue new instruction, indicates whether to issue new instruction to a functional unit
+    input        fu_busy,   // high if fu_busy
     input        rs_free_in,      // Free RS entry, indicates whether to free RS entry upon completion
     
     input        reset,            // Reset signal
@@ -58,7 +58,7 @@ logic internal_rd_mem, internal_wr_mem; //internal memory track
 
 // Outputs
 assign rs_avail_out = !InUse;
-assign rs_ready_out = InUse && OpaValid && OpbValid;
+assign rs_ready_out = InUse && OpaValid && OpbValid && fu_busy;
 assign rs_opa_out   = OPa;
 assign rs_opb_out   = OPb;
 assign rs_tag_out   = DestTag;

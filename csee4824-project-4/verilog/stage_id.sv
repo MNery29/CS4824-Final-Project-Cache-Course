@@ -213,7 +213,7 @@ module stage_id (
     input [`ROB_TAG_BITS-1:0] cdb_tag,
     input [31:0] cdb_value,
 
-    input rs1_issue,
+    input fu_busy,
     input rs1_clear,
 
     input rob_retire_entry,
@@ -235,7 +235,6 @@ module stage_id (
     output [`ROB_TAG_BITS-1:0] output_tag,
     output rs1_ready,
     output [31:0] rs1_npc_out,
-    output [31:0] rs1_inst_out,
 
     //output logic [45:0] rob_debug [`ROB_SZ-1:0],
     output [11:0] rob_pointers_debug,
@@ -250,6 +249,7 @@ module stage_id (
     output ROB_RETIRE_PACKET rob_retire_out, // matches port type exactly
 
     output logic rd_mem_out, wr_mem_out,
+    output logic rob_valid, rob_ready, // ready bit from ROB
 
     // information to send to LSQ about current instruction
     output LSQ_PACKET lsq_packet
@@ -419,7 +419,7 @@ module stage_id (
         .rd_mem(rd_mem),
         .wr_mem(wr_mem),
         .rs_load_in(rs1_load_entry),
-        .rs_use_enable(rs1_issue),
+        .fu_busy(fu_busy),
         .rs_free_in(rs1_clear),
         .rs_alu_func_out(alu_func_out),
         .rs_npc_out(rs1_npc_out),
@@ -447,12 +447,14 @@ module stage_id (
         .rob_cdb_in(rob_cdb_packet),
         .retire_entry(rob_retire_entry),
         .rob_clear(rob_clear),
-        .store_ready(store_ready),
+        .store_ready(store_retire),
         .store_tag(store_tag),
         .rob_retire_out(rob_retire_out),
         .rob_to_rs_value1(rob_to_rs_value1),
         .rob_to_rs_value2(rob_to_rs_value2),
         .rob_full(rob_full),
+        .rob_ready(rob_ready),
+        .rob_valid(rob_valid),
         //.rob_debug(rob_debug),
         .rob_pointers(rob_pointers_debug)
     );
