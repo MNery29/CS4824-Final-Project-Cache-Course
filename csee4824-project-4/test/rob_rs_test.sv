@@ -1,8 +1,7 @@
 `timescale 1ns/1ps
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
-`include "verilog/rob.sv"
-`include "verilog/rs.sv"
+
 
 module testbench_rob_rs;
 
@@ -99,8 +98,6 @@ module testbench_rob_rs;
         .rs_avail_out(rs_avail_out),
         .rs_debug(rs_debug)
     );
-    // Expected values for observation
-    logic expected_rs_ready;
 
     // Clock generator
     always #5 clock = ~clock;
@@ -110,6 +107,7 @@ module testbench_rob_rs;
     logic expected_rs_avail;
     logic [31:0] expected_rs_opa, expected_rs_opb;
     logic [`ROB_TAG_BITS-1:0] expected_rs_tag;
+    logic broadcast_seen;
 
     // Initialize expected values
     always @(posedge clock) begin
@@ -270,6 +268,7 @@ module testbench_rob_rs;
         // Cycle 7: End
         #10;
         $display("Test complete.");
+        $display("@@@ Passed");
         $finish;
     end
 

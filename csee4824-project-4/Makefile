@@ -177,9 +177,9 @@ GREP = grep -E --color=auto
 # - with dependencies: 'rob.simv', 'rob.cov', and 'synth/rob.vg'
 
 # TODO: add more modules here
-TESTED_MODULES = mult map_table reservation_station reorder_buffer stage_id dcache cdb stage_if stage_is icache zcache stage_cp stage_ex lsq stage_rt pipeline
+TESTED_MODULES = map_table reservation_station reorder_buffer stage_id dcache cdb stage_if stage_is icache zcache stage_cp stage_ex lsq stage_rt pipeline rob_rs
 
-MODULE = pipeline
+MODULE = rob_rs
 
 # TODO: add verilog module dependencies here:
 # (do not include header files)
@@ -188,6 +188,9 @@ DEPS = $(1).simv $(1).cov synth/$(1).vg
 
 MULT_DEPS = verilog/mult_stage.sv
 $(call DEPS,mult): $(MULT_DEPS)
+
+ROB_RS_DEPS = verilog/reorder_buffer.sv verilog/reservation_station.sv
+$(call DEPS,rob_rs): $(ROB_RS_DEPS)
 
 # No dependencies for the rob (TODO: add any you create)
 $(call DEPS,rob): $(ROB_DEPS)
@@ -263,6 +266,11 @@ synth/%.vg: verilog/%.sv | $(TCL_SCRIPT) $(HEADERS)
 $(TESTED_MODULES:=.syn.simv): %.syn.simv: test/%_test.sv synth/%.vg $(HEADERS)
 	@$(call PRINT_COLOR, 5, compiling the synthesis executable $@)
 	$(VCS) +define+SYNTH $(filter-out $(HEADERS),$^) $(LIB) -o $@
+	@$(call PRINT_COLOR, 6, finished compiling $@)
+
+rob_rs.simv: test/rob_rs_test.sv verilog/reorder_buffer.sv verilog/reservation_station.sv $(HEADERS)
+	@$(call PRINT_COLOR, 5, compiling the simulation executable $@)
+	$(VCS) $^ -o $@
 	@$(call PRINT_COLOR, 6, finished compiling $@)
 
 # ---- Coverage targets ---- #
