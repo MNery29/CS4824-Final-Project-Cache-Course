@@ -10,9 +10,9 @@
 
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
-`include "verilog/map_table.sv"
+//`include "verilog/map_table.sv" //TEMPORARILY COMMENTED OUT FOR INTEGRATION TEST
 `include "verilog/reservation_station.sv"
-`include "verilog/reorder_buffer.sv"
+//`include "verilog/reorder_buffer.sv" //TEMPORARILY COMMENTED OUT FOR INTEGRATION TEST
 `include "verilog/regfile.sv"
 
 // Decode an instruction: generate useful datapath control signals by matching the RISC-V ISA
@@ -241,7 +241,7 @@ module stage_id (
     output logic has_dest_reg,
     output logic [4:0] dest_reg_idx,
     output ALU_FUNC alu_func_out,
-    output ROB_RETIRE_PACKET rob_retire_out // matches port type exactly
+    output ROB_RETIRE_PACKET rob_retire_out, // matches port type exactly
 
     output logic rd_mem_out, wr_mem_out,
 
@@ -468,12 +468,13 @@ module stage_id (
         .wr_mem(wr_mem),
         .has_dest(has_dest_reg)
     );
+
     assign lsq_packet.valid = if_id_reg.valid;
     assign lsq_packet.rd_mem = rd_mem;
     assign lsq_packet.wr_mem = wr_mem;
     assign lsq_packet.store_data = rs1_opb_valid ? rs1_opb_in : 32'b0;
-    assign lsq_packet.store_data.valid = rs1_opb_valid;
-    assign lsq_packet.store_data.tag = rs1_ogb_valid ? 5'b0 : rs1_opb_in[4:0]; //omit MSB
+    assign lsq_packet.store_data_valid = rs1_opb_valid;
+    assign lsq_packet.store_tag = rs1_opb_valid ? 5'b0 : rs1_opb_in[4:0]; //omit MSB
     assign lsq_packet.rob_tag = rob_tag_out;
 
 endmodule 

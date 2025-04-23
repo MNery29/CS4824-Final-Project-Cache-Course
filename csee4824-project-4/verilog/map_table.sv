@@ -1,6 +1,6 @@
 `include "verilog/sys_defs.svh"
 
-module map_table(
+module map_table (
     input reset,
     input clock,
     input [4:0] rs1_addr, //Source register 1 address

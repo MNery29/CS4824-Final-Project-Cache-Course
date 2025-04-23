@@ -147,8 +147,7 @@ module pipeline (
     //               LSQ Wires                     //
     //////////////////////////////////////////////////
 
-    
-    logic priv_addr_packet priv_addr_pack; // packet to send to memory stage
+    priv_addr_packet priv_addr_packet; // this is correct // packet to send to memory stage
     logic [63:0]dcache_data_out; // data coming back from cache
     logic [3:0] dcache_tag; // high when valid
     logic [3:0] dcache_response; // 0 = can't accept, other=tag of transaction]
@@ -157,9 +156,9 @@ module pipeline (
     logic [63:0] dcache_data; // data going to cache for store
     logic [`XLEN-1:0] dcache_addr; // sending address to dcache
 
-    logic [4:0] mem_tag, // from rt stage
-    logic mem_valid, // from rt stage
-    logic CDB_PACKET cdb_lsq; // broadcast load data
+    logic [4:0] mem_tag; // from rt stage
+    logic mem_valid; // from rt stage
+    CDB_PACKET cdb_lsq; // broadcast load data
 
     logic store_ready;
     logic [4:0] store_ready_tag; // tag of store ready to write
@@ -316,7 +315,7 @@ module pipeline (
 
     .rob_pointers_debug(id_rob_pointers),
 
-    .lsq_packet(lsq_packet),
+    .lsq_packet(lsq_packet)
     );
 
     //////////////////////////////////////////////////
@@ -370,10 +369,10 @@ module pipeline (
     EX_CP_PACKET ex_cp_packet;
 
     stage_ex stage_ex_0 (
-        .id_ex_reg(is_ex_reg),
-        .ex_packet(ex_packet),
+        .is_ex_reg(is_ex_reg),
+        //.ex_packet(ex_packet),
         .ex_cp_packet(ex_cp_packet),
-        .cdb_out(cdb_packet_ex) // output packet to CDB
+        .priv_addr_out(priv_addr_packet) // output packet to CDB
     );
     
     EX_MEM_PACKET ex_mem_reg;
@@ -391,6 +390,8 @@ module pipeline (
 
     // //this is temporary while we wait for LSQ stage to be complete
     // // we will connect with LSQ wires
+    //MEM_WB_PACKET mem_packet;
+
 
     // stage_mem stage_mem_0 (
     //      // Inputs
