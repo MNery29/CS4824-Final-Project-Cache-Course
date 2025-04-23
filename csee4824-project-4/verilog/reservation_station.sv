@@ -13,7 +13,6 @@
 
 module reservation_station(
     input [31:0]   rs_npc_in,    // Next PC (from fetch/decode)
-    input [31:0]   rs_inst_in,     // Full instruction bits
     input ALU_FUNC rs_alu_func_in, // ALU function input for instruction
     input rd_mem, wr_mem, // read/write memory
     
@@ -42,7 +41,6 @@ module reservation_station(
     output [31:0]  rs_npc_out,            // Out: NPC
     output rs_rd_mem_out,
     output rs_wr_mem_out,
-    output [31:0]  rs_inst_out,           // Out: instruction bits
     output       rs_avail_out,            // Is this entry available?
     output [74:0] rs_debug
 );
@@ -56,7 +54,6 @@ logic InUse; // RS entry is in use
 
 ALU_FUNC alu_func; //internal ALU track
 logic[31:0] NPC; //internal NPC track
-logic [31:0] Inst; //internal instruction track
 logic internal_rd_mem, internal_wr_mem; //internal memory track
 
 // Outputs
@@ -67,7 +64,6 @@ assign rs_opb_out   = OPb;
 assign rs_tag_out   = DestTag;
 assign rs_alu_func_out = alu_func;
 assign rs_npc_out       = NPC;
-assign rs_inst_out      = Inst;
 assign rs_rd_mem_out = internal_rd_mem;
 assign rs_wr_mem_out = internal_wr_mem;
 
@@ -89,7 +85,6 @@ always_ff @(posedge clock) begin
         InUse    <= 1'b0;
         alu_func     <= ALU_ADD;
         NPC      <= 32'b0;
-        Inst     <= 32'b0;
         internal_rd_mem <= 1'b0;
         internal_wr_mem <= 1'b0;
     end else begin
@@ -106,7 +101,6 @@ always_ff @(posedge clock) begin
 
             alu_func <= rs_alu_func_in;
             NPC      <= rs_npc_in;
-            Inst     <= rs_inst_in;
             internal_rd_mem <= rd_mem;
             internal_wr_mem <= wr_mem;
 
@@ -132,7 +126,6 @@ always_ff @(posedge clock) begin
                 OpbValid <= 0;
                 alu_func <= ALU_ADD;
                 NPC <= 32'b0;
-                Inst <= 32'b0;
                 InUse <= 0;
                 internal_rd_mem <= 1'b0;
                 internal_wr_mem <= 1'b0;

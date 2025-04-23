@@ -25,6 +25,7 @@ module stage_if (
 );
 
     logic [`XLEN-1:0] PC_reg; // PC we are currently fetching
+    logic [`XLEN-1:0] prev_PC_reg;
 
     assign stall_if = ~Icache_valid_out;
 

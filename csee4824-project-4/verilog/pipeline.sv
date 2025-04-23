@@ -60,7 +60,10 @@ module pipeline (
 
     logic [31:0] id_opA, id_opB;
     logic [`ROB_TAG_BITS-1:0] id_tag;
+    logic [31:0] npc_out;
     ALU_OPA_SELECT id_opa_select;
+    logic rs1_inst_out;
+    logic rs1_ready;
     ALU_OPB_SELECT id_opb_select;
     logic id_has_dest_reg;
     logic [4:0] id_dest_reg_idx;
@@ -281,42 +284,44 @@ module pipeline (
     //);
 
     stage_id stage_id_0 (
-    .clock(clock),
-    .reset(reset),
-    .if_id_reg(if_id_reg),
+        .clock(clock),
+        .reset(reset),
+        .if_id_reg(if_id_reg),
 
-    .cdb_valid(cdb_packet.valid),
-    .cdb_tag(cdb_packet.tag),
-    .cdb_value(cdb_packet.value),
-    .lsq_free(lsq_free),
+        .cdb_valid(cdb_packet.valid),
+        .cdb_tag(cdb_packet.tag),
+        .cdb_value(cdb_packet.value),
+        .lsq_free(lsq_free),
 
-    .mt_retire_entry(1'b0), // TODO: connect properly
-    .rs1_issue(rs_issue_enable[0]),
-    .rs1_clear(rs_issue_enable[0]),
+        .rs1_issue(rs_issue_enable[0]),
+        .rs1_clear(rs_issue_enable[0]),
 
-    .rob_retire_entry(1'b0), // TODO: connect properly
-    .rob_clear(1'b0),        // TODO: connect properly
+        .rob_retire_entry(1'b0), // TODO: connect properly
+        .rob_clear(1'b0),        // TODO: connect properly
 
-    .rob_dest_reg(retire_dest_out),
-    .rob_to_regfile_value(retire_value_out),
-    .rob_regfile_valid(retire_valid_out),
+        .rob_dest_reg(retire_dest_out),
+        .rob_to_regfile_value(retire_value_out),
+        .rob_regfile_valid(retire_valid_out),
 
-    .opA(id_opA),
-    .opB(id_opB),
-    .output_tag(id_tag),
+        .opA(id_opA),
+        .opB(id_opB),
+        .output_tag(id_tag),
+        .rs1_npc_out(npc_out),
+        .rs1_ready(rs1_ready),
+        .rs1_inst_out(rs1_inst_out),
 
-    .opa_select(id_opa_select),
-    .opb_select(id_opb_select),
-    .has_dest_reg(id_has_dest_reg),
-    .dest_reg_idx(id_dest_reg_idx),
-    .rd_mem_out(id_rd_mem),
-    .wr_mem_out(id_wr_mem),
-    .alu_func_out(id_alu_func),
-    .rob_retire_out(id_rob_retire_out),
+        .opa_select(id_opa_select),
+        .opb_select(id_opb_select),
+        .has_dest_reg(id_has_dest_reg),
+        .dest_reg_idx(id_dest_reg_idx),
+        .rd_mem_out(id_rd_mem),
+        .wr_mem_out(id_wr_mem),
+        .alu_func_out(id_alu_func),
+        .rob_retire_out(id_rob_retire_out),
 
-    .rob_pointers_debug(id_rob_pointers),
+        .rob_pointers_debug(id_rob_pointers),
 
-    .lsq_packet(lsq_packet)
+        .lsq_packet(lsq_packet)
     );
 
     //////////////////////////////////////////////////
@@ -338,13 +343,13 @@ module pipeline (
     stage_is stage_is_0 (
         .clock(clock),
         .reset(reset),
-        .rs_ready_out(id_is_packet.rs_ready),
-        .rs_opa_out(id_is_packet.opa),
-        .rs_opb_out(id_is_packet.opb),
-        .rs_tag_out(id_is_packet.dest_tag),
-        .rs_alu_func_out(id_is_packet.alu_func),
-        .rs_npc_out(id_is_packet.NPC),
-        .rs_inst_out(id_is_packet.inst),
+        .rs_ready_out(rs1_ready),
+        .rs_opa_out(id_opA),
+        .rs_opb_out(id_opB),
+        .rs_tag_out(id_tag),
+        .rs_alu_func_out(id_alu_func),
+        .rs_npc_out(npc_out),
+        .rs_inst_out(rs1_inst_out),
         .rd_mem(id_rd_mem),
         .wr_mem(id_wr_mem),
         .fu_ready(fu_ready),

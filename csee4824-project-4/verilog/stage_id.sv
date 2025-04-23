@@ -28,7 +28,8 @@ module decoder (
     output logic          rd_mem, wr_mem, cond_branch, uncond_branch,
     output logic          csr_op, // used for CSR operations, we only use this as a cheap way to get the return code out
     output logic          halt,   // non-zero on a halt
-    output logic          illegal // non-zero on an illegal instruction
+    output logic          illegal, // non-zero on an illegal instruction
+
 );
 
     // Note: I recommend using an IDE's code folding feature on this block
@@ -212,8 +213,6 @@ module stage_id (
     input [`ROB_TAG_BITS-1:0] cdb_tag,
     input [31:0] cdb_value,
 
-    input mt_retire_entry,
-
     input rs1_issue,
     input rs1_clear,
 
@@ -227,12 +226,15 @@ module stage_id (
 
     input lsq_free,
     
-    output logic [31:0] opA,
-    output logic [31:0] opB,
-    output logic [`ROB_TAG_BITS-1:0] output_tag,
+    output [31:0] opA,
+    output [31:0] opB,
+    output [`ROB_TAG_BITS-1:0] output_tag,
+    output rs1_ready,
+    output [31:0] rs1_npc_out,
+    output [31:0] rs1_inst_out,
 
     //output logic [45:0] rob_debug [`ROB_SZ-1:0],
-    output logic [11:0] rob_pointers_debug,
+    output [11:0] rob_pointers_debug,
     //output logic [7:0] mt_tags_debug [31:0],
     //output logic [74:0] rs_debug,
 
@@ -274,7 +276,7 @@ module stage_id (
     assign rob_cdb_packet.valid = cdb_valid;
 
     // Outputs from map table
-    logic [6:0] mt_to_rs_tag1, mt_to_rs_tag2;
+    logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2;
     logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2;
 
     // Regfile read values
@@ -282,7 +284,7 @@ module stage_id (
 
     // RS operand handling
     logic [31:0] rs1_opa_in, rs1_opb_in;
-    logic rs1_opa_valid, rs1_opb_valid;
+    logic rs1_opa_valid, rs1_opb_valid;x
 
     // ROB to RS read signals
     logic rob_to_rs_read1;
@@ -320,15 +322,15 @@ module stage_id (
             OPA_IS_PC   : rs1_opa_in = if_id_reg.PC;
             OPA_IS_ZERO : rs1_opa_in = 32'b0;
             OPA_IS_RS1  : begin
-                if (mt_to_rs_tag1[6:1] == 6'b0) begin
+                if (mt_to_rs_tag1[5:1] == 5'b0) begin
                     rs1_opa_in = rs1_value;
                     rs1_opa_valid = 1;
                 end else if (!mt_to_rs_tag1[0]) begin
-                    rs1_opa_in = {27'b0, mt_to_rs_tag1[6:1]};
+                    rs1_opa_in = {28'b0, mt_to_rs_tag1[5:1]};
                     rs1_opa_valid = 0;
                 end else begin
                     rob_to_rs_read1 = 1;
-                    rob_read_tag1 = mt_to_rs_tag1[6:1];
+                    rob_read_tag1 = mt_to_rs_tag1[5:1];
                     rs1_opa_in = rob_to_rs_value1;
                     rs1_opa_valid = 1;
                 end
@@ -353,15 +355,15 @@ module stage_id (
             OPB_IS_U_IMM : rs1_opb_in = `RV32_signext_Uimm(if_id_reg.inst);
             OPB_IS_J_IMM : rs1_opb_in = `RV32_signext_Jimm(if_id_reg.inst);
             OPB_IS_RS2   : begin
-                if (mt_to_rs_tag2[6:1] == 6'b0) begin
+                if (mt_to_rs_tag2[5:1] == 5'b0) begin
                     rs1_opb_in = rs2_value;
                     rs1_opb_valid = 1;
                 end else if (!mt_to_rs_tag2[0]) begin
-                    rs1_opb_in = {27'b0, mt_to_rs_tag2[6:1]};
+                    rs1_opb_in = {28'b0, mt_to_rs_tag2[5:1]};
                     rs1_opb_valid = 0;
                 end else begin
                     rob_to_rs_read2 = 1;
-                    rob_read_tag2 = mt_to_rs_tag2[6:1];
+                    rob_read_tag2 = mt_to_rs_tag2[5:1];
                     rs1_opb_in = rob_to_rs_value2;
                     rs1_opb_valid = 1;
                 end
@@ -385,7 +387,7 @@ module stage_id (
         .cdb_tag_in(cdb_tag),
         .read_cdb(cdb_valid),
         .retire_addr(rob_dest_reg),
-        .retire_entry(mt_retire_entry),
+        .retire_entry(rob_regfile_valid),
         .retire_tag(rob_retire_tag_out),
         .rs1_tag(mt_to_rs_tag1),
         .rs2_tag(mt_to_rs_tag2),
@@ -398,6 +400,7 @@ module stage_id (
     reservation_station reservation_station_1 (
         .reset(reset),
         .clock(clock),
+        .rs_npc_in(if_id_reg.NPC),
         .rs_rob_tag(rob_tag_out),
         .rs_cdb_in(cdb_value),
         .rs_cdb_tag(cdb_tag),
@@ -407,12 +410,15 @@ module stage_id (
         .rs_opa_valid(rs1_opa_valid),
         .rs_opb_valid(rs1_opb_valid),
         .rs_alu_func_in(alu_func),
+
+
         .rd_mem(rd_mem),
         .wr_mem(wr_mem),
         .rs_load_in(rs1_load_entry),
         .rs_use_enable(rs1_issue),
         .rs_free_in(rs1_clear),
         .rs_alu_func_out(alu_func_out),
+        .rs_npc_out(rs1_npc_out),
         .rs_rd_mem_out(rd_mem_out),
         .rs_wr_mem_out(wr_mem_out),
         .rs_ready_out(rs1_ready),

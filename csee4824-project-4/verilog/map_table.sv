@@ -15,8 +15,8 @@ module map_table (
     input [4:0] retire_tag,
     input retire_entry, //ROB retire?
 
-    output logic [6:0] rs1_tag, //Tag output to RS opA, w/ ready in ROB bit
-    output logic [6:0] rs2_tag, //Tag output to RS opB, w/ ready in ROB bit
+    output logic [5:0] rs1_tag, //Tag output to RS opA, w/ ready in ROB bit
+    output logic [5:0] rs2_tag, //Tag output to RS opB, w/ ready in ROB bit
 
     output logic [4:0] regfile_rs1_addr, //Pass throughs
     output logic [4:0] regfile_rs2_addr
@@ -24,7 +24,7 @@ module map_table (
     //output logic [7:0] tags_debug[31:0]
 );
 
-    logic [5:0] tags[31:0];
+    logic [4:0] tags[31:0];
     logic ready_in_rob[31:0];
     logic has_tag[31:0];
 
@@ -33,7 +33,7 @@ module map_table (
 
     always_comb begin
         if (has_tag[rs1_addr]) begin
-            rs1_tag = {tags[rs1_addr], ready_in_rob[rs1_addr]};
+            rs1_tag = {tags[rs1_addr], ready_in_rob[rs1_addr]}; 
         end
         if (has_tag[rs2_addr]) begin
             rs2_tag = {tags[rs2_addr], ready_in_rob[rs2_addr]};
@@ -51,7 +51,7 @@ module map_table (
         if (reset) begin
             for (int i = 0; i < 32; i++) begin
                 has_tag[i] <= 1;
-                tags[i] <= 6'b0;
+                tags[i] <= 5'b0;
                 ready_in_rob[i] <= 0;
             end
         end
@@ -65,7 +65,7 @@ module map_table (
                 end
             end
             if ((retire_entry) && (retire_tag == tags[retire_addr])) begin
-                tags[retire_addr] <= 6'b0; //Clear tag at destination register on retire
+                tags[retire_addr] <= 5'b0; //Clear tag at destination register on retire
                 ready_in_rob[retire_addr] <= 0;
             end
             if (load_entry) begin
