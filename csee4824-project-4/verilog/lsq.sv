@@ -88,7 +88,7 @@ module lsq#(
 
     output logic store_ready, // let ROB know that store ready to write
     output logic [4:0] store_ready_tag, // tag of store ready to write
-    output logic stall_dispatch,// stall dispatch if lsq is full
+    output logic lsq_free,// if lsq has empty entry
 
     output logic cache_in_flight, //debugging
     output logic head_ready_for_mem, // debugging
@@ -133,7 +133,7 @@ module lsq#(
     assign full  = (next_tail_ptr == head_ptr);
 
     // assign stall if it is full
-    assign stall_dispatch = full;
+    assign lsq_free = !full;
 
      // assign dcache_command = BUS_NONE;
     // assign dcache_addr    = 32'b0;

@@ -68,6 +68,8 @@ module pipeline (
     ALU_FUNC id_alu_func;
     ROB_RETIRE_PACKET id_rob_retire_out;
 
+    LSQ_PACKET lsq_packet;
+
 
     //////////////////////////////////////////////////
     //                IS Stage Wires                //
@@ -157,10 +159,11 @@ module pipeline (
 
     logic [4:0] mem_tag, // from rt stage
     logic mem_valid, // from rt stage
+    logic CDB_PACKET cdb_lsq; // broadcast load data
 
     logic store_ready;
     logic [4:0] store_ready_tag; // tag of store ready to write
-    logic stall_dispatch; // stall dispatch if lsq is full
+    logic lsq_free; // stall dispatch if lsq is full
     logic cache_in_flight; //debugging
     logic head_ready_for_mem; // debugging
     logic [LSQ_SIZE_W:0] head_ptr; //points to OLDEST entry debugging
@@ -285,6 +288,7 @@ module pipeline (
     .cdb_valid(cdb_packet.valid),
     .cdb_tag(cdb_packet.tag),
     .cdb_value(cdb_packet.value),
+    .lsq_free(lsq_free),
 
     .mt_retire_entry(1'b0), // TODO: connect properly
     .rs1_issue(rs_issue_enable[0]),
@@ -310,7 +314,9 @@ module pipeline (
     .alu_func_out(id_alu_func),
     .rob_retire_out(id_rob_retire_out),
 
-    .rob_pointers_debug(id_rob_pointers)
+    .rob_pointers_debug(id_rob_pointers),
+
+    .lsq_packet(lsq_packet),
     );
 
     //////////////////////////////////////////////////
@@ -405,11 +411,34 @@ module pipeline (
     // so my idea for LSQ stage is the following:
     // we will issue the instruction in the reservation station
     // 
-  
+
     lsq lsq_0 (
-        .clock(clock),
+        .clk(clock),
         .reset(reset),
-       
+        .dcache_data_out(dcache_data_out),
+        .dcache_tag(dcache_tag),
+        .dcache_response(dcache_response),
+        .dcache_hit(dcache_hit),
+
+        .mem_tag(mem_tag),
+        .mem_valid(mem_valid),
+
+        .lsq_packet_in(lsq_packet),
+        .cdb_in(cdb_packet_ex), //check
+        .priv_addr_in(priv_addr_packet),
+
+        .cdb_out(cdb_lsq), // broadcast load data
+        .dcache_command(dcache_command),
+        .dcache_addr(dcache_addr), // sending address to dcache
+        .dcache_data(dcache_data), // data for current command (if store)
+
+        .store_ready(store_ready), // let ROB know that store ready to write
+        .store_ready_tag(store_ready_tag), // tag of store ready to write
+        .lsq_free(lsq_free),// if lsq has empty entry
+        .cache_in_flight(cache_in_flight), //debugging
+        .head_ready_for_mem(head_ready_for_mem), // debugging
+        .head_ptr(head_ptr), //points to OLDEST entry debugging
+        .tail_ptr(tail_ptr) //points to next free entry debugging
     );
 
     //////////////////////////////////////////////////
