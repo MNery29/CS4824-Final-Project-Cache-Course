@@ -219,6 +219,10 @@ module stage_id (
     input rob_retire_entry,
     input rob_clear,
 
+    //this is signal from LSQ to let ROB know that a store command is ready
+    input store_retire,
+    input store_tag,
+
     //data from retire stage
     input [4:0] rob_dest_reg,
     input [31:0] rob_to_regfile_value,
@@ -443,6 +447,8 @@ module stage_id (
         .rob_cdb_in(rob_cdb_packet),
         .retire_entry(rob_retire_entry),
         .rob_clear(rob_clear),
+        .store_ready(store_ready),
+        .store_tag(store_tag),
         .rob_retire_out(rob_retire_out),
         .rob_to_rs_value1(rob_to_rs_value1),
         .rob_to_rs_value2(rob_to_rs_value2),
