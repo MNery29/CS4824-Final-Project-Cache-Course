@@ -109,40 +109,54 @@ module testbench_rob_rs;
     logic [`ROB_TAG_BITS-1:0] expected_rs_tag;
     logic broadcast_seen;
 
-    // Initialize expected values
-    always @(posedge clock) begin
-    if (reset) begin
-        expected_rs_ready = 0;
-        expected_rs_avail = 1;
-        expected_rs_opa = 0;
-        expected_rs_opb = 0;
-        expected_rs_tag = 0;
-        broadcast_seen = 0;
-    end else begin
-        if (rs_load_in) begin
-        expected_rs_avail = 0;
-        expected_rs_opa = rs_opa_valid ? rs_opa_in : 32'b0;
-        expected_rs_opb = rs_opb_valid ? rs_opb_in : 32'b0;
-        expected_rs_tag = rs_rob_tag;
-        broadcast_seen = 0;
-        end
+    logic prev_rs_free; //to account for non-instant changes in stations
 
-        if (rs_cdb_valid && !broadcast_seen) begin
-        expected_rs_opb = rs_cdb_in;
-        broadcast_seen = 1;
-        end
-
-        expected_rs_ready = !expected_rs_avail && 
-                            u_rs.rs_debug[43] &&  // opa_valid
-                            u_rs.rs_debug[11];    // opb_valid
-
-        if (rs_free_in) begin
-        expected_rs_avail = 1;
-        expected_rs_ready = 0;
-        expected_rs_opa = 0;
-        expected_rs_opb = 0;
-        end
+    always @(posedge clock) begin 
+        prev_rs_free <= rs_free_in; //to sync up timing check.
     end
+
+   logic [1:0] rs_free_shift;
+
+    always @(posedge clock) begin
+        rs_free_shift <= {rs_free_shift[0], rs_free_in}; // Shift register
+
+        if (reset) begin
+            expected_rs_ready = 0;
+            expected_rs_avail = 1;
+            expected_rs_opa = 0;
+            expected_rs_opb = 0;
+            expected_rs_tag = 0;
+            broadcast_seen = 0;
+            rs_free_shift = 2'b00;
+        end else begin
+            if (rs_load_in) begin
+                expected_rs_avail = 0;
+                expected_rs_opa = rs_opa_valid ? rs_opa_in : 32'b0;
+                expected_rs_opb = rs_opb_valid ? rs_opb_in : 32'b0;
+                expected_rs_tag = rs_rob_tag;
+                broadcast_seen = 0;
+            end
+
+            if (rs_cdb_valid && !broadcast_seen) begin
+                expected_rs_opb = rs_cdb_in;
+                broadcast_seen = 1;
+            end
+
+            // Only clear after the RS had a full cycle to reset
+            if (rs_free_shift == 2'b10) begin
+                expected_rs_avail = 1;
+                expected_rs_ready = 0;
+                expected_rs_opa = 0;
+                expected_rs_opb = 0;
+            end
+
+            // Set ready flag based on RS state
+            expected_rs_ready = u_rs.rs_debug[5] &&  // InUse
+                                u_rs.rs_debug[43] && // opa_valid
+                                u_rs.rs_debug[11];   // opb_valid
+
+            expected_rs_avail = u_rs.rs_avail_out;
+        end
     end
 
     //reset toggle check 
@@ -199,9 +213,9 @@ module testbench_rob_rs;
       // Stimulus
     initial begin
         $display("Starting ROB + RS integration test...");
-
-        // Initialization
         clock = 0;
+
+        // Sync up stimulus
         reset = 1;
         after_reset = 0;
         retire_entry = 0;
@@ -213,20 +227,22 @@ module testbench_rob_rs;
         rob_dispatch_in = '{default:0};
         rob_cdb_in = '{default:0};
 
-        // Hold reset for a few cycles
-        #20;
+        // Wait for a few clock cycles
+        repeat (2) @(posedge clock);
         reset = 0;
         after_reset = 1;
 
-        // Cycle 1: Dispatch new instruction to ROB
+        // Cycle 1: Dispatch to ROB
+        @(posedge clock);
         rob_dispatch_in.valid = 1;
         rob_dispatch_in.dest_reg = 5'd1;
         rob_dispatch_in.opcode = `RV32_OP_IMM;
 
-        #10;
+        @(posedge clock);
         rob_dispatch_in.valid = 0;
 
-        // Cycle 2: Load RS with operands
+        // Cycle 2: Load RS
+        @(posedge clock);
         rs_npc_in = 32'h100;
         rs_inst_in = 32'hDEADBEEF;
         rs_alu_func_in = ALU_ADD;
@@ -237,39 +253,37 @@ module testbench_rob_rs;
         rs_opb_valid = 0;
         rs_load_in = 1;
 
-        #10;
+        @(posedge clock);
         rs_load_in = 0;
 
-        // Cycle 3: Nothing happening, RS waiting for operand
-        #10;
+        // Wait 1 cycle
+        @(posedge clock);
 
-        // Cycle 4: Simulate CDB broadcast
+        // Cycle 4: Broadcast via CDB
         rob_cdb_in.valid = 1;
         rob_cdb_in.tag = rob_dispatch_out.tag;
         rob_cdb_in.value = 32'h12345678;
-
         rs_cdb_in = 32'h12345678;
         rs_cdb_tag = rob_dispatch_out.tag;
         rs_cdb_valid = 1;
 
-        #10;
+        @(posedge clock);
         rob_cdb_in.valid = 0;
         rs_cdb_valid = 0;
 
-        // Cycle 5: RS should now be ready!
-        #10;
+        // Wait one more cycle for RS to update
+        @(posedge clock);
 
-        // Cycle 6: Free the RS after issue
+        // Free RS
         rs_free_in = 1;
-
-        #10;
+        @(posedge clock);
         rs_free_in = 0;
 
-        // Cycle 7: End
-        #10;
+        @(posedge clock);
         $display("Test complete.");
         $display("@@@ Passed");
         $finish;
     end
+
 
 endmodule
