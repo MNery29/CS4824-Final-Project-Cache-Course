@@ -81,6 +81,8 @@ module lsq#(
     input CDB_PACKET cdb_in, // packet from CDB stage
     input priv_addr_packet priv_addr_in, // packet from execute stage (giving us the address)
 
+    input cdb_busy, // this is high if the previous CDB message we sent was not recieved, which means we should send again
+
     output CDB_PACKET cdb_out, // broadcast load data
     output logic [1:0] dcache_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
     output logic [`XLEN-1:0] dcache_addr, // sending address to dcache

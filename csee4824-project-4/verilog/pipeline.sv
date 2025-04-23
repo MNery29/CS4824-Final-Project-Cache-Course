@@ -366,23 +366,15 @@ module pipeline (
     //////////////////////////////////////////////////
     //                Execute Stage                 //
     //////////////////////////////////////////////////
-    EX_CP_PACKET ex_cp_packet;
+    EX_CP_PACKET ex_packet;
 
     stage_ex stage_ex_0 (
+        .clk(clock),
+        .rst(reset),
         .is_ex_reg(is_ex_reg),
-        //.ex_packet(ex_packet),
-        .ex_cp_packet(ex_cp_packet),
-        .priv_addr_out(priv_addr_packet) // output packet to CDB
+        .ex_cp_packet(ex_packet),
+        .priv_addr_out(priv_addr_packet)
     );
-    
-    EX_MEM_PACKET ex_mem_reg;
-    always_ff @(posedge clock or posedge reset) begin
-        if (reset) begin
-            ex_mem_reg <= '0;
-        end else begin
-            ex_mem_reg <= ex_packet;
-        end
-    end
 
      //////////////////////////////////////////////////
     //              Memory Stage                    //
@@ -463,6 +455,11 @@ module pipeline (
         .cdb_packet_out(cdb_packet)
     );
 
+    //////////////////////////////////////////////////
+    //               CDB Broadcast                  //
+    //////////////////////////////////////////////////
+
+    
     //////////////////////////////////////////////////
     //            Reorder Buffer (ROB)              //
     //////////////////////////////////////////////////
