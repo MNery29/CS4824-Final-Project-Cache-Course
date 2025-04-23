@@ -295,7 +295,6 @@ module pipeline (
         .cdb_valid(cdb_packet.valid),
         .cdb_tag(cdb_packet.tag),
         .cdb_value(cdb_packet.value),
-        .lsq_free(lsq_free),
 
         .fu_busy(fu_busy),
         .rs1_clear(rs_issue_enable[0]), //this means its the first register
@@ -390,7 +389,6 @@ module pipeline (
         .cdb_packet_busy(cdb_busy),
         .is_ex_reg(is_ex_reg),
         .ex_cp_packet(ex_packet),
-        .ex_rejected(cdb_busy),
         .alu_busy(fu_busy),
         .priv_addr_out(priv_addr_packet)
     );
@@ -435,7 +433,7 @@ module pipeline (
         .mem_tag(mem_tag),
         .mem_valid(mem_valid),
 
-        .lsq_packet_in(lsq_packet),
+        .lsq_packet(lsq_packet),
         .cdb_in(cdb_packet), //check
         .priv_addr_in(priv_addr_packet),
 
@@ -612,7 +610,7 @@ module pipeline (
 
 
     mem mem_0 (
-        .clock(clock),
+        .clk(clock),
         .proc2mem_addr(proc2mem_addr),
         .proc2mem_data(proc2mem_data),
     `ifndef CACHE_MODE

@@ -23,7 +23,7 @@ input EX_CP_PACKET lsq_cp_packet,
 
 //output to ROB (CDB): defined in sys_defs.sv
 output CDB_PACKET cdb_packet_out,
-output ex_rejected,
+output ex_rejected
 // lsq WILL ALWAYS have priority, so it will NEVER by rejected
 );
 
@@ -35,7 +35,6 @@ always_ff @(posedge clock) begin
             cdb_packet_out.value <= 64'b0;
             cdb_packet_out.tag   <= 5'b0;
             cdb_packet_out.valid <= 1'b0;
-            ex_rejected <= 1'b0;
         end else begin
             if (lsq_cp_packet.done && lsq_cp_packet.valid) begin
 

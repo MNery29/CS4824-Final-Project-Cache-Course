@@ -28,7 +28,7 @@ module decoder (
     output logic          rd_mem, wr_mem, cond_branch, uncond_branch,
     output logic          csr_op, // used for CSR operations, we only use this as a cheap way to get the return code out
     output logic          halt,   // non-zero on a halt
-    output logic          illegal, // non-zero on an illegal instruction
+    output logic          illegal // non-zero on an illegal instruction
 
 );
 
@@ -288,7 +288,7 @@ module stage_id (
 
     // RS operand handling
     logic [31:0] rs1_opa_in, rs1_opb_in;
-    logic rs1_opa_valid, rs1_opb_valid;x
+    logic rs1_opa_valid, rs1_opb_valid;
 
     // ROB to RS read signals
     logic rob_to_rs_read1;
@@ -447,7 +447,7 @@ module stage_id (
         .rob_cdb_in(rob_cdb_packet),
         .retire_entry(rob_retire_entry),
         .rob_clear(rob_clear),
-        .store_ready(store_retire),
+        .store_retire(store_retire),
         .store_tag(store_tag),
         .rob_retire_out(rob_retire_out),
         .rob_to_rs_value1(rob_to_rs_value1),

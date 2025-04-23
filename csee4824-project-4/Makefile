@@ -98,7 +98,7 @@
 # there should be no need to change anything for project 3
 
 # this is a global clock period variable used in the tcl script and referenced in testbenches
-export CLOCK_PERIOD = 1000.0
+export CLOCK_PERIOD = 10000.0
 
 # Path variables
 export RISCV32_HOME = /homes/user/fac/tk3070/tmp/riscv-gcc/riscv-32/bin
@@ -334,16 +334,14 @@ TESTBENCH = test/pipeline_test.sv \
 SOURCES = verilog/pipeline.sv \
           verilog/regfile.sv \
           verilog/icache.sv \
-          verilog/mult.sv \
-          verilog/mult_stage.sv \
           verilog/stage_if.sv \
           verilog/stage_id.sv \
           verilog/stage_is.sv \
           verilog/stage_ex.sv \
-          verilog/stage_mem.sv \
           verilog/stage_cp.sv \
           verilog/stage_rt.sv \
-          verilog/stage_mem.sv
+		  verilog/lsq.sv \
+		  verilog/map_table.sv
 		  
 SYNTH_FILES = synth/pipeline.vg
 

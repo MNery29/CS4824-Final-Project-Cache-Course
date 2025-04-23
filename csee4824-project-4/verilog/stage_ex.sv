@@ -313,6 +313,7 @@ module stage_ex (
 );
 
     logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
+    logic [31:0] next_val;
     logic take_conditional;
 
 
@@ -322,7 +323,7 @@ module stage_ex (
     // assign ex_packet.halt         = id_ex_reg.halt;
     // assign ex_packet.illegal      = id_ex_reg.illegal;
     // assign ex_packet.csr_op       = id_ex_reg.csr_op;
-    assign ex_cp_packet.valid        = is_ex_reg.issue_valid;
+    // assign ex_cp_packet.valid        = is_ex_reg.issue_valid;
 
     // Break out the signed/unsigned bit and memory read/write size
     // assign ex_cp_packet.rd_unsigned  = is_ex_reg.inst.r.funct3[2]; // 1 if unsigned, 0 if signed
@@ -339,28 +340,30 @@ module stage_ex (
     // assign ex_packet.take_branch = id_ex_reg.uncond_branch || (id_ex_reg.cond_branch && take_conditional);
 
     // ALU opA mux
-    always_comb begin
-        case (id_ex_reg.opa_select)
-            OPA_IS_RS1:  opa_mux_out = is_ex_reg.OPA; // before it was: id_ex_reg.rs1_value;
-            OPA_IS_NPC:  opa_mux_out = is_ex_reg.NPC;
-            OPA_IS_PC:   opa_mux_out = is_ex_reg.NPC; // just marking as NPC for now, cuz idk if this is really necessary
-            OPA_IS_ZERO: opa_mux_out = 0;
-            default:     opa_mux_out = `XLEN'hdeadface; // dead face
-        endcase
-    end
+    assign opa_mux_out = is_ex_reg.OPA;
+    // always_comb begin
+    //     case (is_ex_reg.opa_select)
+    //         OPA_IS_RS1:  opa_mux_out = is_ex_reg.OPA; // before it was: id_ex_reg.rs1_value;
+    //         OPA_IS_NPC:  opa_mux_out = is_ex_reg.NPC;
+    //         OPA_IS_PC:   opa_mux_out = is_ex_reg.NPC; // just marking as NPC for now, cuz idk if this is really necessary
+    //         OPA_IS_ZERO: opa_mux_out = 0;
+    //         default:     opa_mux_out = `XLEN'hdeadface; // dead face
+    //     endcase
+    // end
 
     // ALU opB mux
-    always_comb begin
-        case (id_ex_reg.opb_select)
-            OPB_IS_RS2:   opb_mux_out =  is_ex_reg.OPB; //id_ex_reg.rs2_value;
-            OPB_IS_I_IMM: opb_mux_out = `RV32_signext_Iimm(is_ex_reg.inst);
-            OPB_IS_S_IMM: opb_mux_out = `RV32_signext_Simm(is_ex_reg.inst);
-            OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(is_ex_reg.inst);
-            OPB_IS_U_IMM: opb_mux_out = `RV32_signext_Uimm(is_ex_reg.inst);
-            OPB_IS_J_IMM: opb_mux_out = `RV32_signext_Jimm(is_ex_reg.inst);
-            default:      opb_mux_out = `XLEN'hfacefeed; // face feed
-        endcase
-    end
+    assign opb_mux_out = is_ex_reg.OPB;
+    // always_comb begin
+    //     case (is_ex_reg.opb_select)
+    //         OPB_IS_RS2:   opb_mux_out =  is_ex_reg.OPB; //id_ex_reg.rs2_value;
+    //         OPB_IS_I_IMM: opb_mux_out = `RV32_signext_Iimm(is_ex_reg.inst);
+    //         OPB_IS_S_IMM: opb_mux_out = `RV32_signext_Simm(is_ex_reg.inst);
+    //         OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(is_ex_reg.inst);
+    //         OPB_IS_U_IMM: opb_mux_out = `RV32_signext_Uimm(is_ex_reg.inst);
+    //         OPB_IS_J_IMM: opb_mux_out = `RV32_signext_Jimm(is_ex_reg.inst);
+    //         default:      opb_mux_out = `XLEN'hfacefeed; // face feed
+    //     endcase
+    // end
 
     // Instantiate the ALU
     alu alu_0 (
@@ -370,7 +373,7 @@ module stage_ex (
         .func(is_ex_reg.alu_func),
 
         // Output
-        .result(ex_cp_packet.value)
+        .result(next_val)
     );
 
     // Instantiate the conditional branch module
@@ -390,7 +393,7 @@ module stage_ex (
 
     assign ex_cp_packet.valid = cdb_packet_busy ? last_packet.valid : is_ex_reg.issue_valid && !is_mem_op;
     assign ex_cp_packet.rob_tag = cdb_packet_busy ? last_packet.rob_tag : is_ex_reg.rob_tag;
-    assign ex_cp_packet.value = cdb_packet_busy ? last_packet.value : ex_cp_packet.value;
+    assign ex_cp_packet.value = cdb_packet_busy ? last_packet.value : next_val;
     assign ex_cp_packet.done = cdb_packet_busy ? last_packet.done : is_ex_reg.issue_valid && !is_mem_op;
 
     always_ff @(posedge clk or posedge rst) begin
@@ -402,7 +405,7 @@ module stage_ex (
         end else begin
             last_packet.valid <= is_ex_reg.issue_valid && !is_mem_op;
             last_packet.rob_tag <= is_ex_reg.rob_tag;
-            last_packet.value <= ex_packet.alu_result;
+            last_packet.value <= ex_cp_packet.value;
             last_packet.done <= is_ex_reg.issue_valid;
         end
     end

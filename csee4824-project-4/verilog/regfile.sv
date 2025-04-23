@@ -10,7 +10,8 @@
 `include "verilog/sys_defs.svh"
 
 // P4 TODO: update this with the new parameters from sys_defs
-
+`ifndef REGFILE_SV
+`define REGFILE_SV
 module regfile (
     input             clock, // system clock
     // note: no system reset, register values must be written before they can be read
@@ -53,3 +54,4 @@ module regfile (
     end
 
 endmodule // regfile
+`endif
