@@ -405,7 +405,7 @@ typedef struct packed {
 typedef struct packed{
     logic [4:0] rob_tag;  // Where in the ROB the result belongs
     logic [31:0] store_data;
-    logic [4:0] store_tag;
+    logic [4:0] store_data_tag;
     logic store_data_valid;
     logic rd_mem;
     logic wr_mem;
