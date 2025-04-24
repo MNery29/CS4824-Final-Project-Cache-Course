@@ -220,7 +220,7 @@ module stage_id (
 
     //this is signal from LSQ to let ROB know that a store command is ready
     input store_retire,
-    input store_tag,
+    input [4:0] store_tag,
 
     //data from retire stage
     input [4:0] rob_dest_reg,

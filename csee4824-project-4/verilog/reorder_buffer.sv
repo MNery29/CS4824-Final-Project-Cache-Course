@@ -35,7 +35,7 @@ module reorder_buffer(
     input rob_clear, //flush all entries 
 
     input store_retire, //store retire signal from LSQ
-    input store_tag, //tag from LSQ
+    input [4:0] store_tag, //tag from LSQ
 
 
     //output to send to Dispatch stage
@@ -58,7 +58,7 @@ module reorder_buffer(
     output logic rob_valid,
 
     //debug
-    // output logic [45:0] rob_debug [31:0],
+    output logic [45:0] rob_debug [31:0],
     output logic [11:0] rob_pointers
 );
 
@@ -127,11 +127,11 @@ module reorder_buffer(
     //DEBUGGING OUTPUTS
     assign rob_pointers = {head, tail};
 
-    //always_comb begin
-    //    for (int i = 0; i < `ROB_SZ; i++) begin
-    //        rob_debug[i] = {rob_status[i], rob_opcode[i], rob_dest[i], rob_values[i]};
-    //    end
-    //end
+    always_comb begin
+       for (int i = 0; i < `ROB_SZ; i++) begin
+           rob_debug[i] = {rob_status[i], rob_opcode[i], rob_dest[i], rob_values[i]};
+       end
+    end
 
     // ROB LOGIC 
     always_ff @(posedge clock or posedge reset) begin
@@ -143,8 +143,8 @@ module reorder_buffer(
                 rob_status[i] <= EMPTY;
                 rob_is_branch[i] <= 1'b0;
             end
-            head <= 6'b0;
-            tail <= 6'b0;
+            head <= 1;
+            tail <= 1;
         end else begin
             // Dispatch new instruction if valid
             if (rob_dispatch_in.valid && !rob_full) begin
@@ -153,7 +153,7 @@ module reorder_buffer(
                 rob_opcode[tail[`ROB_TAG_BITS-1:0]] <= rob_dispatch_in.opcode;
                 rob_status[tail[`ROB_TAG_BITS-1:0]] <= BUSY;
                 rob_is_branch[tail[`ROB_TAG_BITS-1:0]] <= rob_dispatch_in.is_branch;
-                tail <= tail + 1;
+                tail <= tail + 1 == 0 ? 1 : tail + 1;
             end
 
             // CDB writeback
@@ -186,7 +186,7 @@ module reorder_buffer(
                     rob_opcode[head[`ROB_TAG_BITS-1:0]] <= 7'b0;
                     rob_status[head[`ROB_TAG_BITS-1:0]] <= EMPTY;
                     rob_is_branch[head[`ROB_TAG_BITS-1:0]] <= 1'b0;
-                    head <= head + 1;
+                    head <= head + 1 == 0 ? 1 : head+1;
                 end
             end
         end

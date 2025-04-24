@@ -14,7 +14,7 @@ module testbench;
 
     // DEBUG signals:
     logic [11:0] rob_pointers; 
-    //logic [45:0] rob_debug[31:0];
+    logic [45:0] rob_debug[31:0];
 
     // Local Values
     logic        dispatch_valid;
@@ -32,6 +32,12 @@ module testbench;
     // DUT input
     DISPATCH_ROB_PACKET rob_dispatch_in_temp;
     CDB_ROB_PACKET      rob_cdb_in_temp;
+    //lsq input
+    logic store_retire;
+    logic [4:0] store_tag;
+    logic rob_ready;
+    logic rob_valid;
+    
 
     // Clock Generation
     always begin
@@ -54,19 +60,24 @@ module testbench;
 
         .retire_entry(retire_entry),
         .rob_clear(rob_clear),
+        .store_retire(store_retire),
+        .store_tag(store_tag),
+        .rob_ready(rob_ready),
+        .rob_valid(rob_valid),
+
 
         .rob_dispatch_out(rob_dispatch_out),
         .rob_retire_out(rob_retire_out),
         .rob_to_rs_value1(rob_to_rs_value1),
         .rob_to_rs_value2(rob_to_rs_value2),
         .rob_full(rob_full),
-        //.rob_debug(rob_debug),
+        .rob_debug(rob_debug),
         .rob_pointers(rob_pointers)
     );
 
     // Struct Assembly
     always_comb begin
-        rob_dispatch_in_temp = '{valid: dispatch_valid, dest_reg: dispatch_dest, opcode: dispatch_opcode};
+        rob_dispatch_in_temp = '{valid: dispatch_valid, dest_reg: dispatch_dest, opcode: dispatch_opcode, is_branch:0};
         rob_cdb_in_temp       = '{valid: cdb_valid, tag: cdb_tag, value: cdb_value};
     end
 
@@ -97,6 +108,7 @@ module testbench;
 
     initial begin
         // reset
+        $display("Starting testbench... RESETING ALL VALUES");
         clock = 1;
         reset = 1;
         dispatch_valid = 0;
@@ -112,57 +124,73 @@ module testbench;
 
         @(negedge clock);
         reset = 0;
+        $display("Starting testbench... RESET COMPLETE");
 
         // Cycle 1: Instruction 1
+        $display("Dispatching instruction 1");
         dispatch_valid = 1;
         dispatch_dest = 5'd1;
         dispatch_opcode = `RV32_ADD;
+        print_contents(rob_debug, rob_pointers);
 
         @(negedge clock);
         //print_contents(rob_debug, rob_pointers);
 
         // Cycle 2: Instruction 2 
+        $display("Dispatching instruction 2");
         dispatch_dest = 5'd2;
+        print_contents(rob_debug, rob_pointers);
 
         @(negedge clock);
         //print_contents(rob_debug, rob_pointers);
 
         // Cycle 3: Instruction 3
+        $display("Dispatching instruction 3");
         dispatch_dest = 5'd8;
         dispatch_opcode = `RV32_SUB;
+        print_contents(rob_debug, rob_pointers);
 
         @(negedge clock);
         //print_contents(rob_debug, rob_pointers);
 
         // Cycle 4: Broadcast CDB tag 1
+        $display("Broadcasting CDB tag 1");
         dispatch_valid = 0;
         cdb_valid = 1;
         cdb_tag = 6'd1;
         cdb_value = 32'hFFFF_FFFF;
+        print_contents(rob_debug, rob_pointers);
 
         @(negedge clock);
         //print_contents(rob_debug, rob_pointers);
 
         // Cycle 5: Retire instruction 
+        $display("Retiring instruction 1");
         cdb_valid = 0;
         retire_entry = 1;
+        print_contents(rob_debug, rob_pointers);
 
         @(negedge clock);
         //print_contents(rob_debug, rob_pointers);
 
         // Cycle 6: Attempt another retire (may stall)
+        $display("Attempting to retire instruction 2 (may stall)");
         retire_entry = 1;
+        print_contents(rob_debug, rob_pointers);
 
         @(negedge clock);
         //print_contents(rob_debug, rob_pointers);
 
         // Cycle 7: Instruction 4
+        $display("Dispatching instruction 4");
         retire_entry = 0;
         dispatch_valid = 1;
         dispatch_dest = 5'd31;
         dispatch_opcode = `RV32_SUB;
+        print_contents(rob_debug, rob_pointers);
 
         @(negedge clock);
+        print_contents(rob_debug, rob_pointers);
         //print_contents(rob_debug, rob_pointers);
 
         $finish;

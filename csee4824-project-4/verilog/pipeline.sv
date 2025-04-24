@@ -177,7 +177,7 @@ module pipeline (
     EX_CP_PACKET cdb_lsq; // broadcast load data
 
     logic store_ready;
-    logic [4:0] store_ready_tag; // tag of store ready to write
+    logic [4:0] store_tag; // tag of store ready to write
     logic lsq_free; // stall dispatch if lsq is full
     logic cache_in_flight; //debugging
     logic head_ready_for_mem; // debugging
@@ -458,7 +458,7 @@ module pipeline (
         .dcache_data(dcache_data), // data for current command (if store)
 
         .store_ready(store_ready), // let ROB know that store ready to write
-        .store_ready_tag(store_ready_tag), // tag of store ready to write
+        .store_ready_tag(store_tag), // tag of store ready to write
         .lsq_free(lsq_free),// if lsq has empty entry
         .cache_in_flight(cache_in_flight), //debugging
         .head_ready_for_mem(head_ready_for_mem), // debugging
