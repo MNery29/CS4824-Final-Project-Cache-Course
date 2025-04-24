@@ -41,8 +41,6 @@ module pipeline (
     logic [63:0]      Icache_data_out;
     logic             Icache_valid_out;
     logic             if_valid;
-    logic             take_branch;
-    logic [`XLEN-1:0] branch_target;
     logic             stall_if;
     IF_ID_PACKET      if_packet;
     
@@ -52,7 +50,7 @@ module pipeline (
     //ID_IS_PACKET      id_is_packet; // NOT INCLUDED IN stage_id.sv
     //ID_IS_PACKET      id_is_reg; // NOT INCLUDED IN stage_id.sv FIX
     //logic [45:0]      id_rob_debug[31:0];
-    //logic [11:0]      id_rob_pointers;
+    logic [11:0]      id_rob_pointers;
     //logic [7:0]       id_mt_tags[31:0];
     //logic [74:0]      id_rs_debug;
     //logic [`RS_SIZE-1:0] rs_issue_enable;'
@@ -61,7 +59,7 @@ module pipeline (
     logic [`ROB_TAG_BITS-1:0] id_tag;
     logic [31:0] npc_out;
     ALU_OPA_SELECT id_opa_select;
-    logic rs1_inst_out;
+    logic [`RS_SIZE-1:0][31:0] rs1_inst_out;
     logic rs1_ready;
     ALU_OPB_SELECT id_opb_select;
     logic id_has_dest_reg;
@@ -81,12 +79,13 @@ module pipeline (
     IS_EX_PACKET      is_ex_reg;
     logic             issue_valid;
     logic fu_ready;
+    logic [`RS_SIZE-1:0] rs_issue_enable;
 
     //////////////////////////////////////////////////
     //                 EX Stage Wires               //
     //////////////////////////////////////////////////
     ID_EX_PACKET id_ex_reg;   // The ID to EX stage register
-    EX_MEM_PACKET ex_packet;  // Output Packet
+    // EX_MEM_PACKET ex_packet;  // Output Packet
     CDB_PACKET cdb_packet_ex;
     logic cdb_busy;
     logic fu_busy; //this will stall the RS issue if ex stage is busy / full
@@ -107,6 +106,16 @@ module pipeline (
     logic             retire_valid_out;
     logic [`XLEN-1:0] mem_addr_out;
     logic             mem_valid_out;
+
+    logic maptable_clear;
+    logic rob_clear;
+    logic lsq_clear;
+    logic rs_clear;
+    logic is_clear;
+    logic fu_clear;
+    logic cp_clear;
+    logic take_branch;
+    logic [31:0] new_addr;
 
     //////////////////////////////////////////////////
     //                ROB + Map Table Wires         //
@@ -165,7 +174,7 @@ module pipeline (
 
     logic [4:0] mem_tag; // from rt stage
     logic mem_valid; // from rt stage
-    CDB_PACKET cdb_lsq; // broadcast load data
+    EX_CP_PACKET cdb_lsq; // broadcast load data
 
     logic store_ready;
     logic [4:0] store_ready_tag; // tag of store ready to write
@@ -178,7 +187,6 @@ module pipeline (
     //           Temporary Branch Logic             //
     //////////////////////////////////////////////////
     assign if_valid = 1'b1;                // Always fetch for now
-    assign take_branch = 1'b0;             // No branch resolution yet
     assign branch_target = 32'b0;          // Default branch target
 
     //////////////////////////////////////////////////
@@ -189,7 +197,7 @@ module pipeline (
         .reset(reset),
         .if_valid(if_valid),
         .take_branch(take_branch),
-        .branch_target(branch_target),
+        .branch_target(new_addr),
         .Icache_data_out(Icache_data_out),
         .Icache_valid_out(Icache_valid_out),
         .if_packet(if_packet),
@@ -299,8 +307,7 @@ module pipeline (
         .fu_busy(fu_busy),
         .rs1_clear(rs_issue_enable[0]), //this means its the first register
 
-        .rob_retire_entry(1'b0), // TODO: connect properly
-        .rob_clear(1'b0),        // TODO: connect properly
+        .rob_retire_entry(1'b1), // TODO: connect properly
 
         .store_retire(store_ready),
         .store_tag(store_tag),
@@ -308,6 +315,9 @@ module pipeline (
         .rob_dest_reg(retire_dest_out),
         .rob_to_regfile_value(retire_value_out),
         .rob_regfile_valid(retire_valid_out),
+        .rob_clear(rob_clear), 
+        .maptable_clear(maptable_clear),
+        .rs_clear(rs_clear),
 
         .lsq_free(lsq_free),
 
@@ -349,6 +359,7 @@ module pipeline (
     //////////////////////////////////////////////////
     //                Issue Stage                   //
     //////////////////////////////////////////////////
+
     stage_is stage_is_0 (
         .clock(clock),
         .reset(reset),
@@ -382,10 +393,12 @@ module pipeline (
     //                Execute Stage                 //
     //////////////////////////////////////////////////
     EX_CP_PACKET ex_packet;
+    logic ex_reset;
+    assign ex_reset = reset || fu_clear;
 
     stage_ex stage_ex_0 (
         .clk(clock),
-        .rst(reset),
+        .rst(ex_reset),
         .cdb_packet_busy(cdb_busy),
         .is_ex_reg(is_ex_reg),
         .ex_cp_packet(ex_packet),
@@ -421,10 +434,12 @@ module pipeline (
     // so my idea for LSQ stage is the following:
     // we will issue the instruction in the reservation station
     // 
+    logic lsq_reset;
+    assign lsq_reset = reset || lsq_clear;
 
     lsq lsq_0 (
         .clk(clock),
-        .reset(reset),
+        .reset(lsq_reset),
         .dcache_data_out(dcache_data_out),
         .dcache_tag(dcache_tag),
         .dcache_response(dcache_response),
@@ -465,9 +480,11 @@ module pipeline (
     //////////////////////////////////////////////////
     //               Complete Stage                 //
     //////////////////////////////////////////////////
+    logic cp_reset;
+    assign cp_reset = reset || cp_clear;
     stage_cp stage_cp_0 (
         .clock(clock),
-        .reset(reset),
+        .reset(cp_reset),
         .ex_cp_packet(ex_cp_reg), // input packet from EX stage
         .lsq_cp_packet(cdb_lsq), // input packet from LSQ stage
         .cdb_packet_out(cdb_packet),
@@ -562,7 +579,17 @@ module pipeline (
         .retire_dest(retire_dest_out),
         .retire_valid_out(retire_valid_out),
         .mem_tag(mem_tag),
-        .mem_valid(mem_valid)
+        .mem_valid(mem_valid),
+        .clear_rob(rob_clear),
+        .clear_map_table(maptable_clear),
+        .clear_lsq(lsq_clear),
+        .clear_rs(rs_clear),
+        .clear_is(is_clear),
+        .clear_fu(fu_clear),
+        .clear_cp(cp_clear),
+
+        .take_branch(take_branch),
+        .new_addr(new_addr)
     );
 
 

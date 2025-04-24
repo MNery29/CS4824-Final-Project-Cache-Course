@@ -84,7 +84,7 @@ module lsq#(
 
     // input cdb_busy, // this is high if the previous CDB message we sent was not recieved, which means we should send again
 
-    output CDB_PACKET cdb_out, // broadcast load data
+    output EX_CP_PACKET cdb_out, // broadcast load data
     output logic [1:0] dcache_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
     output logic [`XLEN-1:0] dcache_addr, // sending address to dcache
     output logic [63:0] dcache_data, // data for current command (if store)
@@ -351,9 +351,10 @@ module lsq#(
     end
 
     assign cdb_out.valid = load_completed;
+    assign cdb_out.done =  load_completed;
     // -1 is a hacky way to get the load that was just completed (this is very hacky)
     // only works if it is indeed blocking
-    assign cdb_out.tag   = tag_to_broadcast;
+    assign cdb_out.rob_tag   = tag_to_broadcast;
     // return 32 bits from the 64-bit D-cache line
     assign cdb_out.value = data_to_broadcast;
 

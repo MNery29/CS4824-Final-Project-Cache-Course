@@ -217,7 +217,6 @@ module stage_id (
     input rs1_clear,
 
     input rob_retire_entry,
-    input rob_clear,
 
     //this is signal from LSQ to let ROB know that a store command is ready
     input store_retire,
@@ -229,6 +228,13 @@ module stage_id (
     input rob_regfile_valid,
 
     input lsq_free,
+
+    //reset signals from retire (for branch)
+    input maptable_clear,
+    input rob_clear,
+    input rs_clear,
+
+
     
     output [31:0] opA,
     output [31:0] opB,
@@ -300,9 +306,6 @@ module stage_id (
     logic [31:0] rob_to_rs_value2;
 
     // ROB dispatch and retire signals
-    logic [4:0] rob_dest_reg;
-    logic [31:0] rob_to_regfile_value;
-    logic rob_regfile_valid;
     logic [`ROB_TAG_BITS-1:0] rob_tag_out;
     logic [`ROB_TAG_BITS-1:0] rob_retire_tag_out;
 
@@ -379,7 +382,8 @@ module stage_id (
         if (opb_select != OPB_IS_RS2)
             rs1_opb_valid = 1;
     end
-
+    logic mt_reset;
+    assign mt_reset = reset || maptable_clear;
     
     // Map Table
     map_table map_table_0 (
@@ -401,10 +405,12 @@ module stage_id (
         .regfile_rs2_addr(mt_to_regfile_rs2)
         //.tags_debug(mt_tags_debug)
     );
+    logic rs_reset;
+    assign rs_reset = reset || rs_clear;
 
     // Reservation Station
     reservation_station reservation_station_1 (
-        .reset(reset),
+        .reset(rs_reset),
         .clock(clock),
         .rs_npc_in(if_id_reg.NPC),
         .rs_rob_tag(rob_tag_out),
