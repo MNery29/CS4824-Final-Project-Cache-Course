@@ -256,6 +256,7 @@ module stage_id (
 
 );
     logic rd_mem, wr_mem;
+    logic cond_branch, uncond_branch;
     ALU_FUNC alu_func;
     logic [6:0] opcode;
     assign opcode = if_id_reg.inst[6:0];
@@ -313,6 +314,7 @@ module stage_id (
     assign rob_dispatch_packet.dest_reg = dest_reg_idx;
     assign rob_dispatch_packet.opcode   = opcode;
     assign rob_dispatch_packet.valid    = rob_load_entry;
+    assign rob_dispatch_packet.is_branch = cond_branch || uncond_branch;
 
     //operand select (OPA)
     always_comb begin
@@ -480,6 +482,9 @@ module stage_id (
         .alu_func(alu_func),
         .rd_mem(rd_mem),
         .wr_mem(wr_mem),
+        .cond_branch(cond_branch),
+        .uncond_branch(uncond_branch),
+        
         .has_dest(has_dest_reg)
     );
 

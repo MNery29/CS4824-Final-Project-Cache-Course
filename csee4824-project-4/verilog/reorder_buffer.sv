@@ -69,6 +69,7 @@ module reorder_buffer(
     logic [31:0] rob_values[`ROB_SZ-1:0];
     logic [6:0] rob_opcode[`ROB_SZ-1:0];
     logic [4:0] rob_dest[`ROB_SZ-1:0];
+    logic rob_is_branch[`ROB_SZ-1:0]; //used to track if instruction is a branch or not
 
     //head and tail pointers for queue FIFO structure
     logic [`ROB_TAG_BITS:0] head, tail;
@@ -98,6 +99,7 @@ module reorder_buffer(
             rob_retire_out.reg_valid = regfile_retire(rob_opcode[head[`ROB_TAG_BITS-1:0]]);
             rob_retire_out.mem_valid = memory_retire(rob_opcode[head[`ROB_TAG_BITS-1:0]]);
             rob_retire_out.mem_addr  = memory_retire(rob_opcode[head[`ROB_TAG_BITS-1:0]]) ? rob_values[head[`ROB_TAG_BITS-1:0]] : 32'b0;
+            rob_retire_out.is_branch = rob_is_branch[head[`ROB_TAG_BITS-1:0]];
         end else begin
             rob_retire_out = '{default: 0};
         end
@@ -139,6 +141,7 @@ module reorder_buffer(
                 rob_dest[i]   <= 5'b0;
                 rob_opcode[i] <= 7'b0;
                 rob_status[i] <= EMPTY;
+                rob_is_branch[i] <= 1'b0;
             end
             head <= 6'b0;
             tail <= 6'b0;
@@ -149,11 +152,14 @@ module reorder_buffer(
                 rob_dest[tail[`ROB_TAG_BITS-1:0]]   <= rob_dispatch_in.dest_reg;
                 rob_opcode[tail[`ROB_TAG_BITS-1:0]] <= rob_dispatch_in.opcode;
                 rob_status[tail[`ROB_TAG_BITS-1:0]] <= BUSY;
+                rob_is_branch[tail[`ROB_TAG_BITS-1:0]] <= rob_dispatch_in.is_branch;
                 tail <= tail + 1;
             end
 
             // CDB writeback
             if (rob_cdb_in.valid) begin
+                // so i guess for branches, what if we assume that a NON zero value means its taken?
+                // and we ALSO assume we always predict not taken
                 rob_values[rob_cdb_in.tag] <= rob_cdb_in.value;
                 rob_status[rob_cdb_in.tag] <= READY;
             end
@@ -171,6 +177,7 @@ module reorder_buffer(
                         rob_dest[i]   <= 5'b0;
                         rob_opcode[i] <= 7'b0;
                         rob_status[i] <= EMPTY;
+                        rob_is_branch[i] <= 1'b0;
                     end
                     head <= tail;
                 end else begin
@@ -178,6 +185,7 @@ module reorder_buffer(
                     rob_dest[head[`ROB_TAG_BITS-1:0]]   <= 5'b0;
                     rob_opcode[head[`ROB_TAG_BITS-1:0]] <= 7'b0;
                     rob_status[head[`ROB_TAG_BITS-1:0]] <= EMPTY;
+                    rob_is_branch[head[`ROB_TAG_BITS-1:0]] <= 1'b0;
                     head <= head + 1;
                 end
             end
