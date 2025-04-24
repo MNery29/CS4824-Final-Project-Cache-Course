@@ -29,7 +29,6 @@ module decoder (
     output logic          csr_op, // used for CSR operations, we only use this as a cheap way to get the return code out
     output logic          halt,   // non-zero on a halt
     output logic          illegal // non-zero on an illegal instruction
-
 );
 
     // Note: I recommend using an IDE's code folding feature on this block
@@ -208,7 +207,7 @@ module stage_id (
     input IF_ID_PACKET if_id_reg,
 
     //New I/O
-    //CDB 
+    //CDB -- TODO: USE PACKET!!!!!!!!!
     input cdb_valid,
     input [`ROB_TAG_BITS-1:0] cdb_tag,
     input [31:0] cdb_value,
@@ -224,14 +223,16 @@ module stage_id (
     input store_tag,
 
     //data from retire stage
+    // TODO: Look here............ uhmmm...... maybe make a packet?
+    // TODO: if not packet, please add some comments so we know whats going on
     input [4:0] rob_dest_reg,
     input [31:0] rob_to_regfile_value,
     input rob_regfile_valid,
 
     input lsq_free,
     
-    output [31:0] opA,
-    output [31:0] opB,
+    output [31:0] opA, // drived by RS, data input into fu 
+    output [31:0] opB, // drived by RS, data input into fu
     output [`ROB_TAG_BITS-1:0] output_tag,
     output rs1_ready,
     output [31:0] rs1_npc_out,
@@ -245,6 +246,7 @@ module stage_id (
     output ALU_OPB_SELECT opb_select,
     output logic has_dest_reg,
     output logic [4:0] dest_reg_idx,
+
     output ALU_FUNC alu_func_out,
     output ROB_RETIRE_PACKET rob_retire_out, // matches port type exactly
 

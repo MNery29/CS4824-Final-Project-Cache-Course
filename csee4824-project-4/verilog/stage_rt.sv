@@ -26,7 +26,7 @@ input logic rob_valid, // valid bit from ROB
 input logic branch_mispredict, // branch mispredict bit from ROB
 
 //outputs
-output logic [31:0] retire_value, // data to write to register file
+output logic [`XLEN-1:0] retire_value, // data to write to register file
 output logic [4:0] retire_dest, // destination register to write to
 output logic retire_valid_out, // valid bit to register file
 

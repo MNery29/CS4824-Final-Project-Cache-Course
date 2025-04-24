@@ -2,6 +2,8 @@
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 
+// TO RUN: vcs -sverilog -full64     +incdir+./verilog     -debug_acc+all+dmptf     -debug_region+cell+encrypt     -timescale=1ns/1ps     +v2k     ./verilog/sys_defs.svh     ./verilog/ISA.svh     ./verilog/stage_ex.sv     ./verilog/cdb.sv     ./verilog/reservation_station.sv    ./test/rs_cdb_fu_integration_test.sv
+
 module rs_cdb_fu_integration_test;
     // Clock and reset
     logic clock, reset;
@@ -117,8 +119,8 @@ module rs_cdb_fu_integration_test;
         OPA: rs_opa_out,
         OPB: rs_opb_out,
         rob_tag: rs_tag_out,
-        alu_func: rs_alu_func_out,
-        issue_valid: rs_ready_out,
+        alu_func: rs_alu_func_out,  // Make sure this propagates
+        issue_valid: rs_ready_out && !fu_busy,  // Only valid if RS ready and FU not busy
         rd_mem: rs_rd_mem_out,
         wr_mem: rs_wr_mem_out,
         NPC: rs_npc_out,
@@ -135,26 +137,42 @@ module rs_cdb_fu_integration_test;
     // Clock generator
     always #5 clock = ~clock;
 
-    // Test scenarios
     initial begin
         // Initialize signals
         clock = 0;
         reset = 1;
         rs_load_in = 0;
-       // rs_use_enable = 0;
         rs_free_in = 0;
         rs_opa_valid = 0;
         rs_opb_valid = 0;
-        //rs_rd_mem_out = 0;
-        //rs_wr_mem_out = 0;
+        rd_mem = 0;
+        wr_mem = 0;
         rs_npc_in = 32'h0;
         rs_alu_func_in = ALU_ADD;
         rs_rob_tag = 0;
-
-        // Reset sequence
-        @(posedge clock);
+        fu_busy = 0;
+        cdb_packet_busy = 0;
+        
+        // Reset sequence with verification
+        repeat(5) @(posedge clock);
         reset = 0;
+        repeat(3) @(posedge clock);  // Add more cycles after reset
+        
+        // Verify RS is in clean state
+        $display("Post-reset state: rs_avail=%b, rs_ready=%b, rs_debug=%h",
+                 rs_avail_out, rs_ready_out, rs_debug);
+        
+        if (!rs_avail_out) begin
+            $display("ERROR: RS not available after reset");
+            $finish;
+        end
+
+        // Ensure all modules are ready
         @(posedge clock);
+        if (fu_busy || cdb_packet_busy) begin
+            $display("ERROR: FU or CDB busy after reset");
+            $finish;
+        end
         // Test basic ALU operations
         
         // Test ADD
@@ -185,7 +203,6 @@ module rs_cdb_fu_integration_test;
         test_multiple_ops();
     end
 
-    // Task for testing basic ALU operations
     task test_alu_op(
         input ALU_FUNC alu_func,
         input logic [31:0] opa,
@@ -193,28 +210,70 @@ module rs_cdb_fu_integration_test;
         input logic [31:0] expected_result,
         input string op_name
     );
+        int timeout;
+        
+        // Set up the operation
+        @(posedge clock);
         rs_load_in = 1;
         rs_opa_in = opa;
         rs_opb_in = opb;
         rs_rob_tag = rs_rob_tag + 1;
-        rs_alu_func_in = alu_func;
+        rs_alu_func_in = alu_func;  // Make sure ALU function is set correctly
         rs_opa_valid = 1;
         rs_opb_valid = 1;
+        fu_busy = 0;
+        cdb_packet_busy = 0;
+        
+        // Debug print initial values
+        $display("\nStarting %s operation test", op_name);
+        $display("DEBUG: Setting opa=%h, opb=%h, alu_func=%h", opa, opb, alu_func);
+        
         @(posedge clock);
         rs_load_in = 0;
+        
+        // Wait for one cycle to let RS latch the values
+        @(posedge clock);
+        
+        // Verify inputs were latched
+        if (rs_alu_func_out !== alu_func) begin
+            $display("ERROR: ALU function not latched. Expected %h, got %h", 
+                     alu_func, rs_alu_func_out);
+            $finish;
+        end
 
-        //rs_use_enable = 1;
-        //@(posedge clock);
-        //rs_use_enable = 0;
-
-        repeat(2) @(posedge clock);
+        // Wait for reservation station to be ready
+        timeout = 0;
+        while (!rs_ready_out && timeout < 10) begin
+            @(posedge clock);
+            $display("DEBUG: Cycle %0d:", timeout);
+            $display("  rs_ready=%b, rs_alu_func=%h", rs_ready_out, rs_alu_func_out);
+            $display("  is_ex_packet.issue_valid=%b", is_ex_packet.issue_valid);
+            $display("  is_ex_packet.alu_func=%h", is_ex_packet.alu_func);
+            $display("  fu_busy=%b, cdb_packet_busy=%b", fu_busy, cdb_packet_busy);
+            timeout++;
+        end
+        
+        if (timeout >= 10) begin
+            $display("Test Failed: %s operation - Timeout waiting for rs_ready_out", op_name);
+            $display("DEBUG: rs_ready_out=%b, rs_opa_valid=%b, rs_opb_valid=%b", 
+                     rs_ready_out, rs_opa_valid, rs_opb_valid);
+            $display("DEBUG: fu_busy=%b, rs_debug=%h", fu_busy, rs_debug);
+            $finish;
+        end
+        
+        // Debug prints
+        $display("DEBUG: opa=%h, opb=%h, alu_func=%d", opa, opb, alu_func);
+        $display("DEBUG: rs_opa_out=%h, rs_opb_out=%h", rs_opa_out, rs_opb_out);
+        $display("DEBUG: cdb_valid=%b, cdb_data=%h", cdb_valid, cdb_data);
         
         if (!cdb_valid || cdb_data !== expected_result) begin
             $display("Test Failed: %s operation", op_name);
             $display("Expected: %0h, Got: %0h", expected_result, cdb_data);
             $finish;
         end
+        
         $display("Test Passed: %s operation", op_name);
+        repeat(2) @(posedge clock);
     endtask
 
     // Task for testing data dependencies

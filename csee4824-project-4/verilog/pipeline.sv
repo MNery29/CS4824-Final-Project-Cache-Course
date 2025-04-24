@@ -77,36 +77,45 @@ module pipeline (
     //////////////////////////////////////////////////
     //                IS Stage Wires                //
     //////////////////////////////////////////////////
-    IS_EX_PACKET      is_packet;
-    IS_EX_PACKET      is_ex_reg;
+    IS_EX_PACKET      is_packet; // packet updated during clock cycle by register
+    IS_EX_PACKET      is_ex_reg; //TODO: warnings 
     logic             issue_valid;
-    logic fu_ready;
+    logic             fu_ready;
+    // TODO: put RS struct here and RS_ISSUE_ENABLE
 
     //////////////////////////////////////////////////
     //                 EX Stage Wires               //
     //////////////////////////////////////////////////
-    ID_EX_PACKET id_ex_reg;   // The ID to EX stage register
-    EX_MEM_PACKET ex_packet;  // Output Packet
+    //IS_EX_PACKET is_ex_reg;   // The ID to EX stage register
+    //EX_MEM_PACKET ex_packet;  // Doesnt exist, Output Packet
     CDB_PACKET cdb_packet_ex;
-    logic cdb_busy;
-    logic fu_busy; //this will stall the RS issue if ex stage is busy / full
+    EX_CP_PACKET ex_packet; //output packet to CP stage
+    PRIV_ADDR_PACKET priv_addr_packet; //output packet to LSQ stage
+    logic cdb_busy; //cdb_packet_busy
+    logic fu_busy; //alu_busy, this will stall the RS issue if ex stage is busy / full
     assign fu_ready = !fu_busy;
-
 
     //////////////////////////////////////////////////
     //                CP Stage Wires                //
     //////////////////////////////////////////////////
     EX_CP_PACKET ex_cp_reg;
+    EX_CP_PACKET lsq_cp_reg;
     CDB_PACKET cdb_packet;
+    //TODO: add ex_rejected, same as fu_busy probably to this wire?
 
     //////////////////////////////////////////////////
     //               RT Stage Wires                 //
     //////////////////////////////////////////////////
-    logic [`XLEN-1:0] retire_value_out;
+    logic [`XLEN-1:0] retire_value_out; //TODO: 
     logic [4:0]       retire_dest_out;
     logic             retire_valid_out;
-    logic [`XLEN-1:0] mem_addr_out;
+    //logic [`XLEN-1:0] mem_addr_out; Commented out in the stage 
     logic             mem_valid_out;
+    logic [4:0]       mem_tag_out;
+    // rob_retire and rob_valid is defined somewhere else its all good
+    // rob_retire_packet is the packet that goes to ROB defined below
+    // TODO: Add branch mispredict signal to this stage
+    // TODO: add mem_tag to this stage
 
     //////////////////////////////////////////////////
     //                ROB + Map Table Wires         //
@@ -174,6 +183,7 @@ module pipeline (
     logic head_ready_for_mem; // debugging
     logic [2:0] head_ptr; //points to OLDEST entry debugging
     logic [2:0] tail_ptr; //points to next free entry debugging
+
     //////////////////////////////////////////////////
     //           Temporary Branch Logic             //
     //////////////////////////////////////////////////
@@ -299,8 +309,8 @@ module pipeline (
         .fu_busy(fu_busy),
         .rs1_clear(rs_issue_enable[0]), //this means its the first register
 
-        .rob_retire_entry(1'b0), // TODO: connect properly
-        .rob_clear(1'b0),        // TODO: connect properly
+        .rob_retire_entry(1'b0), // TODO: inputs from retire stage (TODO: Add to retire stage)
+        .rob_clear(1'b0),        // TODO: connect these two properly
 
         .store_retire(store_ready),
         .store_tag(store_tag),
@@ -336,6 +346,7 @@ module pipeline (
     //////////////////////////////////////////////////
     //         ID/IS Pipeline Register              //
     //////////////////////////////////////////////////
+    // This doesnt exist anymore! 
     //always_ff @(posedge clock or posedge reset) begin
     //    if (reset) begin
     //        id_is_reg <= '0; // IS ID Packet not defined yet FIX
@@ -343,8 +354,6 @@ module pipeline (
     //        id_is_reg <= id_is_packet; // IS ID Packet not defined yet FIX
     //    end
     //end
-
-
 
     //////////////////////////////////////////////////
     //                Issue Stage                   //
@@ -471,10 +480,8 @@ module pipeline (
         .ex_cp_packet(ex_cp_reg), // input packet from EX stage
         .lsq_cp_packet(cdb_lsq), // input packet from LSQ stage
         .cdb_packet_out(cdb_packet),
-        .ex_rejected(cdb_busy)
+        .ex_rejected(cdb_busy) // TODO: double check, is it CDB busy or FU busy? 
     );
-
-
     
     //////////////////////////////////////////////////
     //            Reorder Buffer (ROB)              //
@@ -557,7 +564,7 @@ module pipeline (
         .rob_retire_packet(cp_rt_reg),
         .rob_ready(rob_ready),
         .rob_valid(rob_valid),
-        .branch_mispredict(1'b0),
+        .branch_mispredict(1'b0), // TODO: connect because this is just a holder
         .retire_value(retire_value_out),
         .retire_dest(retire_dest_out),
         .retire_valid_out(retire_valid_out),
@@ -675,6 +682,6 @@ module pipeline (
     assign pipeline_commit_wr_data  = retire_value_out;
     assign pipeline_commit_NPC      = cp_rt_reg.mem_addr; 
     assign pipeline_completed_insts = retire_valid_out ? 4'd1 : 4'd0;
-    assign pipeline_error_status    = NO_ERROR;
+    assign pipeline_error_status    = NO_ERROR; //TODO: fix this .......
 
 endmodule // pipeline

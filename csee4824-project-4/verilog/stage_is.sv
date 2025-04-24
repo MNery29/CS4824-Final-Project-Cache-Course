@@ -17,7 +17,7 @@ module stage_is (
     input logic reset,
 
     // Reservation Station signals
-    
+    // TODO: Simplify into RS Struct
     input logic [`RS_SIZE-1:0]          rs_ready_out, // valid bits for reservation station
     input logic [`RS_SIZE-1:0][31:0]    rs_opa_out,  // changed from input  logic [31:0]  rs_opa_out   [`RS_SIZE],
     input  logic [`RS_SIZE-1:0][31:0]   rs_opb_out,

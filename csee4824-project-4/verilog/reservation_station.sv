@@ -11,6 +11,7 @@
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 
+// TODO: Simplify into RS Packet
 module reservation_station(
     input [31:0]   rs_npc_in,    // Next PC (from fetch/decode)
     input ALU_FUNC rs_alu_func_in, // ALU function input for instruction

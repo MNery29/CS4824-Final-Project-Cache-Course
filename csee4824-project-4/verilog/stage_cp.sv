@@ -18,12 +18,12 @@ input logic clock,
 input logic reset,
 
 //input packet from stage_ex: defined in sys_defs.sv
-input EX_CP_PACKET ex_cp_packet,
-input EX_CP_PACKET lsq_cp_packet,
+input EX_CP_PACKET ex_cp_packet, //diff func units but same info!
+input EX_CP_PACKET lsq_cp_packet, 
 
 //output to ROB (CDB): defined in sys_defs.sv
 output CDB_PACKET cdb_packet_out,
-output ex_rejected
+output ex_rejected // passed to execute and issue stage, says FU is busy!
 // lsq WILL ALWAYS have priority, so it will NEVER by rejected
 );
 
