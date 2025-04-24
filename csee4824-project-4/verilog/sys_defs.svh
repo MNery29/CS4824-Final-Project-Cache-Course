@@ -430,7 +430,7 @@ typedef struct packed {
     logic [31:0] rs_opa_out;            // Out: Operand A
     logic [31:0] rs_opb_out;           // Out: Operand B
     logic [`ROB_TAG_BITS-1:0]  rs_tag_out;            // Out: ROB tag
-    logic ALU_FUNC rs_alu_func_out;    // Out: ALU func
+    ALU_FUNC rs_alu_func_out;    // Out: ALU func
     logic [31:0]  rs_npc_out;       // Out: NPC
 } RS_IS_PACKET; //RS TO ISSUE PACKET, CHECK IF NEEDED ELSWHERE
 

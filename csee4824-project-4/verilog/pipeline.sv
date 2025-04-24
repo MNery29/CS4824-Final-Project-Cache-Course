@@ -90,7 +90,7 @@ module pipeline (
     //EX_MEM_PACKET ex_packet;  // Doesnt exist, Output Packet
     CDB_PACKET cdb_packet_ex;
     EX_CP_PACKET ex_packet; //output packet to CP stage
-    PRIV_ADDR_PACKET priv_addr_packet; //output packet to LSQ stage
+    priv_addr_packet priv_addr_packet; //output packet to LSQ stage
     logic cdb_busy; //cdb_packet_busy
     logic fu_busy; //alu_busy, this will stall the RS issue if ex stage is busy / full
     assign fu_ready = !fu_busy;
@@ -163,7 +163,7 @@ module pipeline (
     //               LSQ Wires                     //
     //////////////////////////////////////////////////
 
-    priv_addr_packet priv_addr_packet; // this is correct // packet to send to memory stage
+    //priv_addr_packet priv_addr_packet; // this is correct // packet to send to memory stage
     logic [63:0]dcache_data_out; // data coming back from cache
     logic [3:0] dcache_tag; // high when valid
     logic [3:0] dcache_response; // 0 = can't accept, other=tag of transaction]
@@ -302,44 +302,54 @@ module pipeline (
         .reset(reset),
         .if_id_reg(if_id_reg),
 
-        // .cdb_valid(cdb_packet.valid),
-        // .cdb_tag(cdb_packet.tag),
-        // .cdb_value(cdb_packet.value),
-        cdb_packet(cdb_packet), // packet version insantiation
+        // CDB PACKET
+                // .cdb_valid(cdb_packet.valid),
+                // .cdb_tag(cdb_packet.tag),
+                // .cdb_value(cdb_packet.value),
+        .cdb_packet(cdb_packet), 
 
+        //FU and RS Signals
         .fu_busy(fu_busy),
         .rs1_clear(rs_issue_enable[0]), //this means its the first register
 
+        //ROB Signals
         .rob_retire_entry(1'b0), // TODO: inputs from retire stage (TODO: Add to retire stage)
         .rob_clear(1'b0),        // TODO: connect these two properly
 
+        // LSQ Signals
         .store_retire(store_ready),
         .store_tag(store_tag),
 
+        // Data from retire stage
         .rob_dest_reg(retire_dest_out),
         .rob_to_regfile_value(retire_value_out),
         .rob_regfile_valid(retire_valid_out),
 
         .lsq_free(lsq_free),
 
-        .opA(id_opA),
-        .opB(id_opB),
-        .output_tag(id_tag),
-        .rs1_npc_out(npc_out),
-        .rs1_ready(rs1_ready),
+        //Outputs
 
-        .opa_select(id_opa_select),
-        .opb_select(id_opb_select),
+        .rs1_issue_packet(rs_is_packet),
+        .rob_pointers_debug(id_rob_pointers),
+
+        .opa_select(id_opA),
+        .opb_select(id_opB),
         .has_dest_reg(id_has_dest_reg),
         .dest_reg_idx(id_dest_reg_idx),
-        .rd_mem_out(id_rd_mem),
-        .wr_mem_out(id_wr_mem),
-        .rob_ready(rob_ready),
-        .rob_valid(rob_valid),
+
         .alu_func_out(id_alu_func),
         .rob_retire_out(rob_retire_packet),
 
-        .rob_pointers_debug(id_rob_pointers),
+        .rd_mem_out(id_rd_mem),
+        .wr_mem_out(id_wr_mem),
+        //.output_tag(id_tag),
+        //.rs1_npc_out(npc_out), //NOT USED
+        //.rs1_ready(rs1_ready), //NOT USED
+
+        //.opa_select(id_opa_select), // where are these coming from? why extra
+        //.opb_select(id_opb_select), //
+        .rob_ready(rob_ready),
+        .rob_valid(rob_valid),
 
         .lsq_packet(lsq_packet)
     );

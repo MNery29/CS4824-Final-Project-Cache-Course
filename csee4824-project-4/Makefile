@@ -179,7 +179,7 @@ GREP = grep -E --color=auto
 # TODO: add more modules here
 TESTED_MODULES = map_table reservation_station reorder_buffer stage_id dcache cdb stage_if stage_is icache zcache stage_cp stage_ex lsq stage_rt pipeline rob_rs
 
-MODULE = rob_rs
+MODULE = pipeline
 
 # TODO: add verilog module dependencies here:
 # (do not include header files)
@@ -340,8 +340,9 @@ SOURCES = verilog/pipeline.sv \
           verilog/stage_ex.sv \
           verilog/stage_cp.sv \
           verilog/stage_rt.sv \
-		  verilog/lsq.sv \
-		  verilog/map_table.sv
+          verilog/lsq.sv \
+          test/mem.sv \
+          verilog/cdb.sv
 		  
 SYNTH_FILES = synth/pipeline.vg
 
