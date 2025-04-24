@@ -81,6 +81,8 @@ module pipeline (
     IS_EX_PACKET      is_ex_reg; //TODO: warnings 
     logic             issue_valid;
     logic             fu_ready;
+    logic [`RS_SIZE-1:0] rs_issue_enable;
+    
     // TODO: put RS struct here and RS_ISSUE_ENABLE
 
     //////////////////////////////////////////////////
