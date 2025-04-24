@@ -242,7 +242,7 @@ module stage_id (
     output rs1_ready,
     output [31:0] rs1_npc_out,
 
-    //output logic [45:0] rob_debug [`ROB_SZ-1:0],
+    output logic [45:0] rob_debug [`ROB_SZ-1:0],
     output [11:0] rob_pointers_debug,
     //output logic [7:0] mt_tags_debug [31:0],
     //output logic [74:0] rs_debug,
@@ -463,7 +463,7 @@ module stage_id (
         .rob_full(rob_full),
         .rob_ready(rob_ready),
         .rob_valid(rob_valid),
-        //.rob_debug(rob_debug),
+        .rob_debug(rob_debug),
         .rob_pointers(rob_pointers_debug)
     );
 

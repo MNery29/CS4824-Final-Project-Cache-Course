@@ -31,7 +31,9 @@ module pipeline (
     output logic [4:0]       pipeline_commit_wr_idx,
     output logic [`XLEN-1:0] pipeline_commit_wr_data,
     output logic             pipeline_commit_wr_en,
-    output logic [`XLEN-1:0] pipeline_commit_NPC
+    output logic [`XLEN-1:0] pipeline_commit_NPC,
+
+    output logic [31:0] id_opA
 );
 
     //////////////////////////////////////////////////
@@ -55,7 +57,7 @@ module pipeline (
     //logic [74:0]      id_rs_debug;
     //logic [`RS_SIZE-1:0] rs_issue_enable;'
 
-    logic [31:0] id_opA, id_opB;
+    logic [31:0] id_opB;
     logic [`ROB_TAG_BITS-1:0] id_tag;
     logic [31:0] npc_out;
     ALU_OPA_SELECT id_opa_select;
@@ -636,18 +638,18 @@ module pipeline (
     end
 
 
-    mem mem_0 (
-        .clk(clock),
-        .proc2mem_addr(proc2mem_addr),
-        .proc2mem_data(proc2mem_data),
-    `ifndef CACHE_MODE
-        .proc2mem_size(proc2mem_size),
-    `endif
-        .proc2mem_command(proc2mem_command),
-        .mem2proc_response(mem2proc_response),
-        .mem2proc_data(mem2proc_data),
-        .mem2proc_tag(mem2proc_tag)
-    );
+    // mem mem_0 (
+    //     .clk(clock),
+    //     .proc2mem_addr(proc2mem_addr),
+    //     .proc2mem_data(proc2mem_data),
+    // `ifndef CACHE_MODE
+    //     .proc2mem_size(proc2mem_size),
+    // `endif
+    //     .proc2mem_command(proc2mem_command),
+    //     .mem2proc_response(mem2proc_response),
+    //     .mem2proc_data(mem2proc_data),
+    //     .mem2proc_tag(mem2proc_tag)
+    // );
 
     always_ff @(posedge clock or posedge reset) begin
         if (reset)

@@ -63,6 +63,8 @@ module testbench;
     logic             pipeline_commit_wr_en;
     logic [`XLEN-1:0] pipeline_commit_NPC;
 
+    logic [31:0] id_opA;
+
     // logic [`XLEN-1:0] if_NPC_dbg;
     // logic [31:0]      if_inst_dbg;
     // logic             if_valid_dbg;
@@ -102,7 +104,9 @@ module testbench;
         .pipeline_commit_wr_data  (pipeline_commit_wr_data),
         .pipeline_commit_wr_idx   (pipeline_commit_wr_idx),
         .pipeline_commit_wr_en    (pipeline_commit_wr_en),
-        .pipeline_commit_NPC      (pipeline_commit_NPC)
+        .pipeline_commit_NPC      (pipeline_commit_NPC),
+
+        .id_opA(id_opA)
 
         // .if_NPC_dbg       (if_NPC_dbg),
         // .if_inst_dbg      (if_inst_dbg),
@@ -260,6 +264,7 @@ module testbench;
 
             // print the pipeline debug outputs via c code to the pipeline output file
             // print_cycles();
+            $display(" @@ %h", id_opA);
             // print_stage(" ", if_inst_dbg,     if_NPC_dbg    [31:0], {31'b0,if_valid_dbg});
             // print_stage("|", if_id_inst_dbg,  if_id_NPC_dbg [31:0], {31'b0,if_id_valid_dbg});
             // print_stage("|", id_ex_inst_dbg,  id_ex_NPC_dbg [31:0], {31'b0,id_ex_valid_dbg});
@@ -270,6 +275,7 @@ module testbench;
             // print_membus({30'b0,proc2mem_command}, {28'b0,mem2proc_response},
             //     32'b0, proc2mem_addr[31:0],
             //     proc2mem_data[63:32], proc2mem_data[31:0]);
+            // $fdisplay(wb_fileno, "@@  %t : System clock %d", $realtime, clock_count);
 
             // print register write information to the writeback output file
             if (pipeline_completed_insts > 0) begin

@@ -20,8 +20,23 @@ module testbench;
     logic mt_retire_entry;
     logic rs1_clear;
     logic rs1_issue;
+    logic rs1_ready;
+    logic [31:0] rs1_npc_out;
     logic rob_retire_entry;
+    logic [4:0] rob_dest_reg;
+    logic [31:0] rob_to_regfile_value;
+    logic rob_regfile_valid;
+
+    logic lsq_free;
+
+    logic fu_busy;
+    logic store_retire;
+    logic [4:0] store_tag;
+    logic maptable_clear;
+    logic rs_clear;
     logic rob_clear;
+
+
 
     //Ouputs
     logic [31:0] opA;
@@ -34,8 +49,16 @@ module testbench;
     logic [4:0] dest_reg_idx;
 
     //Debug inputs
-    //logic [45:0] rob_debug [31:0];
+    logic [45:0] rob_debug [31:0];
     logic [11:0] rob_pointers_debug;
+     LSQ_PACKET lsq_packet;
+
+    ALU_FUNC alu_func_out;
+    ROB_RETIRE_PACKET rob_retire_out;
+    logic rd_mem_out;
+    logic wr_mem_out;
+    logic rob_valid;
+    logic rob_ready;
     //logic [7:0] mt_tags_debug [31:0];
     //logic [74:0] rs_debug;
 
@@ -49,24 +72,48 @@ module testbench;
         .cdb_tag(cdb_tag),
         .cdb_value(cdb_value),
 
-        .mt_retire_entry(mt_retire_entry),
-        .rs1_issue(rs1_issue),
         .rs1_clear(rs1_clear),
         .rob_retire_entry(rob_retire_entry),
+
+        .fu_busy(fu_busy),
+
+        .store_retire(store_retire),
+        .store_tag(store_tag),
+
+        .rob_dest_reg(rob_dest_reg),
+        .rob_to_regfile_value(rob_to_regfile_value),
+        .rob_regfile_valid(rob_regfile_valid),
+
+        .lsq_free(lsq_free),
+
+        .maptable_clear(maptable_clear),
         .rob_clear(rob_clear),
+        .rs_clear(rs_clear),
+
 
         .opA(opA),
         .opB(opB),
         .output_tag(output_tag),
+        .rs1_ready(rs1_ready),
+        .rs1_npc_out(rs1_npc_out),
         
-        //.rob_debug(rob_debug),
+        .rob_debug(rob_debug),
         .rob_pointers_debug(rob_pointers_debug),
         //.mt_tags_debug(mt_tags_debug),
         //.rs_debug(rs_debug),
         .opa_select(opa_select),
         .opb_select(opb_select),
         .has_dest_reg(has_dest_reg),
-        .dest_reg_idx(dest_reg_idx)
+        .dest_reg_idx(dest_reg_idx),
+        .alu_func_out(alu_func_out),
+
+        .rob_retire_out(rob_retire_out),
+        .rd_mem_out(rd_mem_out),
+        .wr_mem_out(wr_mem_out),
+        .rob_valid(rob_valid),
+        .rob_ready(rob_ready),
+
+        .lsq_packet(lsq_packet)
     );
 
     // CLOCK_PERIOD is defined on the commandline by the makefile
