@@ -10,6 +10,6 @@ simv_testing/
 *.simv
 synth/
 *.mem
-
+*.nfs*
 ucli.key
 verdi_config_file
