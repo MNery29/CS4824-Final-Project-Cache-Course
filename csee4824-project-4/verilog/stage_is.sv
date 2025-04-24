@@ -18,13 +18,17 @@ module stage_is (
 
     // Reservation Station signals
     // TODO: Simplify into RS Struct
-    input logic [`RS_SIZE-1:0]          rs_ready_out, // valid bits for reservation station
-    input logic [`RS_SIZE-1:0][31:0]    rs_opa_out,  // changed from input  logic [31:0]  rs_opa_out   [`RS_SIZE],
-    input  logic [`RS_SIZE-1:0][31:0]   rs_opb_out,
-    input  logic [`RS_SIZE-1:0][5:0]    rs_tag_out,
-    input ALU_FUNC [`RS_SIZE-1:0]       rs_alu_func_out,
-    input logic [`RS_SIZE-1:0][31:0]    rs_npc_out,       // Next PC
-    input logic [`RS_SIZE-1:0][31:0]    rs_inst_out,       // Instruction word
+    // input logic [`RS_SIZE-1:0]          rs_ready_out, // valid bits for reservation station
+    // input logic [`RS_SIZE-1:0][31:0]    rs_opa_out,  // changed from input  logic [31:0]  rs_opa_out   [`RS_SIZE],
+    // input  logic [`RS_SIZE-1:0][31:0]   rs_opb_out,
+    // input  logic [`RS_SIZE-1:0][5:0]    rs_tag_out,
+    // input ALU_FUNC [`RS_SIZE-1:0]       rs_alu_func_out,
+    // input logic [`RS_SIZE-1:0][31:0]    rs_npc_out,       // Next PC
+    // input logic [`RS_SIZE-1:0][31:0]    rs_inst_out,       // Instruction word MAY NOT BE USED
+    
+    input RS_IS_PACKET [`RS_SIZE-1:0] rs_is_packet, // packet from RS to IS
+    
+    
     input logic rd_mem, wr_mem, // read/write memory
 
     //Functional unit ready signal 
@@ -48,15 +52,15 @@ always_comb begin
 
     if (fu_ready) begin
         for (int i = 0; i < `RS_SIZE; i++) begin
-            if (!issued && rs_ready_out[i]) begin
+            if (!issued && rs_is_packet.rs_ready_out[i]) begin
                 issue_valid               = 1;
-                is_packet.OPA          = rs_opa_out[i];
-                is_packet.OPB          = rs_opb_out[i];
-                is_packet.rob_tag      = rs_tag_out[i][4:0]; // fix to only send the last 4 bits of tag, keep msb internal
+                is_packet.OPA          = rs_is_packet.rs_opa_out[i];
+                is_packet.OPB          = rs_is_packet.rs_opb_out[i];
+                is_packet.rob_tag      = rs_is_packet.rs_tag_out[i][4:0]; // fix to only send the last 4 bits of tag, keep msb internal
                 is_packet.issue_valid  = 1;
-                is_packet.alu_func     = rs_alu_func_out[i];
-                is_packet.NPC          = rs_npc_out[i];
-                is_packet.inst         = rs_inst_out[i];
+                is_packet.alu_func     = rs_is_packet.rs_alu_func_out[i];
+                is_packet.NPC          = rs_is_packet.rs_npc_out[i];
+                // is_packet.inst         = rs_inst_out[i]; NOT USED
                 is_packet.RS_tag       = i;
                 is_packet.rd_mem       = rd_mem;
                 is_packet.wr_mem       = wr_mem;

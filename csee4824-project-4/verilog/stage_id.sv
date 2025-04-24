@@ -208,9 +208,10 @@ module stage_id (
 
     //New I/O
     //CDB -- TODO: USE PACKET!!!!!!!!!
-    input cdb_valid,
-    input [`ROB_TAG_BITS-1:0] cdb_tag,
-    input [31:0] cdb_value,
+    // input cdb_valid,
+    // input [`ROB_TAG_BITS-1:0] cdb_tag,
+    // input [31:0] cdb_value,
+    input CDB_PACKET cdb_packet,
 
     input fu_busy,
     input rs1_clear,
@@ -231,11 +232,12 @@ module stage_id (
 
     input lsq_free,
     
-    output [31:0] opA, // drived by RS, data input into fu 
-    output [31:0] opB, // drived by RS, data input into fu
-    output [`ROB_TAG_BITS-1:0] output_tag,
-    output rs1_ready,
-    output [31:0] rs1_npc_out,
+    // output [31:0] opA, // drived by RS, data input into fu 
+    // output [31:0] opB, // drived by RS, data input into fu
+    // output [`ROB_TAG_BITS-1:0] output_tag,
+    // output rs1_ready,
+    // output [31:0] rs1_npc_out,
+    output RS_IS_PACKET rs1_issue_packet,
 
     //output logic [45:0] rob_debug [`ROB_SZ-1:0],
     output [11:0] rob_pointers_debug,
@@ -278,9 +280,9 @@ module stage_id (
     assign rs1_load_entry = dispatch_ok && if_id_reg.valid;
 
     CDB_ROB_PACKET rob_cdb_packet;
-    assign rob_cdb_packet.tag = cdb_tag;
-    assign rob_cdb_packet.value = cdb_value;
-    assign rob_cdb_packet.valid = cdb_valid;
+    assign rob_cdb_packet.tag = cdb_packet.tag;
+    assign rob_cdb_packet.value = cdb_packet.value;
+    assign rob_cdb_packet.valid = cdb_packet.valid;
 
     // Outputs from map table
     logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2;
@@ -392,8 +394,8 @@ module stage_id (
         .r_dest(dest_reg_idx),
         .tag_in(rob_tag_out),
         .load_entry(mt_load_entry),
-        .cdb_tag_in(cdb_tag),
-        .read_cdb(cdb_valid),
+        .cdb_tag_in(cdb_packet.tag),
+        .read_cdb(cdb_packet.valid),
         .retire_addr(rob_dest_reg),
         .retire_entry(rob_regfile_valid),
         .retire_tag(rob_retire_tag_out),
@@ -410,29 +412,30 @@ module stage_id (
         .clock(clock),
         .rs_npc_in(if_id_reg.NPC),
         .rs_rob_tag(rob_tag_out),
-        .rs_cdb_in(cdb_value),
-        .rs_cdb_tag(cdb_tag),
-        .rs_cdb_valid(cdb_valid),
+        .rs_cdb_in(cdb_packet.value),
+        .rs_cdb_tag(cdb_packet.tag),
+        .rs_cdb_valid(cdb_packet.valid),
         .rs_opa_in(rs1_opa_in),
         .rs_opb_in(rs1_opb_in),
         .rs_opa_valid(rs1_opa_valid),
         .rs_opb_valid(rs1_opb_valid),
         .rs_alu_func_in(alu_func),
-
+        .rs_is_out(rs1_issue_packet),
 
         .rd_mem(rd_mem),
         .wr_mem(wr_mem),
         .rs_load_in(rs1_load_entry),
         .fu_busy(fu_busy),
         .rs_free_in(rs1_clear),
-        .rs_alu_func_out(alu_func_out),
-        .rs_npc_out(rs1_npc_out),
+        // .rs_alu_func_out(alu_func_out),
+        // .rs_npc_out(rs1_npc_out),
         .rs_rd_mem_out(rd_mem_out),
         .rs_wr_mem_out(wr_mem_out),
-        .rs_ready_out(rs1_ready),
-        .rs_opa_out(opA),
-        .rs_opb_out(opB),
-        .rs_tag_out(output_tag),
+        // .rs_ready_out(rs1_ready),
+        // .rs_opa_out(opA),
+        // .rs_opb_out(opB),
+        // .rs_tag_out(output_tag),
+        
         .rs_avail_out(rs1_available)
         //.rs_debug(rs_debug)
     );

@@ -34,12 +34,10 @@ module reservation_station(
     input        reset,            // Reset signal
     input        clock,            // Clock signal
 
-    output       rs_ready_out,            // Ready to issue
-    output [31:0] rs_opa_out,             // Out: Operand A
-    output [31:0] rs_opb_out,             // Out: Operand B
-    output [`ROB_TAG_BITS-1:0]  rs_tag_out,             // Out: ROB tag
-    output ALU_FUNC rs_alu_func_out,      // Out: ALU func
-    output [31:0]  rs_npc_out,            // Out: NPC
+    //OUTPUT TO ISSUE STAGE
+    output RS_IS_PACKET rs_is_out, // Ready to issue (both operands are valid)
+
+
     output rs_rd_mem_out,
     output rs_wr_mem_out,
     output       rs_avail_out,            // Is this entry available?
@@ -59,12 +57,12 @@ logic internal_rd_mem, internal_wr_mem; //internal memory track
 
 // Outputs
 assign rs_avail_out = !InUse;
-assign rs_ready_out = InUse && OpaValid && OpbValid && fu_busy;
-assign rs_opa_out   = OPa;
-assign rs_opb_out   = OPb;
-assign rs_tag_out   = DestTag;
-assign rs_alu_func_out = alu_func;
-assign rs_npc_out       = NPC;
+assign rs_is_out.rs_ready_out = InUse && OpaValid && OpbValid && fu_busy;
+assign rs_is_out.rs_opa_out   = OPa;
+assign rs_is_out.rs_opb_out   = OPb;
+assign rs_is_out.rs_tag_out   = DestTag;
+assign rs_is_out.rs_alu_func_out = alu_func;
+assign rs_is_out.rs_npc_out       = NPC;
 assign rs_rd_mem_out = internal_rd_mem;
 assign rs_wr_mem_out = internal_wr_mem;
 
@@ -72,7 +70,7 @@ assign rs_wr_mem_out = internal_wr_mem;
 wire LoadAFromCDB = (rs_cdb_tag == OPaTag) && !OpaValid && InUse && rs_cdb_valid;
 wire LoadBFromCDB = (rs_cdb_tag == OPbTag) && !OpbValid && InUse && rs_cdb_valid;
 //Debug
-assign rs_debug = {OPa, OpaValid, OPb, OpbValid, DestTag, InUse, rs_ready_out, rs_avail_out};
+assign rs_debug = {OPa, OpaValid, OPb, OpbValid, DestTag, InUse, rs_is_out.rs_ready_out, rs_avail_out};
 
 always_ff @(posedge clock) begin
     if (reset) begin

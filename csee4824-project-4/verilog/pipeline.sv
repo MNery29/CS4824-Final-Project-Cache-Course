@@ -302,9 +302,10 @@ module pipeline (
         .reset(reset),
         .if_id_reg(if_id_reg),
 
-        .cdb_valid(cdb_packet.valid),
-        .cdb_tag(cdb_packet.tag),
-        .cdb_value(cdb_packet.value),
+        // .cdb_valid(cdb_packet.valid),
+        // .cdb_tag(cdb_packet.tag),
+        // .cdb_value(cdb_packet.value),
+        cdb_packet(cdb_packet), // packet version insantiation
 
         .fu_busy(fu_busy),
         .rs1_clear(rs_issue_enable[0]), //this means its the first register
@@ -358,16 +359,19 @@ module pipeline (
     //////////////////////////////////////////////////
     //                Issue Stage                   //
     //////////////////////////////////////////////////
+    RS_IS_PACKET rs_is_packet;
+
     stage_is stage_is_0 (
         .clock(clock),
         .reset(reset),
-        .rs_ready_out(rs1_ready),
-        .rs_opa_out(id_opA),
-        .rs_opb_out(id_opB),
-        .rs_tag_out(id_tag),
-        .rs_alu_func_out(id_alu_func),
-        .rs_npc_out(npc_out),
-        .rs_inst_out(rs1_inst_out),
+        // .rs_ready_out(rs1_ready),
+        // .rs_opa_out(id_opA),
+        // .rs_opb_out(id_opB),
+        // .rs_tag_out(id_tag),
+        // .rs_alu_func_out(id_alu_func),
+        // .rs_npc_out(npc_out),
+        .rs_is_packet(rs_is_packet),
+        // .rs_inst_out(rs1_inst_out), NOTE: not used, likely removable 
         .rd_mem(id_rd_mem),
         .wr_mem(id_wr_mem),
         .fu_ready(fu_ready),
