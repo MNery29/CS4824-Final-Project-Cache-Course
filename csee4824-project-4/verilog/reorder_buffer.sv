@@ -17,9 +17,6 @@ module reorder_buffer(
     input reset,
     input clock,
 
-    //input signals from dispatch stage 
-    input DISPATCH_ROB_PACKET rob_dispatch_in,
-
 
     //If RS needs to read value ready in ROB
     input logic rob_to_rs_read1,
@@ -27,12 +24,21 @@ module reorder_buffer(
     input logic rob_to_rs_read2,
     input logic [`ROB_TAG_BITS-1:0] rob_read_tag2,
 
-    //input signals from CDB (execute) stage) 
-    input CDB_ROB_PACKET rob_cdb_in,
+    //outputs to reservation station
+    output [31:0] rob_to_rs_value1,
+    output [31:0] rob_to_rs_value2,
 
     //input signals from retire stage
     input retire_entry,
     input rob_clear, //flush all entries 
+
+    //input signals from dispatch stage 
+    input DISPATCH_ROB_PACKET rob_dispatch_in,
+
+    //input signals from CDB (execute) stage) 
+    input CDB_ROB_PACKET rob_cdb_in,
+
+
 
     input store_retire, //store retire signal from LSQ
     input store_tag, //tag from LSQ
@@ -44,11 +50,6 @@ module reorder_buffer(
 
     //output signals to retire and complete stage
     output ROB_RETIRE_PACKET rob_retire_out,
-
-
-    //outputs to reservation station
-    output [31:0] rob_to_rs_value1,
-    output [31:0] rob_to_rs_value2,
     
     //rob full signal, for stalling/hazards   
     output rob_full,
