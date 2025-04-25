@@ -40,6 +40,12 @@ module testbench;
     logic rob_ready;
     logic rob_valid;
 
+    // Used to hold the ROB dispatch input for testbench 
+    DISPATCH_ROB_PACKET rob_dispatch_in_temp
+
+    // Used to hold the CDB input for testbench
+    CDB_ROB_PACKET rob_cdb_in_temp;
+
     // Clock Generation
     always begin
         #(`CLOCK_PERIOD/2.0);
