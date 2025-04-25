@@ -32,37 +32,62 @@ module pipeline (
     output logic [`XLEN-1:0] pipeline_commit_wr_data,
     output logic             pipeline_commit_wr_en,
     output logic [`XLEN-1:0] pipeline_commit_NPC,
+    output logic [45:0]      id_rob_debug[31:0],
+    output logic stall_if,
+    output logic [`XLEN-1:0] proc2Icache_addr,
+    output logic             Icache_valid_out,
+    output logic [63:0] Icache_data_out,
+    //id stage debugging wires
+    output logic [`ROB_TAG_BITS-1:0] id_tag,
+    output logic rs1_ready,
 
-    output logic [31:0] id_opA
+    //if stage
+    output IF_ID_PACKET if_packet,
+    output IF_ID_PACKET if_id_reg,
+
+    //IS stage debugging wires
+    output IS_EX_PACKET is_packet,
+    output IS_EX_PACKET is_ex_reg,
+    output logic issue_valid,
+    output logic fu_ready,
+    output logic [`RS_SIZE-1:0] rs_issue_enable,
+
+    //EX stage debugging wires
+    output EX_CP_PACKET ex_cp_reg,
+    output logic fu_busy,
+    output logic cdb_busy, //this will stall the RS issue if ex stage is busy / full
+    output logic rob_full,
+    output logic rs1_available,
+    output logic dispatch_ok
 );
 
     //////////////////////////////////////////////////
     //                IF Stage Wires                //
     //////////////////////////////////////////////////
-    logic [`XLEN-1:0] proc2Icache_addr;
-    logic [63:0]      Icache_data_out;
-    logic             Icache_valid_out;
+    // logic [`XLEN-1:0] proc2Icache_addr;
+    // logic             Icache_valid_out;
+    // logic [63:0] Icache_data_out;
     logic             if_valid;
-    logic             stall_if;
-    IF_ID_PACKET      if_packet;
+    // logic             stall_if;
+    // IF_ID_PACKET      if_packet;
     
     //////////////////////////////////////////////////
     //                ID Stage Wires                //
     //////////////////////////////////////////////////
     //ID_IS_PACKET      id_is_packet; // NOT INCLUDED IN stage_id.sv
     //ID_IS_PACKET      id_is_reg; // NOT INCLUDED IN stage_id.sv FIX
-    //logic [45:0]      id_rob_debug[31:0];
+    // logic [45:0]      id_rob_debug[31:0];
     logic [11:0]      id_rob_pointers;
     //logic [7:0]       id_mt_tags[31:0];
     //logic [74:0]      id_rs_debug;
-    //logic [`RS_SIZE-1:0] rs_issue_enable;'
+    //logic [`RS_SIZE-1:0] rs_issue_enable;
 
-    logic [31:0] id_opB;
-    logic [`ROB_TAG_BITS-1:0] id_tag;
+    logic [31:0] id_opA, id_opB;
+    // logic [`ROB_TAG_BITS-1:0] id_tag;
     logic [31:0] npc_out;
     ALU_OPA_SELECT id_opa_select;
     logic [`RS_SIZE-1:0][31:0] rs1_inst_out;
-    logic rs1_ready;
+    // logic rs1_ready;
     ALU_OPB_SELECT id_opb_select;
     logic id_has_dest_reg;
     logic [4:0] id_dest_reg_idx;
@@ -77,27 +102,27 @@ module pipeline (
     //////////////////////////////////////////////////
     //                IS Stage Wires                //
     //////////////////////////////////////////////////
-    IS_EX_PACKET      is_packet;
-    IS_EX_PACKET      is_ex_reg;
-    logic             issue_valid;
-    logic fu_ready;
-    logic [`RS_SIZE-1:0] rs_issue_enable;
+    // IS_EX_PACKET      is_packet;
+    // IS_EX_PACKET      is_ex_reg;
+    // logic             issue_valid;
+    // logic fu_ready;
+    // logic [`RS_SIZE-1:0] rs_issue_enable;
 
     //////////////////////////////////////////////////
     //                 EX Stage Wires               //
     //////////////////////////////////////////////////
-    ID_EX_PACKET id_ex_reg;   // The ID to EX stage register
+    // ID_EX_PACKET id_ex_reg;   // The ID to EX stage register
     // EX_MEM_PACKET ex_packet;  // Output Packet
-    CDB_PACKET cdb_packet_ex;
-    logic cdb_busy;
-    logic fu_busy; //this will stall the RS issue if ex stage is busy / full
+    // CDB_PACKET cdb_packet_ex;
+    // logic cdb_busy;
+    // logic fu_busy; //this will stall the RS issue if ex stage is busy / full
     assign fu_ready = !fu_busy;
 
 
     //////////////////////////////////////////////////
     //                CP Stage Wires                //
     //////////////////////////////////////////////////
-    EX_CP_PACKET ex_cp_reg;
+    // EX_CP_PACKET ex_cp_reg;
     CDB_PACKET cdb_packet;
 
     //////////////////////////////////////////////////
@@ -125,7 +150,7 @@ module pipeline (
     DISPATCH_ROB_PACKET rob_dispatch_packet;
     ROB_DISPATCH_PACKET rob_dispatch_out;
     ROB_RETIRE_PACKET rob_retire_packet;
-    logic rob_full;
+    // logic rob_full;
 
     //////////////////////////////////////////////////
     //               I-Cache Wires                  //
@@ -210,22 +235,22 @@ module pipeline (
     //////////////////////////////////////////////////
     //                  I-Cache                     //
     //////////////////////////////////////////////////
-    // icache icache_0 (
-    //     .clock(clock),
-    //     .reset(reset),
-    //     .Imem2proc_response(mem2proc_response),
-    //     .Imem2proc_data(mem2proc_data),
-    //     .Imem2proc_tag(mem2proc_tag),
-    //     .proc2Icache_addr(proc2Icache_addr),
-    //     .proc2Imem_command(proc2Imem_command),
-    //     .proc2Imem_addr(proc2Imem_addr),
-    //     .Icache_data_out(Icache_data_out),
-    //     .Icache_valid_out(Icache_valid_out)
-    // );
+    icache icache_0 (
+        .clock(clock),
+        .reset(reset),
+        .Imem2proc_response(mem2proc_response),
+        .Imem2proc_data(mem2proc_data),
+        .Imem2proc_tag(mem2proc_tag),
+        .proc2Icache_addr(proc2Icache_addr),
+        .proc2Imem_command(proc2Imem_command),
+        .proc2Imem_addr(proc2Imem_addr),
+        .Icache_data_out(Icache_data_out),
+        .Icache_valid_out(Icache_valid_out)
+    );
     // for now, no icache, i will pass through all the data
-    assign proc2Imem_addr = proc2Icache_addr;
-    assign Icache_data_out = Imem2proc_data;
-    assign Icache_valid_out = Imem2proc_tag != 0; // this means it is returning data
+    // assign proc2Imem_addr = proc2Icache_addr;
+    // assign Icache_data_out = Imem2proc_data;
+    // assign Icache_valid_out = Imem2proc_tag != 0; // this means it is returning data
 
     //////////////////////////////////////////////////
     //                  D-Cache                     //
@@ -264,7 +289,7 @@ module pipeline (
     //////////////////////////////////////////////////
     //         IF/ID Pipeline Register              //
     //////////////////////////////////////////////////
-    IF_ID_PACKET      if_id_reg;
+    // IF_ID_PACKET      if_id_reg;
     always_ff @(posedge clock or posedge reset) begin
         if (reset) begin
             if_id_reg <= '0;
@@ -309,14 +334,14 @@ module pipeline (
         .fu_busy(fu_busy),
         .rs1_clear(rs_issue_enable[0]), //this means its the first register
 
-        .rob_retire_entry(1'b1), // TODO: connect properly
+        .rob_retire_entry(retire_valid_out), // TODO: connect properly
 
         .store_retire(store_ready),
         .store_tag(store_tag),
 
         .rob_dest_reg(retire_dest_out),
         .rob_to_regfile_value(retire_value_out),
-        .rob_regfile_valid(retire_valid_out),
+        // .rob_regfile_valid(retire_valid_out),
         .rob_clear(rob_clear), 
         .maptable_clear(maptable_clear),
         .rs_clear(rs_clear),
@@ -341,8 +366,13 @@ module pipeline (
         .rob_retire_out(rob_retire_packet),
 
         .rob_pointers_debug(id_rob_pointers),
+        .rob_debug(id_rob_debug),
 
-        .lsq_packet(lsq_packet)
+        .lsq_packet(lsq_packet),
+        .rob_full(rob_full),
+        .dispatch_ok(dispatch_ok),
+        .rs1_available(rs1_available)
+
     );
 
     //////////////////////////////////////////////////

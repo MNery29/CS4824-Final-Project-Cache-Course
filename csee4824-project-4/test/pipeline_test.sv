@@ -63,7 +63,38 @@ module testbench;
     logic             pipeline_commit_wr_en;
     logic [`XLEN-1:0] pipeline_commit_NPC;
 
-    logic [31:0] id_opA;
+   
+    logic [45:0]      id_rob_debug[31:0];
+
+    logic stall_if;
+    logic [`XLEN-1:0] proc2Icache_addr;
+    logic             Icache_valid_out;
+    logic [63:0] Icache_data_out;
+
+    logic [`ROB_TAG_BITS-1:0] id_tag;
+    logic rs1_ready;
+
+
+    //IS stage debugging wires
+    IS_EX_PACKET is_packet;
+    IS_EX_PACKET is_ex_reg;
+    logic issue_valid;
+    logic fu_ready;
+    logic [`RS_SIZE-1:0] rs_issue_enable;
+
+    //EX stage debugging wires
+    EX_CP_PACKET ex_cp_reg;
+    logic fu_busy;
+    logic cdb_busy; //this will stall the RS issue if ex stage is busy / full
+
+    IF_ID_PACKET if_packet;
+    IF_ID_PACKET if_id_reg;
+
+    logic rob_full;
+    logic rs1_available;
+    logic dispatch_ok;
+
+
 
     // logic [`XLEN-1:0] if_NPC_dbg;
     // logic [31:0]      if_inst_dbg;
@@ -106,7 +137,33 @@ module testbench;
         .pipeline_commit_wr_en    (pipeline_commit_wr_en),
         .pipeline_commit_NPC      (pipeline_commit_NPC),
 
-        .id_opA(id_opA)
+        .id_rob_debug          (id_rob_debug),
+        .Icache_valid_out     (Icache_valid_out),
+        .proc2Icache_addr     (proc2Icache_addr),
+        .stall_if             (stall_if),
+        .Icache_data_out       (Icache_data_out),
+
+        .id_tag               (id_tag),
+        .rs1_ready            (rs1_ready),
+
+        //IS stage debugging wires
+        .is_packet            (is_packet),
+        .is_ex_reg            (is_ex_reg),
+        .issue_valid          (issue_valid),
+        .fu_ready             (fu_ready),
+        .rs_issue_enable      (rs_issue_enable),
+        //EX stage debugging wires
+        .ex_cp_reg            (ex_cp_reg),
+        .fu_busy              (fu_busy),
+        .cdb_busy             (cdb_busy),
+
+        .if_packet            (if_packet),
+        .if_id_reg            (if_id_reg),
+
+        .rob_full             (rob_full),
+        .rs1_available        (rs1_available),
+        .dispatch_ok          (dispatch_ok)
+
 
         // .if_NPC_dbg       (if_NPC_dbg),
         // .if_inst_dbg      (if_inst_dbg),
@@ -162,6 +219,72 @@ module testbench;
                       clock_count * `CLOCK_PERIOD);
         end
     endtask // task show_clk_count
+
+    task automatic show_if_packet (
+        input IF_ID_PACKET pkt
+    );
+        if (!pkt.valid) begin
+            $display("[%0t] IF   : (stall/invalid)", $time);
+        end
+        else begin
+            $display("[%0t] IF   : PC = 0x%08h  NPC = 0x%08h  inst = 0x%08h",
+                    $time, pkt.PC, pkt.NPC, pkt.inst);
+        end
+    endtask
+    task automatic show_id_stage (
+        input [`ROB_TAG_BITS-1:0] id_tag,
+        input logic               rs1_ready
+    );
+        $display("[%0t] ID   : tag=%0d  rs1_ready=%b",
+                $time, id_tag, rs1_ready);
+    endtask
+    function string alu_func_str (ALU_FUNC f);
+        case (f)
+            ALU_ADD   : return "ADD";
+            ALU_SUB   : return "SUB";
+            ALU_AND   : return "AND";
+            ALU_OR    : return "OR";
+            ALU_XOR   : return "XOR";
+            ALU_SLT   : return "SLT";
+            ALU_SLTU  : return "SLTU";
+            ALU_SLL   : return "SLL";
+            ALU_SRL   : return "SRL";
+            ALU_SRA   : return "SRA";
+            ALU_MUL   : return "MUL";
+            default   : return "UNK";
+        endcase
+    endfunction
+    // ------------------------------------------------------------
+    //  IS-stage packet
+    // ------------------------------------------------------------
+    task automatic show_is_packet (
+        input IS_EX_PACKET pkt,
+        input logic        issue_valid,
+        input logic        fu_ready,
+        input logic [`RS_SIZE-1:0] rs_issue_en
+    );
+        $display("[%0t] IS   : val=%b  tag=%0d  RS=%0d  func=%s  rd=%b wr=%b",
+                $time, pkt.issue_valid, pkt.rob_tag, pkt.RS_tag,
+                alu_func_str(pkt.alu_func),
+                pkt.rd_mem, pkt.wr_mem);
+        $display("            OPA=0x%08h  OPB=0x%08h  NPC=0x%08h  inst=0x%08h",
+                pkt.OPA, pkt.OPB, pkt.NPC, pkt.inst);
+        $display("            issue_valid=%b  fu_ready=%b  rs_issue_enable=%b",
+                issue_valid, fu_ready, rs_issue_en);
+    endtask
+
+    // ------------------------------------------------------------
+    //  EX-stage commit packet
+    // ------------------------------------------------------------
+    task automatic show_ex_packet (
+        input EX_CP_PACKET pkt,
+        input logic        fu_busy,
+        input logic        cdb_busy
+    );
+        $display("[%0t] EX   : val=%b  done=%b  tag=%0d  value=0x%08h",
+                $time, pkt.valid, pkt.done, pkt.rob_tag, pkt.value);
+        $display("            fu_busy=%b  cdb_busy=%b", fu_busy, cdb_busy);
+    endtask
 
 
     // Show contents of a range of Unified Memory, in both hex and decimal
@@ -261,10 +384,30 @@ module testbench;
             debug_counter <= 0;
         end else begin
             #2;
+            $display("______________NEW CLOCK CYCLE________________");
+            $display("ROB contents:");
+            for (int i = 0; i < 32; i++) begin
+                $display("Status:%b Opcode:%b Dest:%b Value:%h", id_rob_debug[i][45:44], id_rob_debug[i][43:37], 
+                    id_rob_debug[i][36:32], id_rob_debug[i][31:0]);
+            end
+            //display mem/ if stuff in pipeline
+
+            $display("IF STAGE CONTENT: ");
+            $display("PC=%x, VALID=%b STALL_IF= %b ICACHEDATA=%h",proc2Icache_addr, Icache_valid_out, stall_if, Icache_data_out);
+            
+            show_if_packet(if_packet);
+            show_if_packet(if_id_reg);
+            show_id_stage   (id_tag, rs1_ready);
+            show_is_packet  (is_packet, issue_valid, fu_ready, rs_issue_enable);
+            show_ex_packet  (ex_cp_reg, fu_busy, cdb_busy);
+            //display rob full, rs1 available, dispatch ok
+            $display("ROB FULL=%b RS1 AVAIL=%b DISPATCH OK=%b", rob_full, rs1_available, dispatch_ok);
+            $display("------------------------------------------------------------");
+
 
             // print the pipeline debug outputs via c code to the pipeline output file
             // print_cycles();
-            $display(" @@ %h", id_opA);
+            // $display(" @@ %h", id_opA);
             // print_stage(" ", if_inst_dbg,     if_NPC_dbg    [31:0], {31'b0,if_valid_dbg});
             // print_stage("|", if_id_inst_dbg,  if_id_NPC_dbg [31:0], {31'b0,if_id_valid_dbg});
             // print_stage("|", id_ex_inst_dbg,  id_ex_NPC_dbg [31:0], {31'b0,id_ex_valid_dbg});

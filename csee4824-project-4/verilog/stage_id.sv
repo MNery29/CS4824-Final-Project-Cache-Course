@@ -225,7 +225,10 @@ module stage_id (
     //data from retire stage
     input [4:0] rob_dest_reg,
     input [31:0] rob_to_regfile_value,
-    input rob_regfile_valid,
+    // input retire_entry,
+
+
+    // input rob_regfile_valid,
 
     input lsq_free,
 
@@ -258,7 +261,11 @@ module stage_id (
     output logic rob_valid, rob_ready, // ready bit from ROB
 
     // information to send to LSQ about current instruction
-    output LSQ_PACKET lsq_packet
+    output LSQ_PACKET lsq_packet,
+    output logic rob_full, // ROB full signal debugging
+    output logic rs1_available, // RS available signal debugging
+    output logic dispatch_ok // Dispatch OK signal debugging
+
 
 );
     logic rd_mem, wr_mem;
@@ -270,9 +277,9 @@ module stage_id (
     assign dest_reg_idx = (has_dest_reg) ? if_id_reg.inst.r.rd : `ZERO_REG;
 
     // Dispatch control signals
-    logic dispatch_ok;
-    logic rob_full;
-    logic rs1_available;
+    // logic dispatch_ok;
+    // logic rob_full;
+    // logic rs1_available;
 
     assign dispatch_ok = (!rob_full) && (rs1_available) && (lsq_free);
 
@@ -397,7 +404,7 @@ module stage_id (
         .cdb_tag_in(cdb_tag),
         .read_cdb(cdb_valid),
         .retire_addr(rob_dest_reg),
-        .retire_entry(rob_regfile_valid),
+        .retire_entry(rob_retire_entry),
         .retire_tag(rob_retire_tag_out),
         .rs1_tag(mt_to_rs_tag1),
         .rs2_tag(mt_to_rs_tag2),
@@ -472,7 +479,7 @@ module stage_id (
         .clock(clock),
         .read_idx_1(mt_to_regfile_rs1),
         .read_idx_2(mt_to_regfile_rs2),
-        .write_en(rob_regfile_valid),
+        .write_en(rob_retire_entry),
         .write_idx(rob_dest_reg),
         .write_data(rob_to_regfile_value),
         .read_out_1(rs1_value),
