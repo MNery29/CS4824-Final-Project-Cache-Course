@@ -106,7 +106,7 @@ module testbench;
 
     initial begin
         $monitor("Time:%4.0f clock:%b |Inst| instruction:%h valid:%b |CDB| cdb_broadcast:%b cdb_packet.tag:%b cdb_packet.value:%h |Control| mt_retire:%b rob_retire:%b rob_clear:%b rs1_clear:%b || Outputs: rs_is_packet.rs_opa_out:%h rs_is_packet.rs_opb_out:%h rs_is_packet.rs_tag_out:%b", 
-                $time, clock, if_id_packet.inst, if_id_packet.valid, cdb_packet.valid, cdb_packet.tag, cdb_packet.value, retire_entry, retire_entry, rob_clear, rs1_clear, rs_is_packet.rs_opa_out, rs_is_packet.rs_opb_out, rs_is_packet.rs_is_packet.rs_tag_out);
+                $time, clock, if_id_packet.inst, if_id_packet.valid, cdb_packet.valid, cdb_packet.tag, cdb_packet.value, retire_entry, retire_entry, rob_clear, rs1_clear, rs_is_packet.rs_opa_out, rs_is_packet.rs_opb_out, rs_is_packet.rs_tag_out);
         //Reset 
         clock = 1;
         reset = 1; //Pull reset high
