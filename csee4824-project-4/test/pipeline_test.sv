@@ -94,6 +94,8 @@ module testbench;
     logic rs1_available;
     logic dispatch_ok;
 
+    logic [74:0] rs_debug;
+
 
 
     // logic [`XLEN-1:0] if_NPC_dbg;
@@ -162,7 +164,9 @@ module testbench;
 
         .rob_full             (rob_full),
         .rs1_available        (rs1_available),
-        .dispatch_ok          (dispatch_ok)
+        .dispatch_ok          (dispatch_ok),
+
+        .id_rs_debug             (rs_debug)
 
 
         // .if_NPC_dbg       (if_NPC_dbg),
@@ -254,6 +258,28 @@ module testbench;
             default   : return "UNK";
         endcase
     endfunction
+
+    task automatic show_rs_debug (
+        input logic [74:0] rs_debug,
+        input string       prefix = "RS"
+    );
+        // unpack
+        logic [31:0] opA     = rs_debug[74:43];
+        logic        opA_v   = rs_debug[42];
+        logic [31:0] opB     = rs_debug[41:10];
+        logic        opB_v   = rs_debug[9];
+        logic [5:0]  tag     = rs_debug[8:3];
+        logic        in_use  = rs_debug[2];
+        logic        ready   = rs_debug[1];
+        logic        avail   = rs_debug[0];
+
+        // print
+        $display("[%0t] %s : opA=0x%08h (%s)  opB=0x%08h (%s)  tag=%0d  in_use=%b  ready=%b  avail=%b",
+                $time, prefix,
+                opA, opA_v ? "V" : "X",
+                opB, opB_v ? "V" : "X",
+                tag, in_use, ready, avail);
+    endtask
     // ------------------------------------------------------------
     //  IS-stage packet
     // ------------------------------------------------------------
@@ -400,6 +426,7 @@ module testbench;
             show_id_stage   (id_tag, rs1_ready);
             show_is_packet  (is_packet, issue_valid, fu_ready, rs_issue_enable);
             show_ex_packet  (ex_cp_reg, fu_busy, cdb_busy);
+            show_rs_debug(rs_debug, "RS[0]");
             //display rob full, rs1 available, dispatch ok
             $display("ROB FULL=%b RS1 AVAIL=%b DISPATCH OK=%b", rob_full, rs1_available, dispatch_ok);
             $display("------------------------------------------------------------");

@@ -264,7 +264,8 @@ module stage_id (
     output LSQ_PACKET lsq_packet,
     output logic rob_full, // ROB full signal debugging
     output logic rs1_available, // RS available signal debugging
-    output logic dispatch_ok // Dispatch OK signal debugging
+    output logic dispatch_ok, // Dispatch OK signal debugging
+    output logic [74:0] rs_debug // RS debug signal debugging
 
 
 );
@@ -444,8 +445,8 @@ module stage_id (
         .rs_opa_out(opA),
         .rs_opb_out(opB),
         .rs_tag_out(output_tag),
-        .rs_avail_out(rs1_available)
-        //.rs_debug(rs_debug)
+        .rs_avail_out(rs1_available),
+        .rs_debug(rs_debug)
     );
 
     // Reorder Buffer

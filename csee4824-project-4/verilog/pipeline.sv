@@ -58,7 +58,8 @@ module pipeline (
     output logic cdb_busy, //this will stall the RS issue if ex stage is busy / full
     output logic rob_full,
     output logic rs1_available,
-    output logic dispatch_ok
+    output logic dispatch_ok,
+    output logic [74:0] id_rs_debug
 );
 
     //////////////////////////////////////////////////
@@ -367,6 +368,7 @@ module pipeline (
 
         .rob_pointers_debug(id_rob_pointers),
         .rob_debug(id_rob_debug),
+        .rs_debug(id_rs_debug),
 
         .lsq_packet(lsq_packet),
         .rob_full(rob_full),
