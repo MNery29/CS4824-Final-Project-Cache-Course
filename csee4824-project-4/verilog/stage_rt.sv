@@ -47,62 +47,95 @@ module stage_rt (
 
 );
 
+//internal signals
+logic [31:0] retire_value_reg;
+logic [4:0] retire_dest_reg;
+logic retire_valid_reg;
+logic [4:0] mem_tag_reg;
+logic mem_valid_reg;
+logic clear_rob_reg;
+logic clear_map_table_reg;
+logic clear_lsq_reg;
+logic clear_rs_reg;
+logic clear_fu_reg;
+logic clear_is_reg;
+logic clear_cp_reg;
+logic take_branch_reg;
+logic [31:0] new_addr_reg;
+
+assign retire_value = retire_value_reg;
+assign retire_dest = retire_dest_reg;
+assign retire_valid_out = retire_valid_reg;
+assign mem_tag = mem_tag_reg;
+assign mem_valid = mem_valid_reg;
+assign clear_rob = clear_rob_reg;
+assign clear_map_table = clear_map_table_reg;
+assign clear_lsq = clear_lsq_reg;
+assign clear_rs = clear_rs_reg;
+assign clear_fu = clear_fu_reg;
+assign clear_is = clear_is_reg;
+assign clear_cp = clear_cp_reg;
+assign take_branch = take_branch_reg;
+assign new_addr = new_addr_reg;
+
+
+
 always_ff @(posedge clock) begin
     // ok so we check to see if it is a branch, and if it is a branch, we check if we take the branch (we always assume no taking branches)
     if (reset || (rob_retire_packet.is_branch && rob_retire_packet.value != 0)) begin
         //cleare all retire outputs
-        retire_value <= 64'b0;
-        retire_dest <= 5'b0;
-        retire_valid_out <= 1'b0;
+        retire_value_reg <= 0;
+        retire_dest_reg <= 0;
+        retire_valid_reg<= 1'b0;
 
-        clear_rob <= 1;
-        clear_map_table <= 1;
-        clear_lsq <= 1;
-        clear_fu <= 1;
-        clear_rs <= 1;
-        clear_cp <= 1;
-        clear_is <= 1;
+        clear_rob_reg <= 1;
+        clear_map_table_reg <= 1;
+        clear_lsq_reg <= 1;
+        clear_fu_reg <= 1;
+        clear_rs_reg <= 1;
+        clear_cp_reg <= 1;
+        clear_is_reg <= 1;
 
-        new_addr <= rob_retire_packet.value;
-        take_branch <= 1;
+        new_addr_reg <= rob_retire_packet.value;
+        take_branch_reg <= 1;
 
         //clear all mem outputs
         // mem_addr <= 64'b0;
-        mem_tag <= 4'b0;
-        mem_valid <= 1'b0;
+        mem_tag_reg <= 0;
+        mem_valid_reg <= 0;
     end else begin
         // if is a branch, and we predicted correct (not taken), then we can just ignore it
         if (rob_ready && rob_valid && !rob_retire_packet.is_branch) begin
             // retiring an instruction: valid entry from ROB
-            retire_value <= rob_retire_packet.value;
-            retire_dest  <= rob_retire_packet.dest_reg;
-            retire_valid_out <= 1'b1;
+            retire_value_reg <= rob_retire_packet.value;
+            retire_dest_reg  <= rob_retire_packet.dest_reg;
+            retire_valid_reg <= 1'b1;
             // mem_addr     <= rob_retire_packet.mem_addr;
-            mem_tag      <= rob_retire_packet.tag[4:0];
-            mem_valid    <= rob_retire_packet.mem_valid;
-            clear_rob <= 0;
-            clear_map_table <= 0;
-            clear_lsq <= 0;
-            clear_fu <= 0;
-            new_addr <= 0;
-            clear_rs <= 0;
-            clear_cp <= 0;
-            clear_is <= 0;
-            take_branch <= 0;
+            mem_tag_reg      <= rob_retire_packet.tag[4:0];
+            mem_valid_reg    <= rob_retire_packet.mem_valid;
+            clear_rob_reg <= 0;
+            clear_map_table_reg <= 0;
+            clear_lsq_reg <= 0;
+            clear_fu_reg <= 0;
+            new_addr_reg <= 0;
+            clear_rs_reg <= 0;
+            clear_cp_reg <= 0;
+            clear_is_reg <= 0;
+            take_branch_reg <= 0;
         end else begin
             //nothing to retire - set to default
-            retire_value <= 64'b0;
-            retire_dest <= 5'b0;
-            retire_valid_out <= 1'b0;
-            clear_rob <= 0;
-            clear_map_table <= 0;
-            clear_lsq <= 0;
-            clear_fu <= 0;
-            new_addr <= 0;
-            clear_rs <= 0;
-            clear_cp <= 0;
-            clear_is <= 0;
-            take_branch <= 0;
+            retire_value_reg <= 0;
+            retire_dest_reg <= 0;
+            retire_valid_reg <= 0;
+            clear_rob_reg <= 0;
+            clear_map_table_reg <= 0;
+            clear_lsq_reg <= 0;
+            clear_fu_reg <= 0;
+            new_addr_reg <= 0;
+            clear_rs_reg <= 0;
+            clear_cp_reg <= 0;
+            clear_is_reg <= 0;
+            take_branch_reg <= 0;
         end
     end
 end

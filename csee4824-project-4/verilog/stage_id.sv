@@ -215,8 +215,8 @@ module stage_id (
 
     input fu_busy,
     input rs1_clear,
-
     input rob_retire_entry,
+
 
     //this is signal from LSQ to let ROB know that a store command is ready
     input store_retire,
@@ -225,6 +225,7 @@ module stage_id (
     //data from retire stage
     input [4:0] rob_dest_reg,
     input [31:0] rob_to_regfile_value,
+    input retire_entry,
     // input retire_entry,
 
 
@@ -262,10 +263,20 @@ module stage_id (
 
     // information to send to LSQ about current instruction
     output LSQ_PACKET lsq_packet,
+    //debugging signals BELOW
     output logic rob_full, // ROB full signal debugging
     output logic rs1_available, // RS available signal debugging
     output logic dispatch_ok, // Dispatch OK signal debugging
-    output logic [73:0] rs_debug // RS debug signal debugging
+    output logic [73:0] rs_debug, // RS debug signal debugging
+    
+    output logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2,
+
+    output logic [31:0] rs1_value, rs2_value,
+    output logic [31:0] rob_to_rs_value1, rob_to_rs_value2,
+
+    output logic [31:1] [`XLEN-1:0] debug_reg,
+    output logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2
+
 
 
 );
@@ -295,11 +306,11 @@ module stage_id (
     assign rob_cdb_packet.valid = cdb_valid;
 
     // Outputs from map table
-    logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2;
-    logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2;
+    // logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2;
+    // logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2;
 
     // Regfile read values
-    logic [31:0] rs1_value, rs2_value;
+    // logic [31:0] rs1_value, rs2_value;
 
     // RS operand handling
     logic [31:0] rs1_opa_in, rs1_opb_in;
@@ -308,10 +319,10 @@ module stage_id (
     // ROB to RS read signals
     logic rob_to_rs_read1;
     logic [`ROB_TAG_BITS-1:0] rob_read_tag1;
-    logic [31:0] rob_to_rs_value1;
+    // logic [31:0] rob_to_rs_value1;
     logic rob_to_rs_read2;
     logic [`ROB_TAG_BITS-1:0] rob_read_tag2;
-    logic [31:0] rob_to_rs_value2;
+    // logic [31:0] rob_to_rs_value2;
 
     // ROB dispatch and retire signals
     logic [`ROB_TAG_BITS-1:0] rob_tag_out;
@@ -331,7 +342,7 @@ module stage_id (
     always_comb begin
         rs1_opa_in = 32'b0;
         rs1_opa_valid = 0;
-        rob_to_rs_read1 = 0;
+        rob_to_rs_read1 = 1;
         rob_read_tag1 = 0;
 
         case (opa_select)
@@ -362,7 +373,7 @@ module stage_id (
     always_comb begin
         rs1_opb_in = 32'b0;
         rs1_opb_valid = 0;
-        rob_to_rs_read2 = 0;
+        rob_to_rs_read2 = 1;
         rob_read_tag2 = 0;
 
         case (opb_select)
@@ -395,7 +406,7 @@ module stage_id (
     
     // Map Table
     map_table map_table_0 (
-        .reset(reset),
+        .reset(mt_reset),
         .clock(clock),
         .rs1_addr(if_id_reg.inst.r.rs1),
         .rs2_addr(if_id_reg.inst.r.rs2),
@@ -405,7 +416,7 @@ module stage_id (
         .cdb_tag_in(cdb_tag),
         .read_cdb(cdb_valid),
         .retire_addr(rob_dest_reg),
-        .retire_entry(rob_retire_entry),
+        .retire_entry(retire_entry),
         .retire_tag(rob_retire_tag_out),
         .rs1_tag(mt_to_rs_tag1),
         .rs2_tag(mt_to_rs_tag2),
@@ -481,11 +492,13 @@ module stage_id (
         .clock(clock),
         .read_idx_1(mt_to_regfile_rs1),
         .read_idx_2(mt_to_regfile_rs2),
-        .write_en(rob_retire_entry),
+        .write_en(retire_entry),
         .write_idx(rob_dest_reg),
         .write_data(rob_to_regfile_value),
         .read_out_1(rs1_value),
-        .read_out_2(rs2_value)
+        .read_out_2(rs2_value),
+
+        .debug_reg(debug_reg)
     );
 
     // Decoder

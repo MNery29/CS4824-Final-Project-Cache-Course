@@ -71,8 +71,15 @@ module testbench;
     logic             Icache_valid_out;
     logic [63:0] Icache_data_out;
 
+    
+
+    //id stage debugging
     logic [`ROB_TAG_BITS-1:0] id_tag;
     logic rs1_ready;
+    logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2;
+
+    logic [31:0] rs1_value, rs2_value;
+    logic [31:0] rob_to_rs_value1, rob_to_rs_value2;
 
 
     //IS stage debugging wires
@@ -121,6 +128,21 @@ module testbench;
     logic [73:0] rs_debug;
 
     CDB_PACKET cdb_packet;
+
+    logic [`XLEN-1:0] retire_value_out;
+    logic [4:0]       retire_dest_out;
+    logic             retire_valid_out;
+
+    ROB_RETIRE_PACKET rob_retire_packet;
+
+    logic rob_valid, rob_ready;
+
+    logic [31:1] [`XLEN-1:0] debug_reg;
+
+    logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2;
+
+    ALU_OPA_SELECT id_opa_select;
+    ALU_OPB_SELECT id_opb_select;
 
     
 
@@ -173,8 +195,15 @@ module testbench;
         .stall_if             (stall_if),
         .Icache_data_out       (Icache_data_out),
 
+        //id stage debugging
         .id_tag               (id_tag),
         .rs1_ready            (rs1_ready),
+        .mt_to_rs_tag1       (mt_to_rs_tag1),
+        .mt_to_rs_tag2       (mt_to_rs_tag2),
+        .rs1_value            (rs1_value),
+        .rs2_value            (rs2_value),
+        .rob_to_rs_value1     (rob_to_rs_value1),
+        .rob_to_rs_value2     (rob_to_rs_value2),
 
         //IS stage debugging wires
         .is_packet            (is_packet),
@@ -198,7 +227,24 @@ module testbench;
 
         .ex_packet            (ex_packet),
 
-        .cdb_packet            (cdb_packet)
+        .cdb_packet            (cdb_packet),
+
+        //rt stage debugging wires
+        .retire_value_out     (retire_value_out),
+        .retire_dest_out      (retire_dest_out),
+        .retire_valid_out     (retire_valid_out),
+        .rob_retire_packet    (rob_retire_packet),
+
+        .rob_valid           (rob_valid),
+        .rob_ready           (rob_ready),
+
+        .debug_reg           (debug_reg),
+
+        .mt_to_regfile_rs1 (mt_to_regfile_rs1),
+        .mt_to_regfile_rs2 (mt_to_regfile_rs2),
+        .id_opa_select (id_opa_select),
+        .id_opb_select (id_opb_select)
+        
 
 
         // .if_NPC_dbg       (if_NPC_dbg),
@@ -256,16 +302,31 @@ module testbench;
         end
     endtask // task show_clk_count
 
-    task automatic show_if_packet (
-        input IF_ID_PACKET pkt
-    );
+    task automatic show_if_packet (input IF_ID_PACKET pkt);
+        // Extract indices (0–31).  For formats that lack rs1/rs2 these
+        // bits are architecturally zero, so the printout is harmless.
+        automatic logic [4:0] rs1_idx = pkt.inst[19:15];
+        automatic logic [4:0] rs2_idx = pkt.inst[24:20];
+
         if (!pkt.valid) begin
             $display("[%0t] IF   : (stall/invalid)", $time);
         end
         else begin
-            $display("[%0t] IF   : PC = 0x%08h  NPC = 0x%08h  inst = 0x%08h",
-                    $time, pkt.PC, pkt.NPC, pkt.inst);
+            $display("[%0t] IF   : PC = 0x%08h  NPC = 0x%08h inst = 0x%08h  rs1 = %0d  rs2 = %0d",
+                    $time, pkt.PC, pkt.NPC, pkt.inst, rs1_idx, rs2_idx);
         end
+    endtask
+    task automatic show_rob_retire_packet (
+        input ROB_RETIRE_PACKET pkt,
+        input string            prefix = "RETIRE"
+    );
+        $display("[%0t] %s : tag=%0d  dest=%0d  reg_valid=%b mem_valid=%b  branch=%b",
+                $time, prefix,
+                pkt.tag, pkt.dest_reg,
+                pkt.reg_valid, pkt.mem_valid, pkt.is_branch);
+
+        $display("            value=0x%08h  mem_addr=0x%08h",
+                pkt.value, pkt.mem_addr);
     endtask
     task automatic show_id_stage (
         input [`ROB_TAG_BITS-1:0] id_tag,
@@ -385,6 +446,16 @@ module testbench;
                 $time, pkt.valid, pkt.done, pkt.rob_tag, pkt.value);
         $display("            fu_busy=%b  cdb_busy=%b", fu_busy, cdb_busy);
     endtask
+    task automatic show_regfile (
+        input logic [31:1] [`XLEN-1:0] regs,   // <-- same layout as regfile
+        input string                      hdr = "REGFILE"
+    );
+        $display("[%0t] === %s contents ===", $time, hdr);
+        for (int i = 1; i <= 31; i++) begin
+            // regs[i] is the XLEN-bit vector for x<i>
+            $display("x%0d : 0x%0h", i, regs[i]);
+        end
+    endtask
     task automatic show_cdb_packet (
         input CDB_PACKET pkt,
         input string     prefix = "CDB"   // let caller override label
@@ -418,6 +489,73 @@ module testbench;
             $display("@@@");
         end
     endtask // task show_mem_with_decimal
+
+    function automatic string opa_sel_str (input ALU_OPA_SELECT sel);
+        case (sel)
+            OPA_IS_RS1  : return "RS1";
+            OPA_IS_NPC  : return "NPC";
+            OPA_IS_PC   : return "PC";
+            OPA_IS_ZERO : return "ZERO";
+            default     : return "OPA(?)";
+        endcase
+    endfunction
+
+    function automatic string opb_sel_str (input ALU_OPB_SELECT sel);
+        case (sel)
+            OPB_IS_RS2   : return "RS2";
+            OPB_IS_I_IMM : return "I_IMM";
+            OPB_IS_S_IMM : return "S_IMM";
+            OPB_IS_B_IMM : return "B_IMM";
+            OPB_IS_U_IMM : return "U_IMM";
+            OPB_IS_J_IMM : return "J_IMM";
+            default      : return "OPB(?)";
+        endcase
+    endfunction
+
+    task display_all_signals;
+        begin
+            $display("ROB contents:");
+            for (int i = 0; i < 32; i++) begin
+                $display("Status:%b Opcode:%b Dest:%b Value:%h", id_rob_debug[i][45:44], id_rob_debug[i][43:37], 
+                    id_rob_debug[i][36:32], id_rob_debug[i][31:0]);
+            end
+            //display mem/ if stuff in pipeline
+
+            $display("IF STAGE CONTENT: ");
+            $display("PC=%x, VALID=%b STALL_IF= %b ICACHEDATA=%h",proc2Icache_addr, Icache_valid_out, stall_if, Icache_data_out);
+            $display("ID STAGE CONTENT: ");
+            $display("OPA SELECT =%s, OPB SELECT=%s", opa_sel_str(id_opa_select), opb_sel_str(id_opb_select));
+            $display("REG INDX 1 =%d, REG INDX 2=%d", mt_to_regfile_rs1, mt_to_regfile_rs2);
+            $display("ROB TAG=%d, RS1 READY=%b, mt_to_rs_tag1=%b, mt_to_rs_tag2=%b", id_tag, rs1_ready, mt_to_rs_tag1, mt_to_rs_tag2);
+            $display("RS1 VALUE=%h, RS2 VALUE=%h", rs1_value, rs2_value);
+            $display("ROB TO RS VALUE1=%h, ROB TO RS VALUE2=%h", rob_to_rs_value1, rob_to_rs_value2);
+            show_if_packet(if_packet);
+            show_if_packet(if_id_reg);
+            show_id_stage   (id_tag, rs1_ready);
+            $display("IS PACKEt: ");
+            show_is_packet  (is_packet, issue_valid, fu_ready, rs_issue_enable);
+            $display("IS REGISTER: ");
+            // show_is_packet  (is_ex_reg, issue_valid, fu_ready, rs_issue_enable);
+            $display("First Ex packet");
+            show_ex_packet  (ex_packet, fu_busy, cdb_busy);
+            $display("ex reg");
+            show_ex_packet  (ex_cp_reg, fu_busy, cdb_busy);
+            show_rs_debug(rs_debug, "RS[0]");
+            show_cdb_packet(cdb_packet, "CDB");
+            $display("RETIRE STAGE INFORMATION: ");
+            $display("RETIRE VALUE=%h, RETIRE DEST=%d, RETIRE VALID=%b", retire_value_out, retire_dest_out, retire_valid_out);
+            //display rob full, rs1 available, dispatch ok
+            $display("ROB FULL=%b RS1 AVAIL=%b DISPATCH OK=%b", rob_full, rs1_available, dispatch_ok);  
+
+            $display("ROB READY=%b, ROB VALID=%b", rob_ready, rob_valid);
+            show_rob_retire_packet(rob_retire_packet);
+
+            $display("------------------------------------------------------------");
+            $display("reg file information: ");
+            show_regfile(debug_reg, "DEBUG_REG");
+            $display("------------------------------------------------------------");
+        end
+    endtask
 
 
     initial begin
@@ -484,8 +622,12 @@ module testbench;
         end else begin
             clock_count <= (clock_count + 1);
             instr_count <= (instr_count + pipeline_completed_insts);
+            $display("______________POS EDGE CLOCK CYCLE!!!________________");
+            display_all_signals();
         end
+        
     end
+
 
 
     always @(negedge clock) begin
@@ -495,46 +637,9 @@ module testbench;
             debug_counter <= 0;
         end else begin
             #2;
-            $display("______________NEW CLOCK CYCLE________________");
-            $display("ROB contents:");
-            for (int i = 0; i < 32; i++) begin
-                $display("Status:%b Opcode:%b Dest:%b Value:%h", id_rob_debug[i][45:44], id_rob_debug[i][43:37], 
-                    id_rob_debug[i][36:32], id_rob_debug[i][31:0]);
-            end
-            //display mem/ if stuff in pipeline
-
-            $display("IF STAGE CONTENT: ");
-            $display("PC=%x, VALID=%b STALL_IF= %b ICACHEDATA=%h",proc2Icache_addr, Icache_valid_out, stall_if, Icache_data_out);
+            $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");
+            display_all_signals();
             
-            show_if_packet(if_packet);
-            show_if_packet(if_id_reg);
-            //display what the ID packet is seeing 
-            show_dispatch_inputs(
-                clock, reset, if_id_reg,
-                cdb_valid, cdb_tag, cdb_value,
-                fu_busy, rs1_clear,
-                rob_retire_entry,
-                store_retire, store_tag,
-                rob_dest_reg, rob_to_regfile_value,
-                lsq_free,
-                maptable_clear, rob_clear, rs_clear
-            );
-
-
-
-            show_id_stage   (id_tag, rs1_ready);
-            show_is_packet  (is_packet, issue_valid, fu_ready, rs_issue_enable);
-            $display("First Ex packet");
-            show_ex_packet  (ex_packet, fu_busy, cdb_busy);
-            $display("ex reg");
-            show_ex_packet  (ex_cp_reg, fu_busy, cdb_busy);
-            show_rs_debug(rs_debug, "RS[0]");
-            show_cdb_packet(cdb_packet, "CDB");
-            //display rob full, rs1 available, dispatch ok
-            $display("ROB FULL=%b RS1 AVAIL=%b DISPATCH OK=%b", rob_full, rs1_available, dispatch_ok);
-            $display("------------------------------------------------------------");
-
-
             // print the pipeline debug outputs via c code to the pipeline output file
             // print_cycles();
             // $display(" @@ %h", id_opA);

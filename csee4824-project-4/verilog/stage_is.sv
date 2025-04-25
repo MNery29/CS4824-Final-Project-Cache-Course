@@ -24,7 +24,7 @@ module stage_is (
     input  logic [`RS_SIZE-1:0][4:0]    rs_tag_out,
     input ALU_FUNC [`RS_SIZE-1:0]       rs_alu_func_out,
     input logic [`RS_SIZE-1:0][31:0]    rs_npc_out,       // Next PC
-    input logic [`RS_SIZE-1:0][31:0]    rs_inst_out,       // Instruction word
+    // input logic [`RS_SIZE-1:0][31:0]    rs_inst_out,       // Instruction word
     input logic rd_mem, wr_mem, is_branch,// read/write memory
 
     //Functional unit ready signal 
@@ -56,7 +56,7 @@ always_comb begin
                 is_packet.issue_valid  = 1;
                 is_packet.alu_func     = rs_alu_func_out[i];
                 is_packet.NPC          = rs_npc_out[i];
-                is_packet.inst         = rs_inst_out[i];
+                // is_packet.inst         = rs_inst_out[i];
                 is_packet.RS_tag       = i;
                 is_packet.rd_mem       = rd_mem;
                 is_packet.wr_mem       = wr_mem;

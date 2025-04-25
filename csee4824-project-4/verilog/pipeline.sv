@@ -41,9 +41,20 @@ module pipeline (
     output logic [`ROB_TAG_BITS-1:0] id_tag,
     output logic rs1_ready,
 
+    output logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2,
+    output logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2,
+
+    output logic [31:0] rs1_value, rs2_value,
+    output logic [31:0] rob_to_rs_value1, rob_to_rs_value2,
+
+    output ALU_OPA_SELECT id_opa_select, 
+    output ALU_OPB_SELECT id_opb_select,
+
     //if stage
     output IF_ID_PACKET if_packet,
     output IF_ID_PACKET if_id_reg,
+
+   
 
     //IS stage debugging wires
     output IS_EX_PACKET is_packet,
@@ -61,7 +72,18 @@ module pipeline (
     output logic rs1_available,
     output logic dispatch_ok,
     output logic [73:0] id_rs_debug,
-    output CDB_PACKET cdb_packet
+    output CDB_PACKET cdb_packet,
+
+    //retire stage debugging wires
+    output logic [`XLEN-1:0] retire_value_out,
+    output logic [4:0]       retire_dest_out,
+    output logic             retire_valid_out,
+    output ROB_RETIRE_PACKET rob_retire_packet,
+    output logic rob_ready, rob_valid,
+
+    output logic [31:1] [`XLEN-1:0] debug_reg
+
+
 );
 
     //////////////////////////////////////////////////
@@ -88,16 +110,16 @@ module pipeline (
     logic [31:0] id_opA, id_opB;
     // logic [`ROB_TAG_BITS-1:0] id_tag;
     logic [31:0] npc_out;
-    ALU_OPA_SELECT id_opa_select;
-    logic [`RS_SIZE-1:0][31:0] rs1_inst_out;
+    // ALU_OPA_SELECT id_opa_select;
+    // logic [`RS_SIZE-1:0][31:0] rs1_inst_out;
     // logic rs1_ready;
-    ALU_OPB_SELECT id_opb_select;
+    // ALU_OPB_SELECT id_opb_select;
     logic id_has_dest_reg;
     logic [4:0] id_dest_reg_idx;
     logic id_rd_mem, id_wr_mem, id_is_branch;
     ALU_FUNC id_alu_func;
-    ROB_RETIRE_PACKET id_rob_retire_out;
-    logic rob_ready, rob_valid;
+    // ROB_RETIRE_PACKET id_rob_retire_out;
+    // logic rob_ready, rob_valid;
 
     LSQ_PACKET lsq_packet;
 
@@ -131,9 +153,9 @@ module pipeline (
     //////////////////////////////////////////////////
     //               RT Stage Wires                 //
     //////////////////////////////////////////////////
-    logic [`XLEN-1:0] retire_value_out;
-    logic [4:0]       retire_dest_out;
-    logic             retire_valid_out;
+    // logic [`XLEN-1:0] retire_value_out;
+    // logic [4:0]       retire_dest_out;
+    // logic             retire_valid_out;
     logic [`XLEN-1:0] mem_addr_out;
     logic             mem_valid_out;
 
@@ -152,7 +174,7 @@ module pipeline (
     //////////////////////////////////////////////////
     DISPATCH_ROB_PACKET rob_dispatch_packet;
     ROB_DISPATCH_PACKET rob_dispatch_out;
-    ROB_RETIRE_PACKET rob_retire_packet;
+    // ROB_RETIRE_PACKET rob_retire_packet;
     // logic rob_full;
 
     //////////////////////////////////////////////////
@@ -216,7 +238,7 @@ module pipeline (
     //////////////////////////////////////////////////
     //           Temporary Branch Logic             //
     //////////////////////////////////////////////////
-    assign if_valid = 1'b1;                // Always fetch for now
+    assign if_valid = dispatch_ok;                // Always fetch for now
     assign branch_target = 32'b0;          // Default branch target
 
     //////////////////////////////////////////////////
@@ -297,7 +319,9 @@ module pipeline (
         if (reset) begin
             if_id_reg <= '0;
         end else begin
-            if_id_reg <= if_packet;
+            if (if_packet.valid) begin
+                if_id_reg <= if_packet;
+            end
         end
     end
 
@@ -337,13 +361,14 @@ module pipeline (
         .fu_busy(fu_busy),
         .rs1_clear(rs_issue_enable[0]), //this means its the first register
 
-        .rob_retire_entry(retire_valid_out), // TODO: connect properly
+        .rob_retire_entry(1'b1), // TODO: connect properly
 
         .store_retire(store_ready),
         .store_tag(store_tag),
 
         .rob_dest_reg(retire_dest_out),
         .rob_to_regfile_value(retire_value_out),
+        .retire_entry(retire_valid_out),
         // .rob_regfile_valid(retire_valid_out),
         .rob_clear(rob_clear), 
         .maptable_clear(maptable_clear),
@@ -376,7 +401,18 @@ module pipeline (
         .lsq_packet(lsq_packet),
         .rob_full(rob_full),
         .dispatch_ok(dispatch_ok),
-        .rs1_available(rs1_available)
+        .rs1_available(rs1_available),
+        .mt_to_rs_tag1(mt_to_rs_tag1),
+        .mt_to_rs_tag2(mt_to_rs_tag2),
+        .rs1_value(rs1_value),
+        .rs2_value(rs2_value),
+        .rob_to_rs_value1(rob_to_rs_value1),
+        .rob_to_rs_value2(rob_to_rs_value2),
+
+        .debug_reg(debug_reg),
+
+        .mt_to_regfile_rs1(mt_to_regfile_rs1),
+        .mt_to_regfile_rs2(mt_to_regfile_rs2)
 
     );
 
@@ -406,7 +442,6 @@ module pipeline (
         .rs_tag_out(id_tag),
         .rs_alu_func_out(id_alu_func),
         .rs_npc_out(npc_out),
-        .rs_inst_out(rs1_inst_out),
         .rd_mem(id_rd_mem),
         .wr_mem(id_wr_mem),
         .is_branch(id_is_branch),
@@ -419,13 +454,13 @@ module pipeline (
     //////////////////////////////////////////////////
     //         IS/EX Pipeline Register              //
     //////////////////////////////////////////////////
-    always_ff @(posedge clock or posedge reset) begin
-        if (reset) begin
-            is_ex_reg <= '0;
-        end else begin
-            is_ex_reg <= is_packet;
-        end
-    end
+    // always_ff @(posedge clock or posedge reset) begin
+    //     if (reset) begin
+    //         is_ex_reg <= '0;
+    //     end else begin
+    //         is_ex_reg <= is_packet;
+    //     end
+    // end
 
     //////////////////////////////////////////////////
     //                Execute Stage                 //
@@ -438,7 +473,7 @@ module pipeline (
         .clk(clock),
         .rst(ex_reset),
         .cdb_packet_busy(cdb_busy),
-        .is_ex_reg(is_ex_reg),
+        .is_ex_reg(is_packet),
         .ex_cp_packet(ex_packet),
         .alu_busy(fu_busy),
         .priv_addr_out(priv_addr_packet)
@@ -594,13 +629,13 @@ module pipeline (
     //////////////////////////////////////////////////
     //            CP/RT Pipeline Register           //
     //////////////////////////////////////////////////
-    ROB_RETIRE_PACKET cp_rt_reg;
-    always_ff @(posedge clock or posedge reset) begin
-        if (reset)
-            cp_rt_reg <= '0;
-        else
-            cp_rt_reg <= rob_retire_packet;
-    end
+    // ROB_RETIRE_PACKET cp_rt_reg;
+    // always_ff @(posedge clock or posedge reset) begin
+    //     if (reset)
+    //         cp_rt_reg <= '0;
+    //     else
+    //         cp_rt_reg <= rob_retire_packet;
+    // end
 
 
     //////////////////////////////////////////////////
@@ -609,7 +644,7 @@ module pipeline (
     stage_rt stage_rt_0 (
         .clock(clock),
         .reset(reset),
-        .rob_retire_packet(cp_rt_reg),
+        .rob_retire_packet(rob_retire_packet),
         .rob_ready(rob_ready),
         .rob_valid(rob_valid),
         .branch_mispredict(1'b0),
@@ -738,7 +773,7 @@ module pipeline (
     assign pipeline_commit_wr_en    = retire_valid_out;
     assign pipeline_commit_wr_idx   = retire_dest_out;
     assign pipeline_commit_wr_data  = retire_value_out;
-    assign pipeline_commit_NPC      = cp_rt_reg.mem_addr; 
+    assign pipeline_commit_NPC      = rob_retire_packet.mem_addr; 
     assign pipeline_completed_insts = retire_valid_out ? 4'd1 : 4'd0;
     assign pipeline_error_status    = NO_ERROR;
 

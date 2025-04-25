@@ -19,11 +19,14 @@ module regfile (
     input             write_en,
     input [`XLEN-1:0] write_data,
 
-    output logic [`XLEN-1:0] read_out_1, read_out_2
+    output logic [`XLEN-1:0] read_out_1, read_out_2,
+
+    output logic [31:1] [`XLEN-1:0] debug_reg // for debugging
 );
 
     logic [31:1] [`XLEN-1:0] registers; // 31 XLEN-length Registers (0 is known)
-
+    
+    assign debug_reg = registers;
     // Read port 1
     always_comb begin
         if (read_idx_1 == `ZERO_REG) begin

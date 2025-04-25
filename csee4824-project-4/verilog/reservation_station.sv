@@ -67,9 +67,8 @@ assign rs_alu_func_out = alu_func;
 assign rs_npc_out       = NPC;
 assign rs_rd_mem_out = internal_rd_mem;
 assign rs_wr_mem_out = internal_wr_mem;
-assign rs_is_branch_out = is_branch;
+assign rs_is_branch_out = internal_is_branch;
 
-assign InUse = NPC != 32'b0 || DestTag != 0; // In use if NPC is not zero
 // Load from CDB if tag matches
 wire LoadAFromCDB = (rs_cdb_tag == OPaTag) && !OpaValid && InUse && rs_cdb_valid;
 wire LoadBFromCDB = (rs_cdb_tag == OPbTag) && !OpbValid && InUse && rs_cdb_valid;
@@ -85,7 +84,7 @@ always_ff @(posedge clock) begin
         DestTag  <= 5'b0;
         OpaValid <= 1'b0;
         OpbValid <= 1'b0;
-        // InUse    <= 1'b0;
+        InUse    <= 1'b0;
         alu_func     <= ALU_ADD;
         NPC      <= 32'b0;
         internal_rd_mem <= 1'b0;
@@ -101,7 +100,7 @@ always_ff @(posedge clock) begin
             OpbValid <= rs_opb_valid;
             OPaTag <= (rs_opa_valid) ? 0 : rs_opa_in[`ROB_TAG_BITS-1:0];
             OPbTag <= (rs_opb_valid) ? 0 : rs_opb_in[`ROB_TAG_BITS-1:0];
-            // InUse    <= 1'b1;
+            InUse    <= 1'b1;
 
             alu_func <= rs_alu_func_in;
             NPC      <= rs_npc_in;
@@ -131,7 +130,7 @@ always_ff @(posedge clock) begin
                 OpbValid <= 0;
                 alu_func <= ALU_ADD;
                 NPC <= 32'b0;
-                // InUse <= 0;
+                InUse <= 0;
                 internal_rd_mem <= 1'b0;
                 internal_wr_mem <= 1'b0;
                 internal_is_branch <= 1'b0;
