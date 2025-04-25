@@ -265,7 +265,7 @@ module stage_id (
     output logic rob_full, // ROB full signal debugging
     output logic rs1_available, // RS available signal debugging
     output logic dispatch_ok, // Dispatch OK signal debugging
-    output logic [74:0] rs_debug // RS debug signal debugging
+    output logic [73:0] rs_debug // RS debug signal debugging
 
 
 );

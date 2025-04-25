@@ -95,7 +95,7 @@ module testbench;
     logic rs1_available;
     logic dispatch_ok;
 
-    logic [74:0] rs_debug;
+    logic [73:0] rs_debug;
 
     CDB_PACKET cdb_packet;
 
@@ -273,11 +273,11 @@ module testbench;
         input string       prefix = "RS"
     );
         // unpack
-        logic [31:0] opA     = rs_debug[74:43];
-        logic        opA_v   = rs_debug[42];
-        logic [31:0] opB     = rs_debug[41:10];
-        logic        opB_v   = rs_debug[9];
-        logic [5:0]  tag     = rs_debug[8:3];
+        logic [31:0] opA     = rs_debug[73:42];
+        logic        opA_v   = rs_debug[41];
+        logic [31:0] opB     = rs_debug[40:09];
+        logic        opB_v   = rs_debug[8];
+        logic [4:0]  tag     = rs_debug[7:3];
         logic        in_use  = rs_debug[2];
         logic        ready   = rs_debug[1];
         logic        avail   = rs_debug[0];
@@ -304,8 +304,8 @@ module testbench;
                 pkt.rd_mem, pkt.wr_mem);
         $display("            OPA=0x%08h  OPB=0x%08h  NPC=0x%08h  inst=0x%08h",
                 pkt.OPA, pkt.OPB, pkt.NPC, pkt.inst);
-        $display("            issue_valid=%b  fu_ready=%b  rs_issue_enable=%b",
-                issue_valid, fu_ready, rs_issue_en);
+        $display("            issue_valid=%b  fu_ready=%b  rs_issue_enable=%b is_branch=%b",
+                issue_valid, fu_ready, rs_issue_en, pkt.is_branch);
     endtask
 
     // ------------------------------------------------------------
@@ -445,8 +445,10 @@ module testbench;
             show_if_packet(if_id_reg);
             show_id_stage   (id_tag, rs1_ready);
             show_is_packet  (is_packet, issue_valid, fu_ready, rs_issue_enable);
-            show_ex_packet  (ex_cp_reg, fu_busy, cdb_busy);
+            $display("First Ex packet");
             show_ex_packet  (ex_packet, fu_busy, cdb_busy);
+            $display("ex reg");
+            show_ex_packet  (ex_cp_reg, fu_busy, cdb_busy);
             show_rs_debug(rs_debug, "RS[0]");
             show_cdb_packet(cdb_packet, "CDB");
             //display rob full, rs1 available, dispatch ok

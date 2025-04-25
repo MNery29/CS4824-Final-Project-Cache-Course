@@ -60,7 +60,7 @@ module pipeline (
     output logic rob_full,
     output logic rs1_available,
     output logic dispatch_ok,
-    output logic [74:0] id_rs_debug,
+    output logic [73:0] id_rs_debug,
     output CDB_PACKET cdb_packet
 );
 

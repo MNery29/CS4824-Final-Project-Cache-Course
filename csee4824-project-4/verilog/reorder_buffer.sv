@@ -73,6 +73,12 @@ module reorder_buffer(
 
     //head and tail pointers for queue FIFO structure
     logic [`ROB_TAG_BITS:0] head, tail;
+    logic [`ROB_TAG_BITS:0] next_head, next_tail;
+    assign next_head[`ROB_TAG_BITS] = head[`ROB_TAG_BITS];
+    assign next_tail[`ROB_TAG_BITS] = tail[`ROB_TAG_BITS];
+    assign next_head[`ROB_TAG_BITS-1:0] = head[`ROB_TAG_BITS-1:0] == 5'b11111 ? 1 : head[`ROB_TAG_BITS-1:0] + 1;
+    assign next_tail[`ROB_TAG_BITS-1:0] = tail[`ROB_TAG_BITS-1:0] == 5'b11111 ? 1 : tail[`ROB_TAG_BITS-1:0] + 1;
+
 
     //check if ROB is full
     assign rob_full = ((head[`ROB_TAG_BITS-1:0] == tail[`ROB_TAG_BITS-1:0]) && (head[`ROB_TAG_BITS] != tail[`ROB_TAG_BITS]));
@@ -153,7 +159,7 @@ module reorder_buffer(
                 rob_opcode[tail[`ROB_TAG_BITS-1:0]] <= rob_dispatch_in.opcode;
                 rob_status[tail[`ROB_TAG_BITS-1:0]] <= BUSY;
                 rob_is_branch[tail[`ROB_TAG_BITS-1:0]] <= rob_dispatch_in.is_branch;
-                tail <= tail + 1 == 0 ? 1 : tail + 1;
+                tail <= next_tail;
             end
 
             // CDB writeback
@@ -186,7 +192,7 @@ module reorder_buffer(
                     rob_opcode[head[`ROB_TAG_BITS-1:0]] <= 7'b0;
                     rob_status[head[`ROB_TAG_BITS-1:0]] <= EMPTY;
                     rob_is_branch[head[`ROB_TAG_BITS-1:0]] <= 1'b0;
-                    head <= head + 1 == 0 ? 1 : head+1;
+                    head <= next_head;
                 end
             end
         end

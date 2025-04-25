@@ -43,7 +43,7 @@ module reservation_station(
     output rs_wr_mem_out,
     output rs_is_branch_out,             // Out: is branch
     output       rs_avail_out,            // Is this entry available?
-    output [74:0] rs_debug
+    output [73:0] rs_debug
 );
 
 //internal storage: 
