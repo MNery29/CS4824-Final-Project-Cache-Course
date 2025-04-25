@@ -12,7 +12,7 @@ module testbench;
     IF_ID_PACKET if_id_packet;
     
     //CDB inputs
-    CDB_PACKET cdb_packet
+    CDB_PACKET cdb_packet;
 
     //retire entry and whether to clear retire stage
     logic rob_retire_entry;
@@ -51,9 +51,7 @@ module testbench;
 
         .if_id_reg(if_id_packet),
 
-        .cdb_valid(cdb_valid),
-        .cdb_tag(cdb_tag),
-        .cdb_value(cdb_value),
+        .cdb_packet(cdb_packet),
 
         .mt_retire_entry(mt_retire_entry),
         .rs1_issue(rs1_issue),
@@ -114,8 +112,8 @@ module testbench;
     endtask
 
     initial begin
-        $monitor("Time:%4.0f clock:%b |Inst| instruction:%h valid:%b |CDB| cdb_broadcast:%b cdb_tag:%b cdb_value:%h |Control| mt_retire:%b rob_retire:%b rob_clear:%b rs1_issue:%b rs1_clear:%b || Outputs: opA:%h opB:%h output_tag:%b", 
-                $time, clock, if_id_packet.inst, if_id_packet.valid, cdb_valid, cdb_tag, cdb_value, mt_retire_entry, rob_retire_entry, rob_clear, rs1_issue, rs1_clear, opA, opB, output_tag);
+        $monitor("Time:%4.0f clock:%b |Inst| instruction:%h valid:%b |CDB| cdb_broadcast:%b cdb_packet.tag:%b cdb_packet.value:%h |Control| mt_retire:%b rob_retire:%b rob_clear:%b rs1_issue:%b rs1_clear:%b || Outputs: opA:%h opB:%h output_tag:%b", 
+                $time, clock, if_id_packet.inst, if_id_packet.valid, cdb_packet.valid, cdb_packet.tag, cdb_packet.value, mt_retire_entry, rob_retire_entry, rob_clear, rs1_issue, rs1_clear, opA, opB, output_tag);
         //Reset 
         clock = 1;
         reset = 1; //Pull reset high
@@ -130,9 +128,9 @@ module testbench;
         if_id_packet.NPC = 32'h0000_0004;
         if_id_packet.valid = 1'b0;
         //CDB
-        cdb_valid = 1'b0;
-        cdb_tag = 6'b0;
-        cdb_value = 32'h0;
+        cdb_packet.valid = 1'b0;
+        cdb_packet.tag = 6'b0;
+        cdb_packet.value = 32'h0;
         //Control signals
         mt_retire_entry = 1'b0;
         rob_retire_entry = 1'b0;
@@ -156,9 +154,9 @@ module testbench;
         if_id_packet.NPC = 32'h0000_0004;
         if_id_packet.valid = 1'b1;
         //CDB
-        cdb_valid = 1'b0;
-        cdb_tag = 6'b0;
-        cdb_value = 32'h0;
+        cdb_packet.valid = 1'b0;
+        cdb_packet.tag = 6'b0;
+        cdb_packet.value = 32'h0;
         //Control signals
         mt_retire_entry = 1'b0;
         rob_retire_entry = 1'b0;
@@ -172,9 +170,9 @@ module testbench;
         //print_RS(rs_debug);
         if_id_packet.valid = 1'b0; //Stall dispatch
 
-        cdb_valid = 1'b1; //Simulate CDB broadcast
-        cdb_tag = 6'b000001;
-        cdb_value = 32'h0000_0123;
+        cdb_packet.valid = 1'b1; //Simulate CDB broadcast
+        cdb_packet.tag = 6'b000001;
+        cdb_packet.value = 32'h0000_0123;
 
         mt_retire_entry = 1'b0;
         rob_retire_entry = 1'b0;
@@ -188,9 +186,9 @@ module testbench;
         //print_RS(rs_debug);
         if_id_packet.valid = 1'b0; //Stall dispatch
 
-        cdb_valid = 1'b0; //Stop CDB broadcast
-        cdb_tag = 6'b000000;
-        cdb_value = 32'h0000_0000;
+        cdb_packet.valid = 1'b0; //Stop CDB broadcast
+        cdb_packet.tag = 6'b000000;
+        cdb_packet.value = 32'h0000_0000;
 
         mt_retire_entry = 1'b1; //Retire instruction
         rob_retire_entry = 1'b1;
@@ -213,9 +211,9 @@ module testbench;
         if_id_packet.NPC = 32'h0000_0004;
         if_id_packet.valid = 1'b1;
         //CDB
-        cdb_valid = 1'b0;
-        cdb_tag = 6'b00000;
-        cdb_value = 32'h0000_0000;
+        cdb_packet.valid = 1'b0;
+        cdb_packet.tag = 6'b00000;
+        cdb_packet.value = 32'h0000_0000;
         //Control signals
         mt_retire_entry = 1'b0;
         rob_retire_entry = 1'b0;
@@ -229,9 +227,9 @@ module testbench;
         //print_RS(rs_debug);
         if_id_packet.valid = 1'b0; //Stall dispatch
 
-        cdb_valid = 1'b1; //Simulate CDB broadcast
-        cdb_tag = 6'b000010;
-        cdb_value = 32'hFFFF_FABC;
+        cdb_packet.valid = 1'b1; //Simulate CDB broadcast
+        cdb_packet.tag = 6'b000010;
+        cdb_packet.value = 32'hFFFF_FABC;
 
         mt_retire_entry = 1'b0;
         rob_retire_entry = 1'b0;
@@ -245,9 +243,9 @@ module testbench;
         //print_RS(rs_debug);
         if_id_packet.valid = 1'b0; //Stall dispatch
 
-        cdb_valid = 1'b0; //Stop CDB broadcast
-        cdb_tag = 6'b000000;
-        cdb_value = 32'h0000_0000;
+        cdb_packet.valid = 1'b0; //Stop CDB broadcast
+        cdb_packet.tag = 6'b000000;
+        cdb_packet.value = 32'h0000_0000;
 
         mt_retire_entry = 1'b1; //Retire instruction 
         rob_retire_entry = 1'b1;
@@ -271,9 +269,9 @@ module testbench;
         if_id_packet.NPC = 32'h0000_0004;
         if_id_packet.valid = 1'b1;
         //CDB
-        cdb_valid = 1'b0;
-        cdb_tag = 6'b00000;
-        cdb_value = 32'h0000_0000;
+        cdb_packet.valid = 1'b0;
+        cdb_packet.tag = 6'b00000;
+        cdb_packet.value = 32'h0000_0000;
         //Control signals
         mt_retire_entry = 1'b0;
         rob_retire_entry = 1'b0;
@@ -304,9 +302,9 @@ module testbench;
         if_id_packet.NPC = 32'h0000_0004;
         if_id_packet.valid = 1'b1;
         //CDB
-        cdb_valid = 1'b0;
-        cdb_tag = 6'b00000;
-        cdb_value = 32'h0000_0000;
+        cdb_packet.valid = 1'b0;
+        cdb_packet.tag = 6'b00000;
+        cdb_packet.value = 32'h0000_0000;
         //Control signals
         mt_retire_entry = 1'b0;
         rob_retire_entry = 1'b0;
