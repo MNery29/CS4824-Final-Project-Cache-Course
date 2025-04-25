@@ -82,6 +82,29 @@ module testbench;
     logic fu_ready;
     logic [`RS_SIZE-1:0] rs_issue_enable;
 
+    //ID Debugging wires 
+    logic cdb_valid;
+    logic [`ROB_TAG_BITS-1:0] cdb_tag;
+    logic [31:0] cdb_value;
+
+    logic rs1_clear;
+
+    logic rob_retire_entry;
+
+    logic store_retire;
+    logic [4:0] store_tag;
+
+    logic [4:0] rob_dest_reg;
+    logic [31:0] rob_to_regfile_value;
+
+    logic lsq_free;
+
+    logic maptable_clear;
+    logic rob_clear;
+    logic rs_clear;
+
+
+
     //EX stage debugging wires
     EX_CP_PACKET ex_cp_reg;
     EX_CP_PACKET ex_packet;
