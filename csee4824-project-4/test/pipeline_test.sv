@@ -268,6 +268,48 @@ module testbench;
         endcase
     endfunction
 
+    // ------------------------------------------------------------
+    //  ID-input tests
+    // ------------------------------------------------------------
+
+
+    task automatic show_dispatch_inputs (
+        input logic              clock,
+        input logic              reset,
+        input IF_ID_PACKET       if_id_reg,
+        input logic              cdb_valid,
+        input [`ROB_TAG_BITS-1:0] cdb_tag,
+        input logic [31:0]       cdb_value,
+        input logic              fu_busy,
+        input logic              rs1_clear,
+        input logic              rob_retire_entry,
+        input logic              store_retire,
+        input logic [4:0]        store_tag,
+        input logic [4:0]        rob_dest_reg,
+        input logic [31:0]       rob_to_regfile_value,
+        input logic              lsq_free,
+        input logic              maptable_clear,
+        input logic              rob_clear,
+        input logic              rs_clear
+    );
+        $display("[%0t] DISPATCH INPUTS:", $time);
+        $display("    clock=%b  reset=%b", clock, reset);
+        $display("    if_id_reg: PC=0x%08h  NPC=0x%08h  inst=0x%08h  valid=%b", 
+                if_id_reg.PC, if_id_reg.NPC, if_id_reg.inst, if_id_reg.valid);
+        $display("    CDB: valid=%b  tag=%0d  value=0x%08h", 
+                cdb_valid, cdb_tag, cdb_value);
+        $display("    fu_busy=%b  rs1_clear=%b", fu_busy, rs1_clear);
+        $display("    rob_retire_entry=%b  rob_dest_reg=%0d  rob_to_regfile_value=0x%08h", 
+                rob_retire_entry, rob_dest_reg, rob_to_regfile_value);
+        $display("    store_retire=%b  store_tag=%0d", store_retire, store_tag);
+        $display("    lsq_free=%b", lsq_free);
+        $display("    clears: map_table=%b  rob=%b  rs=%b", 
+                maptable_clear, rob_clear, rs_clear);
+    endtask
+
+
+
+
     task automatic show_rs_debug (
         input logic [74:0] rs_debug,
         input string       prefix = "RS"
@@ -443,6 +485,20 @@ module testbench;
             
             show_if_packet(if_packet);
             show_if_packet(if_id_reg);
+            //display what the ID packet is seeing 
+            show_dispatch_inputs(
+                clock, reset, if_id_reg,
+                cdb_valid, cdb_tag, cdb_value,
+                fu_busy, rs1_clear,
+                rob_retire_entry,
+                store_retire, store_tag,
+                rob_dest_reg, rob_to_regfile_value,
+                lsq_free,
+                maptable_clear, rob_clear, rs_clear
+            );
+
+
+
             show_id_stage   (id_tag, rs1_ready);
             show_is_packet  (is_packet, issue_valid, fu_ready, rs_issue_enable);
             $display("First Ex packet");
