@@ -12,17 +12,23 @@ module testbench;
     IF_ID_PACKET if_id_packet;
     
     //CDB inputs
-    logic cdb_valid;
-    logic [4:0] cdb_tag;
-    logic [31:0] cdb_value;
+    CDB_PACKET cdb_packet
+
+    //retire entry and whether to clear retire stage
+    logic rob_retire_entry;
+    logic rob_clear;
+
+
+    logic store_retire;
+    logic store_tag;
+
+    
 
     //Control inputs
     logic mt_retire_entry;
     logic rs1_clear;
     logic rs1_issue;
-    logic rob_retire_entry;
-    logic rob_clear;
-
+    
     //Ouputs
     logic [31:0] opA;
     logic [31:0] opB;
