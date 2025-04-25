@@ -217,7 +217,11 @@ module stage_id (
     input fu_busy,
     input rs1_clear,
 
-    input rob_retire_entry,
+
+    //retire entry signal: Tells whether current entry should be retired: pass through to ROB/MT
+    input retire_entry,
+
+
     input rob_clear,
 
     //this is signal from LSQ to let ROB know that a store command is ready
@@ -452,7 +456,7 @@ module stage_id (
         .rob_read_tag2(rob_read_tag2),
         //.rob_cdb_in('{tag: cdb_tag, value: cdb_value, valid: cdb_valid}), Synthesis Issues, Replacing with, with other instantiations above:
         .rob_cdb_in(rob_cdb_packet),
-        .retire_entry(rob_retire_entry),
+        .retire_entry(retire_entry),
         .rob_clear(rob_clear),
         .store_retire(store_retire),
         .store_tag(store_tag),
