@@ -37,6 +37,9 @@ module testbench;
     logic rob_ready;
     logic rob_valid;
 
+    logic store_retire;
+    logic store_tag;
+
     // Used to hold the ROB dispatch input for testbench 
     DISPATCH_ROB_PACKET rob_dispatch_in_temp;
 
@@ -99,7 +102,7 @@ module testbench;
 
     // Struct Assembly
     always_comb begin
-        rob_dispatch_in_temp = '{valid: dispatch_to_rob.valid, dest_reg: dispatch_to_rob.dest_reg, opcode: dispatch_to_rob.opcode};
+        rob_dispatch_in_temp = '{valid: dispatch_to_rob.valid, dest_reg: dispatch_to_rob.dest_reg, opcode: dispatch_to_rob.opcode, is_branch: dispatch_to_rob.is_branch};
         rob_cdb_in_temp       = '{valid: cdb_to_rob.valid, tag: cdb_to_rob.tag, value: cdb_to_rob.value};
     end
 
