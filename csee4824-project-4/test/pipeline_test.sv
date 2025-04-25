@@ -84,6 +84,7 @@ module testbench;
 
     //EX stage debugging wires
     EX_CP_PACKET ex_cp_reg;
+    EX_CP_PACKET ex_packet;
     logic fu_busy;
     logic cdb_busy; //this will stall the RS issue if ex stage is busy / full
 
@@ -95,6 +96,10 @@ module testbench;
     logic dispatch_ok;
 
     logic [74:0] rs_debug;
+
+    CDB_PACKET cdb_packet;
+
+    
 
 
 
@@ -166,7 +171,11 @@ module testbench;
         .rs1_available        (rs1_available),
         .dispatch_ok          (dispatch_ok),
 
-        .id_rs_debug             (rs_debug)
+        .id_rs_debug             (rs_debug),
+
+        .ex_packet            (ex_packet),
+
+        .cdb_packet            (cdb_packet)
 
 
         // .if_NPC_dbg       (if_NPC_dbg),
@@ -311,7 +320,18 @@ module testbench;
                 $time, pkt.valid, pkt.done, pkt.rob_tag, pkt.value);
         $display("            fu_busy=%b  cdb_busy=%b", fu_busy, cdb_busy);
     endtask
-
+    task automatic show_cdb_packet (
+        input CDB_PACKET pkt,
+        input string     prefix = "CDB"   // let caller override label
+    );
+        if (!pkt.valid) begin
+            $display("[%0t] %s : (invalid)", $time, prefix);
+        end
+        else begin
+            $display("[%0t] %s : tag=%0d  value=0x%08h",
+                    $time, prefix, pkt.tag, pkt.value);
+        end
+    endtask
 
     // Show contents of a range of Unified Memory, in both hex and decimal
     task show_mem_with_decimal;
@@ -426,7 +446,9 @@ module testbench;
             show_id_stage   (id_tag, rs1_ready);
             show_is_packet  (is_packet, issue_valid, fu_ready, rs_issue_enable);
             show_ex_packet  (ex_cp_reg, fu_busy, cdb_busy);
+            show_ex_packet  (ex_packet, fu_busy, cdb_busy);
             show_rs_debug(rs_debug, "RS[0]");
+            show_cdb_packet(cdb_packet, "CDB");
             //display rob full, rs1 available, dispatch ok
             $display("ROB FULL=%b RS1 AVAIL=%b DISPATCH OK=%b", rob_full, rs1_available, dispatch_ok);
             $display("------------------------------------------------------------");

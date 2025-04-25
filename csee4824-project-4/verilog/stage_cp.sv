@@ -27,7 +27,7 @@ output ex_rejected
 // lsq WILL ALWAYS have priority, so it will NEVER by rejected
 );
 
-assign ex_rejected = ex_cp_packet.valid && !lsq_cp_packet.valid;
+assign ex_rejected = ex_cp_packet.valid && lsq_cp_packet.valid;
 
 
 always_ff @(posedge clock) begin

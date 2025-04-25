@@ -257,7 +257,7 @@ module stage_id (
     output ALU_FUNC alu_func_out,
     output ROB_RETIRE_PACKET rob_retire_out, // matches port type exactly
 
-    output logic rd_mem_out, wr_mem_out,
+    output logic rd_mem_out, wr_mem_out, is_branch_out,
     output logic rob_valid, rob_ready, // ready bit from ROB
 
     // information to send to LSQ about current instruction
@@ -269,7 +269,7 @@ module stage_id (
 
 
 );
-    logic rd_mem, wr_mem;
+    logic rd_mem, wr_mem, is_branch;
     logic cond_branch, uncond_branch;
     ALU_FUNC alu_func;
     logic [6:0] opcode;
@@ -441,6 +441,7 @@ module stage_id (
         .rs_npc_out(rs1_npc_out),
         .rs_rd_mem_out(rd_mem_out),
         .rs_wr_mem_out(wr_mem_out),
+        .rs_is_branch_out(is_branch_out),  
         .rs_ready_out(rs1_ready),
         .rs_opa_out(opA),
         .rs_opb_out(opB),
@@ -501,7 +502,9 @@ module stage_id (
         
         .has_dest(has_dest_reg)
     );
+    assign rob_tag_out = rob_dispatch_out.tag;
 
+    assign is_branch = cond_branch || uncond_branch;
     assign lsq_packet.valid = if_id_reg.valid;
     assign lsq_packet.rd_mem = rd_mem;
     assign lsq_packet.wr_mem = wr_mem;

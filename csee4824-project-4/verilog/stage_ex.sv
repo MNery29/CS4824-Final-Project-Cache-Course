@@ -393,7 +393,7 @@ module stage_ex (
 
     assign ex_cp_packet.valid = cdb_packet_busy ? last_packet.valid : is_ex_reg.issue_valid && !is_mem_op;
     assign ex_cp_packet.rob_tag = cdb_packet_busy ? last_packet.rob_tag : is_ex_reg.rob_tag;
-    assign ex_cp_packet.value = cdb_packet_busy ? last_packet.value : take_conditional ? next_val : 0;
+    assign ex_cp_packet.value = cdb_packet_busy ? last_packet.value : is_ex_reg.is_branch ? take_conditional ? next_val : 0 : next_val;
     assign ex_cp_packet.done = cdb_packet_busy ? last_packet.done : is_ex_reg.issue_valid && !is_mem_op;
 
     always_ff @(posedge clk or posedge rst) begin
@@ -403,10 +403,10 @@ module stage_ex (
             last_packet.value <= 0;
             last_packet.done <= 0;
         end else begin
-            last_packet.valid <= is_ex_reg.issue_valid && !is_mem_op;
-            last_packet.rob_tag <= is_ex_reg.rob_tag;
+            last_packet.valid <= ex_cp_packet.valid;
+            last_packet.rob_tag <= ex_cp_packet.rob_tag;
             last_packet.value <= ex_cp_packet.value;
-            last_packet.done <= is_ex_reg.issue_valid;
+            last_packet.done <= ex_cp_packet.done;
         end
     end
 

@@ -25,7 +25,7 @@ module stage_is (
     input ALU_FUNC [`RS_SIZE-1:0]       rs_alu_func_out,
     input logic [`RS_SIZE-1:0][31:0]    rs_npc_out,       // Next PC
     input logic [`RS_SIZE-1:0][31:0]    rs_inst_out,       // Instruction word
-    input logic rd_mem, wr_mem, // read/write memory
+    input logic rd_mem, wr_mem, is_branch,// read/write memory
 
     //Functional unit ready signal 
     input logic fu_ready,

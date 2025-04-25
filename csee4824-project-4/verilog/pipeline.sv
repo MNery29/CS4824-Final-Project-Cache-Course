@@ -54,12 +54,14 @@ module pipeline (
 
     //EX stage debugging wires
     output EX_CP_PACKET ex_cp_reg,
+    output EX_CP_PACKET ex_packet,
     output logic fu_busy,
     output logic cdb_busy, //this will stall the RS issue if ex stage is busy / full
     output logic rob_full,
     output logic rs1_available,
     output logic dispatch_ok,
-    output logic [74:0] id_rs_debug
+    output logic [74:0] id_rs_debug,
+    output CDB_PACKET cdb_packet
 );
 
     //////////////////////////////////////////////////
@@ -92,7 +94,7 @@ module pipeline (
     ALU_OPB_SELECT id_opb_select;
     logic id_has_dest_reg;
     logic [4:0] id_dest_reg_idx;
-    logic id_rd_mem, id_wr_mem;
+    logic id_rd_mem, id_wr_mem, id_is_branch;
     ALU_FUNC id_alu_func;
     ROB_RETIRE_PACKET id_rob_retire_out;
     logic rob_ready, rob_valid;
@@ -124,7 +126,7 @@ module pipeline (
     //                CP Stage Wires                //
     //////////////////////////////////////////////////
     // EX_CP_PACKET ex_cp_reg;
-    CDB_PACKET cdb_packet;
+    // CDB_PACKET cdb_packet;
 
     //////////////////////////////////////////////////
     //               RT Stage Wires                 //
@@ -361,6 +363,7 @@ module pipeline (
         .dest_reg_idx(id_dest_reg_idx),
         .rd_mem_out(id_rd_mem),
         .wr_mem_out(id_wr_mem),
+        .is_branch_out(id_is_branch),
         .rob_ready(rob_ready),
         .rob_valid(rob_valid),
         .alu_func_out(id_alu_func),
@@ -406,6 +409,7 @@ module pipeline (
         .rs_inst_out(rs1_inst_out),
         .rd_mem(id_rd_mem),
         .wr_mem(id_wr_mem),
+        .is_branch(id_is_branch),
         .fu_ready(fu_ready),
         .issue_valid(issue_valid),
         .is_packet(is_packet),
@@ -426,7 +430,7 @@ module pipeline (
     //////////////////////////////////////////////////
     //                Execute Stage                 //
     //////////////////////////////////////////////////
-    EX_CP_PACKET ex_packet;
+    // EX_CP_PACKET ex_packet;
     logic ex_reset;
     assign ex_reset = reset || fu_clear;
 
