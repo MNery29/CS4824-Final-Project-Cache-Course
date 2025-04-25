@@ -204,6 +204,7 @@ endmodule // decoder
 module stage_id (
     input              clock,           // system clock
     input              reset,           // system reset
+    
     input IF_ID_PACKET if_id_reg,
 
     //New I/O
@@ -224,11 +225,13 @@ module stage_id (
     input store_tag,
 
     //data from retire stage
-    // TODO: Look here............ uhmmm...... maybe make a packet?
-    // TODO: if not packet, please add some comments so we know whats going on
-    input [4:0] rob_dest_reg,
-    input [31:0] rob_to_regfile_value,
-    input rob_regfile_valid,
+    // DATA FROM THE RETIRE STAGE SENT THROUGH ID INTO THE REGFILE AND MAP TABLE. 
+
+    //GONNA KEEP THESE AS IS, NO PACKET NEEDED. 
+
+    input [4:0] rob_dest_reg, //Known as dest_reg from retire stage
+    input [31:0] rob_to_regfile_value, // known as retire dest in retire
+    input rob_regfile_valid, // known as retire_valid_out in retire
 
     input lsq_free,
     
@@ -304,9 +307,6 @@ module stage_id (
     logic [31:0] rob_to_rs_value2;
 
     // ROB dispatch and retire signals
-    logic [4:0] rob_dest_reg;
-    logic [31:0] rob_to_regfile_value;
-    logic rob_regfile_valid;
     logic [`ROB_TAG_BITS-1:0] rob_tag_out;
     logic [`ROB_TAG_BITS-1:0] rob_retire_tag_out;
 
