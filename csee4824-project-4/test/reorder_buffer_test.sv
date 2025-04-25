@@ -33,15 +33,12 @@ module testbench;
     ROB_DISPATCH_PACKET rob_dispatch_out;
     ROB_RETIRE_PACKET   rob_retire_out;
 
-    //logic for full signal, stalling 
-    logic rob_full;
-
     //outputs if the ROB has something to retire
     logic rob_ready;
     logic rob_valid;
 
     // Used to hold the ROB dispatch input for testbench 
-    DISPATCH_ROB_PACKET rob_dispatch_in_temp
+    DISPATCH_ROB_PACKET rob_dispatch_in_temp;
 
     // Used to hold the CDB input for testbench
     CDB_ROB_PACKET rob_cdb_in_temp;
