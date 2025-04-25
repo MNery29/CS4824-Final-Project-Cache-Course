@@ -100,13 +100,13 @@ module testbench;
     task print_RS;
         input [74:0] entry;
         $display("rs contents:");
-        $display("opA:%h opA_valid:%b opB:%h opB_valid:%b dest_tag:%b in_use:%b ready:%b available:%b", entry[74:43], entry[42], entry[41:10], entry[9], entry[8:3], entry[2], entry[1], entry[0]);
+        $display("rs_is_packet.opA:%h rs_is_packet.opA_valid:%b rs_is_packet.opB:%h rs_is_packet.opB_valid:%b dest_tag:%b in_use:%b ready:%b available:%b", entry[74:43], entry[42], entry[41:10], entry[9], entry[8:3], entry[2], entry[1], entry[0]);
         $display("=======================================================================");
     endtask
 
     initial begin
-        $monitor("Time:%4.0f clock:%b |Inst| instruction:%h valid:%b |CDB| cdb_broadcast:%b cdb_packet.tag:%b cdb_packet.value:%h |Control| mt_retire:%b rob_retire:%b rob_clear:%b rs1_clear:%b || Outputs: opA:%h opB:%h output_tag:%b", 
-                $time, clock, if_id_packet.inst, if_id_packet.valid, cdb_packet.valid, cdb_packet.tag, cdb_packet.value, retire_entry, retire_entry, rob_clear, rs1_clear, opA, opB, output_tag);
+        $monitor("Time:%4.0f clock:%b |Inst| instruction:%h valid:%b |CDB| cdb_broadcast:%b cdb_packet.tag:%b cdb_packet.value:%h |Control| mt_retire:%b rob_retire:%b rob_clear:%b rs1_clear:%b || Outputs: rs_is_packet.opA:%h rs_is_packet.opB:%h rs_is_packet.output_tag:%b", 
+                $time, clock, if_id_packet.inst, if_id_packet.valid, cdb_packet.valid, cdb_packet.tag, cdb_packet.value, retire_entry, retire_entry, rob_clear, rs1_clear, rs_is_packet.opA, rs_is_packet.opB, rs_is_packet.rs_is_packet.output_tag);
         //Reset 
         clock = 1;
         reset = 1; //Pull reset high
@@ -125,7 +125,6 @@ module testbench;
         cdb_packet.tag = 6'b0;
         cdb_packet.value = 32'h0;
         //Control signals
-        retire_entry = 1'b0;
         retire_entry = 1'b0;
         rob_clear = 1'b0;
         rs1_clear = 1'b0;
@@ -150,7 +149,6 @@ module testbench;
         cdb_packet.tag = 6'b0;
         cdb_packet.value = 32'h0;
         //Control signals
-        retire_entry = 1'b0;
         retire_entry = 1'b0;
         rob_clear = 1'b0;
         rs1_clear = 1'b0;
@@ -205,7 +203,6 @@ module testbench;
         cdb_packet.value = 32'h0000_0000;
         //Control signals
         retire_entry = 1'b0;
-        retire_entry = 1'b0;
         rob_clear = 1'b0;
         rs1_clear = 1'b0;
 
@@ -235,7 +232,6 @@ module testbench;
         cdb_packet.value = 32'h0000_0000;
 
         retire_entry = 1'b1; //Retire instruction 
-        retire_entry = 1'b1;
         rob_clear = 1'b0;
         rs1_clear = 1'b1; //Clear RS for next inst - In reality, this would happen when inst has proceeded to execute
 
@@ -259,7 +255,6 @@ module testbench;
         cdb_packet.tag = 6'b00000;
         cdb_packet.value = 32'h0000_0000;
         //Control signals
-        retire_entry = 1'b0;
         retire_entry = 1'b0;
         rob_clear = 1'b0;
         rs1_clear = 1'b0;
@@ -291,7 +286,6 @@ module testbench;
         cdb_packet.tag = 6'b00000;
         cdb_packet.value = 32'h0000_0000;
         //Control signals
-        retire_entry = 1'b0;
         retire_entry = 1'b0;
         rob_clear = 1'b0;
         rs1_clear = 1'b0;
