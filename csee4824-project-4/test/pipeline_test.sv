@@ -251,6 +251,11 @@ module testbench;
 
         .cdb_packet            (cdb_packet),
 
+
+
+
+
+
         //rt stage debugging wires
         .retire_value_out     (retire_value_out),
         .retire_dest_out      (retire_dest_out),
@@ -650,6 +655,9 @@ module testbench;
 
             $display("IF STAGE CONTENT: ");
             $display("PC=%x, VALID=%b STALL_IF= %b ICACHEDATA=%h",proc2Icache_addr, Icache_valid_out, stall_if, Icache_data_out);
+            show_dispatch_inputs(clock, reset, if_id_reg, cdb_valid, cdb_tag, cdb_value, fu_busy, rs1_clear,
+                rob_retire_entry, store_retire, store_tag, rob_dest_reg, rob_to_regfile_value,
+                lsq_free, maptable_clear, rob_clear, rs_clear);
             $display("ID STAGE CONTENT: ");
             $display("OPA SELECT =%s, OPB SELECT=%s", opa_sel_str(id_opa_select), opb_sel_str(id_opb_select));
             $display("REG INDX 1 =%d, REG INDX 2=%d", mt_to_regfile_rs1, mt_to_regfile_rs2);

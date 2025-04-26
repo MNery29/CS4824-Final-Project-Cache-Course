@@ -37,6 +37,40 @@ module pipeline (
     output logic [`XLEN-1:0] proc2Icache_addr,
     output logic             Icache_valid_out,
     output logic [63:0] Icache_data_out,
+    
+    //ID Input debug wires
+    output IF_ID_PACKET if_id_reg,
+
+    output logic cdb_valid,
+    output logic [`ROB_TAG_BITS-1:0] cdb_tag,
+    output logic [31:0] cdb_value,
+
+
+    output logic rs1_clear,
+    output logic rob_retire_entry,
+
+
+
+    output logic  store_retire,
+
+
+    output logic [4:0] rob_dest_reg,
+    output logic [31:0] rob_to_regfile_value,
+    output logic retire_entry,
+
+
+
+
+
+    output logic lsq_free,
+
+
+    output logic maptable_clear,
+    output logic rob_clear,
+    output logic rs_clear,
+
+
+
     //id stage debugging wires
     output logic [`ROB_TAG_BITS-1:0] id_tag,
     output logic rs1_ready,
@@ -88,7 +122,7 @@ module pipeline (
     output lsq_entry_t lsq_out [7:0], // debugging
     output logic store_ready,
     output logic [4:0] store_tag, // tag of store ready to write
-    output logic lsq_free, // stall dispatch if lsq is full
+
     output priv_addr_packet priv_addr_packet, 
     output logic cache_in_flight, //debugging
     output logic head_ready_for_mem, // debugging
