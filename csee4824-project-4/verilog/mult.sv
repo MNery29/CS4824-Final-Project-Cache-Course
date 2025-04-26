@@ -5,7 +5,6 @@
 // period than straight multiplication.
 
 `include "verilog/sys_defs.svh"
-`include "verilog/mult_stage.sv"
 
 // P4 TODO: You must implement the different types of multiplication here and
 //          in mult_stage. See the original ALU and it's different behavior for
