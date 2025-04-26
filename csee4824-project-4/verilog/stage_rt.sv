@@ -43,7 +43,7 @@ module stage_rt (
     output logic clear_fu,
     output logic clear_is,
     output logic clear_cp,
-    output logic [31:0] new_addr,
+    output logic [31:0] new_addr, // new address to write to
     output logic take_branch // take branch bit
 
 );
@@ -63,7 +63,6 @@ logic clear_fu_reg;
 logic clear_is_reg;
 logic clear_cp_reg;
 logic take_branch_reg;
-logic [31:0] new_addr_reg;
 
 assign retire_value = retire_value_reg;
 assign retire_dest = retire_dest_reg;
@@ -79,13 +78,13 @@ assign clear_fu = clear_fu_reg;
 assign clear_is = clear_is_reg;
 assign clear_cp = clear_cp_reg;
 assign take_branch = take_branch_reg;
-assign new_addr = new_addr_reg;
+assign new_addr = take_branch ? retire_value_reg : 0; // if we take the branch, we need to set the new address to the value of the instruction
 
 
 
 always_ff @(posedge clock) begin
     // ok so we check to see if it is a branch, and if it is a branch, we check if we take the branch (we always assume no taking branches)
-    if (reset || (rob_retire_packet.is_branch && rob_retire_packet.value != 0)) begin
+    if (reset) begin
         //cleare all retire outputs
         retire_value_reg <= 0;
         retire_dest_reg <= 0;
@@ -99,9 +98,7 @@ always_ff @(posedge clock) begin
         clear_rs_reg <= 1;
         clear_cp_reg <= 1;
         clear_is_reg <= 1;
-
-        new_addr_reg <= rob_retire_packet.value;
-        take_branch_reg <= 1;
+        take_branch_reg <= 0;
 
         //clear all mem outputs
         // mem_addr <= 64'b0;
@@ -109,24 +106,52 @@ always_ff @(posedge clock) begin
         mem_valid_reg <= 0;
     end else begin
         // if is a branch, and we predicted correct (not taken), then we can just ignore it
-        if (rob_ready && rob_valid && !rob_retire_packet.is_branch) begin
+        if (rob_ready && rob_valid) begin
             // retiring an instruction: valid entry from ROB
             retire_value_reg <= rob_retire_packet.value;
             retire_dest_reg  <= rob_retire_packet.dest_reg;
-            retire_valid_reg <= 1'b1;
+            retire_valid_reg <= !rob_retire_packet.mem_valid;
             retire_tag_reg <= rob_retire_packet.tag[4:0];
             // mem_addr     <= rob_retire_packet.mem_addr;
             mem_tag_reg      <= rob_retire_packet.tag[4:0];
             mem_valid_reg    <= rob_retire_packet.mem_valid;
-            clear_rob_reg <= 0;
-            clear_map_table_reg <= 0;
-            clear_lsq_reg <= 0;
-            clear_fu_reg <= 0;
-            new_addr_reg <= 0;
-            clear_rs_reg <= 0;
-            clear_cp_reg <= 0;
-            clear_is_reg <= 0;
-            take_branch_reg <= 0;
+            if (rob_retire_packet.is_branch) begin
+                // if it is a branch, we need to check if we take the branch
+                if (rob_retire_packet.take_branch) begin
+                    // if we take the branch, we need to clear the ROB and map table
+                    clear_rob_reg <= 1;
+                    clear_map_table_reg <= 1;
+                    clear_lsq_reg <= 1;
+                    clear_fu_reg <= 1;
+                    clear_rs_reg <= 1;
+                    clear_cp_reg <= 1;
+                    clear_is_reg <= 1;
+                    take_branch_reg <= 1;
+                end else begin
+                    clear_rob_reg <= 0;
+                    clear_map_table_reg <= 0;
+                    clear_lsq_reg <= 0;
+                    clear_fu_reg <= 0;
+                    clear_rs_reg <= 0;
+                    clear_cp_reg <= 0;
+                    clear_is_reg <= 0;
+                    take_branch_reg <= 0;
+                    // if we do not take the branch, we just set the new address to zero
+                    take_branch_reg <= 0;
+                end
+            end else begin
+                clear_rob_reg <= 0;
+                clear_map_table_reg <= 0;
+                clear_lsq_reg <= 0;
+                clear_fu_reg <= 0;
+                clear_rs_reg <= 0;
+                clear_cp_reg <= 0;
+                clear_is_reg <= 0;
+                take_branch_reg <= 0;
+                // not a branch, so just set to default
+                take_branch_reg <= 0;
+            end
+            
         end else begin
             //nothing to retire - set to default
             retire_value_reg <= 0;
@@ -137,7 +162,6 @@ always_ff @(posedge clock) begin
             clear_map_table_reg <= 0;
             clear_lsq_reg <= 0;
             clear_fu_reg <= 0;
-            new_addr_reg <= 0;
             clear_rs_reg <= 0;
             clear_cp_reg <= 0;
             clear_is_reg <= 0;

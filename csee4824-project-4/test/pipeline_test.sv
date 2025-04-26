@@ -81,9 +81,12 @@ module testbench;
     logic [31:0] rs1_value, rs2_value;
     logic [31:0] rob_to_rs_value1, rob_to_rs_value2;
 
+    INST id_inst_out;
+
 
     //IS stage debugging wires
     IS_EX_PACKET is_packet;
+    logic if_stall;
     IS_EX_PACKET is_ex_reg;
     logic issue_valid;
     logic fu_ready;
@@ -115,7 +118,11 @@ module testbench;
     EX_CP_PACKET ex_packet;
     logic fu_busy;
     logic cdb_busy; //this will stall the RS issue if ex stage is busy / full
+    logic [`XLEN-1:0] opa_mux_out;
+    logic [`XLEN-1:0] opb_mux_out;
 
+    
+    logic take_conditional;
     IF_ID_PACKET if_packet;
     IF_ID_PACKET if_id_reg;
 
@@ -212,6 +219,7 @@ module testbench;
 
         .id_rob_debug          (id_rob_debug),
         .Icache_valid_out     (Icache_valid_out),
+        .if_stall           (if_stall),
         .proc2Icache_addr     (proc2Icache_addr),
         .stall_if             (stall_if),
         .Icache_data_out       (Icache_data_out),
@@ -237,6 +245,8 @@ module testbench;
         .fu_busy              (fu_busy),
         .cdb_busy             (cdb_busy),
 
+        .take_conditional       (take_conditional),
+
         .if_packet            (if_packet),
         .if_id_reg            (if_id_reg),
 
@@ -249,6 +259,11 @@ module testbench;
         .ex_packet            (ex_packet),
 
         .cdb_packet            (cdb_packet),
+        .opa_mux_out         (opa_mux_out),
+        .opb_mux_out         (opb_mux_out),
+
+
+        .id_inst_out          (id_inst_out),
 
 
 
@@ -527,6 +542,27 @@ module testbench;
                 opB, opB_v ? "V" : "X",
                 tag, in_use, ready, avail);
     endtask
+      function automatic string opa_sel_str (input ALU_OPA_SELECT sel);
+        case (sel)
+            OPA_IS_RS1  : return "RS1";
+            OPA_IS_NPC  : return "NPC";
+            OPA_IS_PC   : return "PC";
+            OPA_IS_ZERO : return "ZERO";
+            default     : return "OPA(?)";
+        endcase
+    endfunction
+
+    function automatic string opb_sel_str (input ALU_OPB_SELECT sel);
+        case (sel)
+            OPB_IS_RS2   : return "RS2";
+            OPB_IS_I_IMM : return "I_IMM";
+            OPB_IS_S_IMM : return "S_IMM";
+            OPB_IS_B_IMM : return "B_IMM";
+            OPB_IS_U_IMM : return "U_IMM";
+            OPB_IS_J_IMM : return "J_IMM";
+            default      : return "OPB(?)";
+        endcase
+    endfunction
     // ------------------------------------------------------------
     //  IS-stage packet
     // ------------------------------------------------------------
@@ -542,8 +578,10 @@ module testbench;
                 pkt.rd_mem, pkt.wr_mem);
         $display("            OPA=0x%08h  OPB=0x%08h  NPC=0x%08h  inst=0x%08h",
                 pkt.OPA, pkt.OPB, pkt.NPC, pkt.inst);
-        $display("            issue_valid=%b  fu_ready=%b  rs_issue_enable=%b is_branch=%b",
-                issue_valid, fu_ready, rs_issue_en, pkt.is_branch);
+        $display("            issue_valid=%b  fu_ready=%b  rs_issue_enable=%b cond_branch=%b uncond_branch=%b",
+                issue_valid, fu_ready, rs_issue_en, pkt.cond_branch, pkt.uncond_branch);
+        $display(" opa_sel=%s  opb_sel=%s",
+                opa_sel_str(pkt.opa_select), opb_sel_str(pkt.opb_select));
     endtask
 
     // ------------------------------------------------------------
@@ -554,8 +592,8 @@ module testbench;
         input logic        fu_busy,
         input logic        cdb_busy
     );
-        $display("[%0t] EX   : val=%b  done=%b  tag=%0d  value=0x%08h",
-                $time, pkt.valid, pkt.done, pkt.rob_tag, pkt.value);
+        $display("[%0t] EX   : val=%b  done=%b  tag=%0d  value=0x%08h take_branch=%b",
+                $time, pkt.valid, pkt.done, pkt.rob_tag, pkt.value , pkt.take_branch);
         $display("            fu_busy=%b  cdb_busy=%b", fu_busy, cdb_busy);
     endtask
     task automatic show_regfile (
@@ -576,8 +614,8 @@ module testbench;
                 $display("[%0t] %s : (invalid)", $time, prefix);
             end
             else begin
-                $display("[%0t] %s : tag=%0d  value=0x%08h",
-                        $time, prefix, pkt.tag, pkt.value);
+                $display("[%0t] %s : tag=%0d  value=0x%08h take_branch=%b",
+                        $time, prefix, pkt.tag, pkt.value, pkt.take_branch);
             end
         endtask
 
@@ -623,28 +661,6 @@ module testbench;
         end
     endtask // task show_mem_with_decimal
 
-    function automatic string opa_sel_str (input ALU_OPA_SELECT sel);
-        case (sel)
-            OPA_IS_RS1  : return "RS1";
-            OPA_IS_NPC  : return "NPC";
-            OPA_IS_PC   : return "PC";
-            OPA_IS_ZERO : return "ZERO";
-            default     : return "OPA(?)";
-        endcase
-    endfunction
-
-    function automatic string opb_sel_str (input ALU_OPB_SELECT sel);
-        case (sel)
-            OPB_IS_RS2   : return "RS2";
-            OPB_IS_I_IMM : return "I_IMM";
-            OPB_IS_S_IMM : return "S_IMM";
-            OPB_IS_B_IMM : return "B_IMM";
-            OPB_IS_U_IMM : return "U_IMM";
-            OPB_IS_J_IMM : return "J_IMM";
-            default      : return "OPB(?)";
-        endcase
-    endfunction
-
     task display_all_signals;
         begin
             $display("ROB contents:");
@@ -655,11 +671,13 @@ module testbench;
             //display mem/ if stuff in pipeline
 
             $display("IF STAGE CONTENT: ");
+            $display("IF STALL : (BC OF DATA ARBITRATION : %0b)", if_stall);
             $display("PC=%x, VALID=%b STALL_IF= %b ICACHEDATA=%h",proc2Icache_addr, Icache_valid_out, stall_if, Icache_data_out);
             show_dispatch_inputs(clock, reset, if_id_reg, cdb_valid, cdb_tag, cdb_value, fu_busy, rs1_clear,
                 rob_retire_entry, store_retire, store_tag, rob_dest_reg, rob_to_regfile_value,
                 lsq_free, maptable_clear, rob_clear, rs_clear);
             $display("ID STAGE CONTENT: ");
+            $display("ID INST OUT: %h", id_inst_out);
             $display("OPA SELECT =%s, OPB SELECT=%s", opa_sel_str(id_opa_select), opb_sel_str(id_opb_select));
             $display("REG INDX 1 =%d, REG INDX 2=%d", mt_to_regfile_rs1, mt_to_regfile_rs2);
             $display("ROB TAG=%d, RS1 READY=%b, mt_to_rs_tag1=%b, mt_to_rs_tag2=%b", id_tag, rs1_ready, mt_to_rs_tag1, mt_to_rs_tag2);
@@ -670,10 +688,14 @@ module testbench;
             show_id_stage   (id_tag, rs1_ready);
             $display("IS PACKEt: ");
             show_is_packet  (is_packet, issue_valid, fu_ready, rs_issue_enable);
-            $display("IS REGISTER: ");
+            // $display("IS REGISTER: ");
             // show_is_packet  (is_ex_reg, issue_valid, fu_ready, rs_issue_enable);
+            $display("EX take conditional ");
+            $display("OPA MUX OUT=%h, OPB MUX OUT=%h", opa_mux_out, opb_mux_out);
+            $display("take_conditional=%b", take_conditional);
             $display("First Ex packet");
             show_ex_packet  (ex_packet, fu_busy, cdb_busy);
+
             $display("ex reg");
             show_ex_packet  (ex_cp_reg, fu_busy, cdb_busy);
             show_rs_debug(rs_debug, "RS[0]");
@@ -699,6 +721,7 @@ module testbench;
 
             $display("PRIVATE ADDR contents: %s",priv_addr_pkt_fmt(priv_addr_in));
             $display("rest of the contents:");
+            $display("cache in flight =%b", cache_in_flight);
             $display("store ready =%b, store tag=%d", store_ready, store_tag);
             $display("lsq free =%b", lsq_free);
             $display("head ready for mem =%b", head_ready_for_mem);

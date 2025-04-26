@@ -383,15 +383,19 @@ typedef struct packed {
 typedef struct packed {
     logic [31:0] OPA;         // Operand A
     logic [31:0] OPB;         // Operand B
+    ALU_OPA_SELECT opa_select; // ALU opa mux select (ALU_OPA_xxx *)
+    ALU_OPB_SELECT opb_select; // ALU opb mux select (ALU_OPB_xxx *)
     logic [4:0]  rob_tag;     // ROB tag for destination
     logic [5:0]  RS_tag;      // Optional: ID of issuing RS
     ALU_FUNC alu_func;    // ALU operation selector
     logic [31:0] NPC;         // Next PC (for branch evaluation)
+    logic [31:0] PC;         // Current PC
     INST              inst;        // Raw instruction bits
     logic        issue_valid; // This packet is valid to execute
     logic rd_mem;
     logic wr_mem;
-    logic is_branch;
+    logic cond_branch;
+    logic uncond_branch;
 } IS_EX_PACKET;
 
 
@@ -402,6 +406,7 @@ typedef struct packed {
     logic [31:0] value;     // Result to commit
     logic        done;      // Result is ready
     logic valid; //whether this packet is valid yet
+    logic take_branch;
 } EX_CP_PACKET;
 
 typedef struct packed{
@@ -446,6 +451,7 @@ typedef struct packed {
     logic        mem_valid; 
     logic [31:0] mem_addr; // Memory address to write back to the register file
     logic is_branch; // Whether the instruction is a branch, if it is, a positive VALUE would mean that the branch was taken
+    logic take_branch;
 } ROB_RETIRE_PACKET;
 
 
@@ -456,6 +462,7 @@ typedef struct packed {
     logic [4:0]  tag;     // ROB tag
     logic [31:0] value;   // Result value
     logic        valid;   // Valid signal
+    logic take_branch;
 } CDB_PACKET;
 
 //CDB_ROB_PACKET: to be sent from CDB to ROB
@@ -463,6 +470,7 @@ typedef struct packed {
     logic [`ROB_TAG_BITS-1:0] tag;     // ROB tag for the entry being updated
     logic [31:0] value;   // Value to write back to the register file
     logic       valid;   // Whether the output is valid
+    logic take_branch;
 } CDB_ROB_PACKET;
 
 

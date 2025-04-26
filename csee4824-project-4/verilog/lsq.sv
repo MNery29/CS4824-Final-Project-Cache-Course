@@ -267,8 +267,8 @@ module lsq#(
             // then record it as "in flight"
             // we want to handle stores seperately
             if (head_ready_for_mem && !lsq[next_head_ptr-1].is_store) begin
-
-                if (dcache_response != 0) begin
+                // this happens when we do testing
+                if (dcache_response != 0 && !dcache_hit) begin
                     if (NONBLOCKING) begin
                         lsq[next_head_ptr-1].valid <= 1'b0;
                     end
@@ -409,6 +409,7 @@ module lsq#(
     assign cdb_out.rob_tag   = tag_to_broadcast;
     // return 32 bits from the 64-bit D-cache line
     assign cdb_out.value = data_to_broadcast;
+    assign cdb_out.take_branch = 1'b0; // not used in LSQ
 
 
 

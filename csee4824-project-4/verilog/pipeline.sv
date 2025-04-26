@@ -40,6 +40,7 @@ module pipeline (
     
     //ID Input debug wires
     output IF_ID_PACKET if_id_reg,
+    output logic if_stall,
 
     output logic cdb_valid,
     output logic [`ROB_TAG_BITS-1:0] cdb_tag,
@@ -86,6 +87,7 @@ module pipeline (
 
     //if stage
     output IF_ID_PACKET if_packet,
+    output INST id_inst_out,
 
 
    
@@ -107,6 +109,9 @@ module pipeline (
     output logic dispatch_ok,
     output logic [73:0] id_rs_debug,
     output CDB_PACKET cdb_packet,
+    output logic take_conditional,
+    output logic [`XLEN-1:0] opa_mux_out,
+    output logic [`XLEN-1:0] opb_mux_out,
 
     //retire stage debugging wires
     output logic [`XLEN-1:0] retire_value_out,
@@ -170,14 +175,19 @@ module pipeline (
     logic [31:0] id_opA, id_opB;
     // logic [`ROB_TAG_BITS-1:0] id_tag;
     logic [31:0] npc_out;
+    logic [31:0] pc_out;
+    // INST id_inst_out;
     // ALU_OPA_SELECT id_opa_select;
     // logic [`RS_SIZE-1:0][31:0] rs1_inst_out;
     // logic rs1_ready;
     // ALU_OPB_SELECT id_opb_select;
     logic id_has_dest_reg;
     logic [4:0] id_dest_reg_idx;
-    logic id_rd_mem, id_wr_mem, id_is_branch;
+    logic id_rd_mem, id_wr_mem, id_cond_branch, id_uncond_branch;
     ALU_FUNC id_alu_func;
+
+    ALU_OPA_SELECT id_opa_select_out;
+    ALU_OPB_SELECT id_opb_select_out;
     // ROB_RETIRE_PACKET id_rob_retire_out;
     // logic rob_ready, rob_valid;
 
@@ -413,10 +423,12 @@ module pipeline (
         .clock(clock),
         .reset(reset),
         .if_id_reg(if_id_reg),
+        .if_stall(if_stall),
 
         .cdb_valid(cdb_packet.valid),
         .cdb_tag(cdb_packet.tag),
         .cdb_value(cdb_packet.value),
+        .cdb_take_branch(cdb_packet.take_branch),
 
         .fu_busy(fu_busy),
         .rs1_clear(rs_issue_enable[0]), //this means its the first register
@@ -439,8 +451,12 @@ module pipeline (
 
         .opA(id_opA),
         .opB(id_opB),
+        .inst_out(id_inst_out),
+        .opa_select_out(id_opa_select_out),
+        .opb_select_out(id_opb_select_out),
         .output_tag(id_tag),
         .rs1_npc_out(npc_out),
+        .rs1_pc_out(pc_out),
         .rs1_ready(rs1_ready),
 
         .opa_select(id_opa_select),
@@ -449,7 +465,8 @@ module pipeline (
         .dest_reg_idx(id_dest_reg_idx),
         .rd_mem_out(id_rd_mem),
         .wr_mem_out(id_wr_mem),
-        .is_branch_out(id_is_branch),
+        .cond_branch_out(id_cond_branch),
+        .uncond_branch_out(id_uncond_branch),
         .rob_ready(rob_ready),
         .rob_valid(rob_valid),
         .alu_func_out(id_alu_func),
@@ -500,12 +517,17 @@ module pipeline (
         .rs_ready_out(rs1_ready),
         .rs_opa_out(id_opA),
         .rs_opb_out(id_opB),
+        .rs_opa_select_out(id_opa_select_out),
+        .rs_opb_select_out(id_opb_select_out),
         .rs_tag_out(id_tag),
         .rs_alu_func_out(id_alu_func),
         .rs_npc_out(npc_out),
+        .rs_pc_out(pc_out),
+        .rs_inst_out(id_inst_out),
         .rd_mem(id_rd_mem),
         .wr_mem(id_wr_mem),
-        .is_branch(id_is_branch),
+        .cond_branch(id_cond_branch),
+        .uncond_branch(id_uncond_branch),
         .fu_ready(fu_ready),
         .issue_valid(issue_valid),
         .is_packet(is_packet),
@@ -537,7 +559,10 @@ module pipeline (
         .is_ex_reg(is_packet),
         .ex_cp_packet(ex_packet),
         .alu_busy(fu_busy),
-        .priv_addr_out(priv_addr_packet)
+        .take_conditional(take_conditional),
+        .priv_addr_out(priv_addr_packet),
+        .opa_mux_out(opa_mux_out),
+        .opb_mux_out(opb_mux_out)
     );
 
      //////////////////////////////////////////////////
@@ -750,8 +775,11 @@ module pipeline (
 `endif
 
     always_comb begin
+        if_stall = 1'b0;
+
         owner_d = owner_q;
         if (dcache2mem_command != BUS_NONE) begin
+            if_stall = 1'b1;
             proc2mem_command = dcache2mem_command;
             proc2mem_addr    = dcache2mem_addr;
             proc2mem_data = dcache2mem_data;

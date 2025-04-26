@@ -277,16 +277,22 @@ module stage_ex (
     // input ID_EX_PACKET id_ex_reg,
 
     // output EX_MEM_PACKET ex_packet,
-    output alu_busy,
+    output logic alu_busy,
+    output logic take_conditional,
     output EX_CP_PACKET ex_cp_packet,
     //broad cast value + tag to cbd, so reorder buffer can be updated
-    output priv_addr_packet priv_addr_out
+    output priv_addr_packet priv_addr_out,
+
+    output logic [`XLEN-1:0] opa_mux_out,
+    output logic [`XLEN-1:0] opb_mux_out
 
 );
 
-    logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
+    // logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
     logic [31:0] next_val;
-    logic take_conditional;
+    logic take_branch;
+    logic is_branch;
+    // logic take_conditional;
 
 
     assign is_mem_op = is_ex_reg.rd_mem || is_ex_reg.wr_mem;
@@ -305,6 +311,7 @@ module stage_ex (
 
     EX_CP_PACKET last_packet;
 
+
     // ultimate "take branch" signal:
     // unconditional, or conditional and the condition is true
 
@@ -312,11 +319,30 @@ module stage_ex (
     // assign ex_packet.take_branch = id_ex_reg.uncond_branch || (id_ex_reg.cond_branch && take_conditional);
 
     // ALU opA mux
-    assign opa_mux_out = is_ex_reg.OPA;
-
+    // assign opa_mux_out = is_ex_reg.OPA;
+    always_comb begin
+        case (is_ex_reg.opa_select)
+            OPA_IS_RS1:  opa_mux_out = is_ex_reg.OPA;
+            OPA_IS_NPC:  opa_mux_out = is_ex_reg.NPC;
+            OPA_IS_PC:   opa_mux_out = is_ex_reg.PC;
+            OPA_IS_ZERO: opa_mux_out = 0;
+            default:     opa_mux_out = `XLEN'hdeadface; // dead face
+        endcase
+    end
 
     // ALU opB mux
-    assign opb_mux_out = is_ex_reg.OPB;
+    // assign opb_mux_out = is_ex_reg.OPB;
+    always_comb begin
+        case (is_ex_reg.opb_select)
+            OPB_IS_RS2:   opb_mux_out = is_ex_reg.OPB;
+            OPB_IS_I_IMM: opb_mux_out = `RV32_signext_Iimm(is_ex_reg.inst);
+            OPB_IS_S_IMM: opb_mux_out = `RV32_signext_Simm(is_ex_reg.inst);
+            OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(is_ex_reg.inst);
+            OPB_IS_U_IMM: opb_mux_out = `RV32_signext_Uimm(is_ex_reg.inst);
+            OPB_IS_J_IMM: opb_mux_out = `RV32_signext_Jimm(is_ex_reg.inst);
+            default:      opb_mux_out = `XLEN'hfacefeed; // face feed
+        endcase
+    end
 
 
     // Instantiate the ALU
@@ -345,10 +371,18 @@ module stage_ex (
     assign priv_addr_out.tag = is_ex_reg.rob_tag;
     assign priv_addr_out.addr = ex_cp_packet.value;
 
+    assign take_branch = is_ex_reg.uncond_branch || (is_ex_reg.cond_branch & take_conditional);
+    assign is_branch = is_ex_reg.cond_branch || is_ex_reg.uncond_branch;
+
     assign ex_cp_packet.valid = cdb_packet_busy ? last_packet.valid : is_ex_reg.issue_valid && !is_mem_op;
     assign ex_cp_packet.rob_tag = cdb_packet_busy ? last_packet.rob_tag : is_ex_reg.rob_tag;
-    assign ex_cp_packet.value = cdb_packet_busy ? last_packet.value : is_ex_reg.is_branch ? take_conditional ? next_val : 0 : next_val;
+    assign ex_cp_packet.value   = cdb_packet_busy ? is_branch ? last_packet.value :
+                              is_ex_reg.uncond_branch            ? next_val :
+                              is_ex_reg.cond_branch              ? (take_branch ? next_val : is_ex_reg.NPC) :
+                                                           is_ex_reg.NPC : next_val;
     assign ex_cp_packet.done = cdb_packet_busy ? last_packet.done : is_ex_reg.issue_valid && !is_mem_op;
+
+    assign ex_cp_packet.take_branch = cdb_packet_busy ? last_packet.take_branch : take_branch;
 
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
@@ -356,11 +390,13 @@ module stage_ex (
             last_packet.rob_tag <= 0;
             last_packet.value <= 0;
             last_packet.done <= 0;
+            last_packet.take_branch <= 0;
         end else begin
             last_packet.valid <= ex_cp_packet.valid;
             last_packet.rob_tag <= ex_cp_packet.rob_tag;
             last_packet.value <= ex_cp_packet.value;
             last_packet.done <= ex_cp_packet.done;
+            last_packet.take_branch <= ex_cp_packet.take_branch;
         end
     end
 

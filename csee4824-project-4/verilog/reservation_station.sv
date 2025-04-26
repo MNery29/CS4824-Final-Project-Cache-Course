@@ -13,8 +13,11 @@
 
 module reservation_station(
     input [31:0]   rs_npc_in,    // Next PC (from fetch/decode)
+    input [31:0] rs_pc_in,
     input ALU_FUNC rs_alu_func_in, // ALU function input for instruction
-    input rd_mem, wr_mem, is_branch, // read/write memory
+    input rd_mem, wr_mem, cond_branch,uncond_branch, // read/write memory
+
+    input INST rs_inst,
     
     input [`ROB_TAG_BITS-1:0] rs_rob_tag,      // Tag input for instruction (ROB tail pointer)
     input [31:0] rs_cdb_in,       // Data from the CDB - FU operation result 
@@ -23,6 +26,8 @@ module reservation_station(
     
     input [31:0] rs_opa_in,       // Operand A: input from instruction, either register or CDB.
     input [31:0] rs_opb_in,       // Operand B: input from instruction, either register or CDB.
+    input ALU_OPA_SELECT rs_opa_select, // Operand A select: indicates if the operand is a register or immediate data
+    input ALU_OPB_SELECT rs_opb_select, // Operand B select: indicates if the operand is a register or immediate data
     input        rs_opa_valid,    // Operand A is valid (is immediate data and not tag)
     input        rs_opb_valid,    // Operand B is valid
     
@@ -36,18 +41,26 @@ module reservation_station(
     output       rs_ready_out,            // Ready to issue
     output [31:0] rs_opa_out,             // Out: Operand A
     output [31:0] rs_opb_out,             // Out: Operand B
+    output INST rs_inst_out,
+    output ALU_OPA_SELECT rs_opa_select_out, // Out: Operand A select
+    output ALU_OPB_SELECT rs_opb_select_out, // Out: Operand B select
     output [`ROB_TAG_BITS-1:0]  rs_tag_out,             // Out: ROB tag
     output ALU_FUNC rs_alu_func_out,      // Out: ALU func
     output [31:0]  rs_npc_out,            // Out: NPC
+    output [31:0] rs_pc_out,             // Out: PC
     output rs_rd_mem_out,
     output rs_wr_mem_out,
-    output rs_is_branch_out,             // Out: is branch
+    output rs_cond_branch_out,             // Out: is branch
+    output rs_uncond_branch_out,             // Out: is branch
     output       rs_avail_out,            // Is this entry available?
     output [73:0] rs_debug
 );
 
 //internal storage: 
 logic [31:0] OPa, OPb; // Operand A and B
+ALU_OPA_SELECT rs_opa_select_internal; // Operand A select
+ALU_OPB_SELECT rs_opb_select_internal; // Operand B select
+INST internal_inst; // internal instruction storage
 logic [`ROB_TAG_BITS-1:0] OPaTag, OPbTag; // Operand A and B tags
 logic [`ROB_TAG_BITS-1:0] DestTag;// Destination register tag, and op tags
 logic OpaValid, OpbValid; // Operand A and B valid
@@ -55,7 +68,8 @@ logic InUse; // RS entry is in use
 
 ALU_FUNC alu_func; //internal ALU track
 logic[31:0] NPC; //internal NPC track
-logic internal_rd_mem, internal_wr_mem, internal_is_branch; //internal memory track
+logic [31:0] PC; //internal CDB track
+logic internal_rd_mem, internal_wr_mem, internal_cond_branch, internal_uncond_branch; //internal memory track
 
 // Outputs
 assign rs_avail_out = !InUse;
@@ -65,9 +79,14 @@ assign rs_opb_out   = OPb;
 assign rs_tag_out   = DestTag;
 assign rs_alu_func_out = alu_func;
 assign rs_npc_out       = NPC;
+assign rs_pc_out       = PC;
 assign rs_rd_mem_out = internal_rd_mem;
 assign rs_wr_mem_out = internal_wr_mem;
-assign rs_is_branch_out = internal_is_branch;
+assign rs_cond_branch_out = internal_cond_branch;
+assign rs_uncond_branch_out = internal_uncond_branch;
+assign rs_opa_select_out = rs_opa_select_internal;
+assign rs_opb_select_out = rs_opb_select_internal;
+assign rs_inst_out = internal_inst;
 
 // Load from CDB if tag matches
 wire LoadAFromCDB = (rs_cdb_tag == OPaTag) && !OpaValid && InUse && rs_cdb_valid;
@@ -87,9 +106,13 @@ always_ff @(posedge clock) begin
         InUse    <= 1'b0;
         alu_func     <= ALU_ADD;
         NPC      <= 32'b0;
+        PC       <= 32'b0;
         internal_rd_mem <= 1'b0;
         internal_wr_mem <= 1'b0;
-        internal_is_branch <= 1'b0;
+        internal_cond_branch <= 1'b0;
+        internal_uncond_branch <= 1'b0;
+        rs_opa_select_internal <= OPA_IS_RS1;
+        rs_opb_select_internal <= OPB_IS_RS2;
     end else begin
         // Load new instruction
         if (rs_load_in && !InUse) begin
@@ -104,9 +127,14 @@ always_ff @(posedge clock) begin
 
             alu_func <= rs_alu_func_in;
             NPC      <= rs_npc_in;
+            PC       <= rs_pc_in;
             internal_rd_mem <= rd_mem;
             internal_wr_mem <= wr_mem;
-            internal_is_branch <= is_branch;
+            internal_cond_branch <= cond_branch;
+            internal_uncond_branch <= uncond_branch;
+            rs_opa_select_internal <= rs_opa_select;
+            rs_opb_select_internal <= rs_opb_select;
+            internal_inst <= rs_inst;
 
         end else begin
             // CDB broadcasts update operand readiness
@@ -130,10 +158,14 @@ always_ff @(posedge clock) begin
                 OpbValid <= 0;
                 alu_func <= ALU_ADD;
                 NPC <= 32'b0;
+                PC <= 32'b0;
                 InUse <= 0;
                 internal_rd_mem <= 1'b0;
                 internal_wr_mem <= 1'b0;
-                internal_is_branch <= 1'b0;
+                internal_cond_branch <= 1'b0;
+                internal_uncond_branch <= 1'b0;
+                rs_opa_select_internal <= OPA_IS_RS1;
+                rs_opb_select_internal <= OPB_IS_RS2;
             end
         end
     end
