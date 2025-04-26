@@ -399,8 +399,8 @@ module testbench;
                 pkt.tag, pkt.dest_reg,
                 pkt.reg_valid, pkt.mem_valid, pkt.is_branch);
 
-        $display("            value=0x%08h  mem_addr=0x%08h",
-                pkt.value, pkt.mem_addr);
+        $display("            value=0x%08h  mem_addr=0x%08h take_branch=%b",
+                pkt.value, pkt.mem_addr, pkt.take_branch);
     endtask
     task automatic show_id_stage (
         input [`ROB_TAG_BITS-1:0] id_tag,

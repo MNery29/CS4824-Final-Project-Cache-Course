@@ -389,8 +389,8 @@ module stage_id (
         //     end
         // endcase
 
-        if (opa_select != OPA_IS_RS1)
-            rs1_opa_valid = 1;
+        // if (opa_select != OPA_IS_RS1 && !cond_branch)
+        //     rs1_opa_valid = 1;
     end
 
     //operand select (OPB)
@@ -435,8 +435,8 @@ module stage_id (
         //     end
         // endcase
 
-        if (opb_select != OPB_IS_RS2 )
-            rs1_opb_valid = 1;
+        // if (opb_select != OPB_IS_RS2 && !cond_branch)
+        //     rs1_opb_valid = 1;
     end
     logic mt_reset;
     assign mt_reset = reset || maptable_clear;

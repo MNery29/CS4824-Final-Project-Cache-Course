@@ -197,7 +197,7 @@ module lsq#(
 
     // for indexing mem of cache data (from returns of tag)
     always_comb begin
-        if (dcache_tag != 0) begin
+        if (dcache_tag != 0 && !dcache_hit) begin
             next_data_to_broadcast = cache_offset_in_flight[dcache_tag] ? dcache_data_out[63:32] : dcache_data_out[31:0];
             if (cache_in_flight_rd_unsigned[dcache_tag]) begin
                 // unsigned: zero-extend the data

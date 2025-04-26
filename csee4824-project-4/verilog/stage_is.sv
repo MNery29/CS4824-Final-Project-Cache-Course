@@ -56,8 +56,8 @@ always_comb begin
                 issue_valid               = 1;
                 is_packet.OPA          = rs_opa_out[i];
                 is_packet.OPB          = rs_opb_out[i];
-                is_packet.opa_select    = rs_opa_select_out[i];
-                is_packet.opb_select    = rs_opb_select_out[i];
+                is_packet.opa_select    = rs_opa_select_out;
+                is_packet.opb_select    = rs_opb_select_out;
                 is_packet.rob_tag      = rs_tag_out[i][4:0]; // fix to only send the last 4 bits of tag, keep msb internal
                 is_packet.issue_valid  = 1;
                 is_packet.alu_func     = rs_alu_func_out[i];

@@ -305,7 +305,7 @@ module pipeline (
     //////////////////////////////////////////////////
     //           Temporary Branch Logic             //
     //////////////////////////////////////////////////
-    assign if_valid = dispatch_ok;                // Always fetch for now
+    assign if_valid = dispatch_ok && ~if_stall && ~is_clear;                // Always fetch for now
     assign branch_target = 32'b0;          // Default branch target
 
     //////////////////////////////////////////////////
@@ -386,7 +386,7 @@ module pipeline (
     //////////////////////////////////////////////////
     // IF_ID_PACKET      if_id_reg;
     always_ff @(posedge clock or posedge reset) begin
-        if (reset) begin
+        if (reset || is_clear) begin
             if_id_reg <= '0;
         end else begin
             if (if_packet.valid) begin
@@ -418,10 +418,12 @@ module pipeline (
     //    .mt_tags_debug(id_mt_tags),
     //    .rs_debug(id_rs_debug)
     //);
-
+    // stage reset 
+    logic stage_id_reset;
+    assign stage_id_reset = reset ||rob_clear;
     stage_id stage_id_0 (
         .clock(clock),
-        .reset(reset),
+        .reset(stage_id_reset),
         .if_id_reg(if_id_reg),
         .if_stall(if_stall),
 
@@ -775,11 +777,10 @@ module pipeline (
 `endif
 
     always_comb begin
-        if_stall = 1'b0;
 
         owner_d = owner_q;
         if (dcache2mem_command != BUS_NONE) begin
-            if_stall = 1'b1;
+            
             proc2mem_command = dcache2mem_command;
             proc2mem_addr    = dcache2mem_addr;
             proc2mem_data = dcache2mem_data;
@@ -833,9 +834,11 @@ module pipeline (
         Imem2proc_response  = 0;
         Imem2proc_data      = 0;
         Imem2proc_tag       = 0;
+        if_stall = 0;
 
         case (owner_q)
             `OWN_D: begin
+                if_stall = 1'b1;
                 mem2dcache_response = mem2proc_response;
                 mem2dcache_data = mem2proc_data;
                 mem2dcache_tag      = mem2proc_tag;
