@@ -40,7 +40,7 @@
 `define NUM_FU_STORE xx
 
 // number of mult stages (2, 4, or 8)
-`define MULT_STAGES 4
+`define MULT_STAGES 8
 
 // number of reservation stations: 
 

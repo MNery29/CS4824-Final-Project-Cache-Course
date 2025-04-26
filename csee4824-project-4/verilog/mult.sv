@@ -5,6 +5,7 @@
 // period than straight multiplication.
 
 `include "verilog/sys_defs.svh"
+`include "verilog/mult_stage.sv"
 
 // P4 TODO: You must implement the different types of multiplication here and
 //          in mult_stage. See the original ALU and it's different behavior for
@@ -30,26 +31,29 @@ typedef enum logic [1:0] {
 
 
 module mult (
-    input clock, reset,
-    input [63:0] mcand, mplier,
-    input [1:0] mul_type, // which kind of multiplication to compute 
-    input start,
+    input logic clock, reset,
+    input logic [63:0] mcand, mplier,
+    input mul_type_t mul_type, // which kind of multiplication to compute 
+    input logic start,
 
-    output [63:0] product,
-    output done
+    output logic [63:0] product,
+    output logic done
 );
 
-    logic [`STAGES-2:0] internal_dones;
-    logic [(64*(`STAGES-1))-1:0] internal_product_sums, internal_mcands, internal_mpliers;
-    logic [63:0] mcand_out, mplier_out;
-    logic [127:0] full_product_sum; // full 128-bit product at output
+    logic [(128*(`MULT_STAGES-1))-1:0] internal_product_sums;
+    logic [(64*(`MULT_STAGES-1))-1:0] internal_mpliers;
+    logic [(64*(`MULT_STAGES-1))-1:0] internal_mcands;
+    logic [`MULT_STAGES-2:0] internal_dones;
+
+    logic [127:0] full_product_sum;
+    logic [63:0]  mplier_out, mcand_out;
 
 
 
 
     // instantiate an array of mult_stage modules
     // this uses concatenation syntax for internal wiring, see lab 2 slides
-    mult_stage mstage [`STAGES-1:0] (
+    mult_stage mstage [`MULT_STAGES-1:0] (
         .clock (clock),
         .reset (reset),
         .start       ({internal_dones, start}), // forward prev done as next start
