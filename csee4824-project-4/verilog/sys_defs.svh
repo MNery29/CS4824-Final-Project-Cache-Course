@@ -412,6 +412,8 @@ typedef struct packed{
     logic rd_mem;
     logic wr_mem;
     logic valid;
+    logic rd_unsigned;
+    MEM_SIZE mem_size;
 } LSQ_PACKET;
 
 //this private addr packet will only be READ by LSQ's and only be written to by functional units
@@ -463,6 +465,22 @@ typedef struct packed {
     logic       valid;   // Whether the output is valid
 } CDB_ROB_PACKET;
 
+
+typedef struct packed {
+    logic              valid;      // if entry is occupied
+    logic              is_store;   // distinguish load vs store
+    logic [4:0]  rob_tag; // tag of the transaction
+
+    logic [4:0]        address_tag;    // tag that will produce the address on a private channel
+    logic [31:0]       address;    // memory address (OPA + OPB)
+    logic         address_valid; // if we have the address from private channel
+    logic [63:0]       store_data; // data to store (if store)
+    logic [4:0]        store_data_tag;    // tag from the ROB
+    logic store_data_valid; // if we have the data from CDB
+    logic              retired;    // store can only write if retired
+    logic rd_unsigned; // whether the data is signed or unsigned
+    MEM_SIZE mem_size; // size of the memory operation
+} lsq_entry_t;
 
 
 

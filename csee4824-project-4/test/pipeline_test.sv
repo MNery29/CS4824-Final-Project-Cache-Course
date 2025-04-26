@@ -144,6 +144,28 @@ module testbench;
     ALU_OPA_SELECT id_opa_select;
     ALU_OPB_SELECT id_opb_select;
 
+    LSQ_PACKET lsq_packet;
+    lsq_entry_t lsq_out [7:0]; // debugging
+    logic store_ready;
+    logic [4:0] store_tag; // tag of store ready to write
+    logic lsq_free; // stall dispatch if lsq is full
+    priv_addr_packet priv_addr_in;
+    logic cache_in_flight; //debugging
+    logic head_ready_for_mem; // debugging
+    logic [2:0] head_ptr; //points to OLDEST entry debugging
+    logic [2:0] tail_ptr; //points to next free entry debugging
+    logic [63:0]dcache_data_out; // data coming back from cache
+    logic [3:0] dcache_tag; // high when valid
+    logic [3:0] dcache_response; // 0 = can't accept; other=tag of transaction]
+    logic dcache_hit; // 1 if hit; 0 if miss
+    logic [1:0] dcache_command; // `BUS_NONE `BUS_LOAD or `BUS_STORE
+    logic [63:0] dcache_data; // data going to cache for store
+    logic [`XLEN-1:0] dcache_addr; // sending address to 
+    logic [4:0] mem_tag; // from rt stage
+    logic mem_valid; // from rt stage
+
+    EX_CP_PACKET cdb_lsq; // broadcast load data
+
     
 
 
@@ -243,7 +265,30 @@ module testbench;
         .mt_to_regfile_rs1 (mt_to_regfile_rs1),
         .mt_to_regfile_rs2 (mt_to_regfile_rs2),
         .id_opa_select (id_opa_select),
-        .id_opb_select (id_opb_select)
+        .id_opb_select (id_opb_select),
+
+        //LSQ DEBUGGING
+        .lsq_packet          (lsq_packet),
+        .lsq_out             (lsq_out),
+        .store_ready         (store_ready),
+        .store_tag           (store_tag),
+        .lsq_free            (lsq_free),
+        .priv_addr_packet     (priv_addr_in),
+        .cache_in_flight     (cache_in_flight),
+        .head_ready_for_mem  (head_ready_for_mem),
+        .head_ptr           (head_ptr),
+        .tail_ptr           (tail_ptr),
+        .dcache_data_out     (dcache_data_out),
+        .dcache_tag          (dcache_tag),
+        .dcache_response     (dcache_response),
+        .dcache_hit          (dcache_hit),
+        .dcache_command      (dcache_command),
+        .dcache_data         (dcache_data),
+        .dcache_addr         (dcache_addr),
+        .mem_tag             (mem_tag),
+        .mem_valid           (mem_valid),
+        .cdb_lsq             (cdb_lsq)
+        
         
 
 
@@ -289,7 +334,15 @@ module testbench;
         clock = ~clock;
     end
 
-
+     function automatic string mem_size_str (input MEM_SIZE sz);
+        case (sz)
+            BYTE   : return "BYTE";
+            HALF   : return "HALF";
+            WORD   : return "WORD";
+            DOUBLE : return "DOUBLE";
+            default: return "MS(?)";
+        endcase
+    endfunction
     // Task to display # of elapsed clock edges
     task show_clk_count;
         real cpi;
@@ -351,6 +404,59 @@ module testbench;
             default   : return "UNK";
         endcase
     endfunction
+
+    // ===============================================================
+    //  Pretty-printer for a single LSQ entry
+    //    – returns a formatted string, so you can use $display()
+    // ===============================================================
+    function automatic string lsq_entry_fmt
+        (input int idx, input lsq_entry_t e);
+        string s;
+        $sformat(s,
+            "[%0d] v:%0b %-2s  rob:%2d | addr:%08h (tag:%2d v:%0b) | data:%016h (tag:%2d v:%0b) | rd_unsigned: %0b mem_size: %s| ret:%0b",
+            idx,
+            e.valid,
+            e.is_store ? "ST" : "LD",
+            e.rob_tag,
+            e.address,
+            e.address_tag,
+            e.address_valid,
+            e.store_data,
+            e.store_data_tag,
+            e.store_data_valid,
+            e.rd_unsigned,
+            mem_size_str(e.mem_size),
+            e.retired);
+        return s;
+    endfunction
+
+    function automatic string priv_addr_pkt_fmt (input priv_addr_packet p);
+        string s;
+        if (!p.valid)
+            return "(priv-addr: — invalid —)";
+
+        $sformat(s,
+            "(addr:%0h  tag:%0d  v:%0b)",
+            p.addr,
+            p.tag,
+            p.valid);
+        return s;
+    endfunction
+
+    // ===============================================================
+    //  Convenience task to dump the whole LSQ array
+    // ===============================================================
+    task automatic dump_lsq
+        (input lsq_entry_t lsq [8]);
+        int i;
+        $display("====== LSQ DUMP @ %0t ======", $time);
+        for (i = 0; i < 8; i++) begin
+            // if (lsq[i].valid)              // comment out this line
+            $display("%s", lsq_entry_fmt(i, lsq[i]));
+        end
+        $display("===========================\n");
+    endtask
+
 
     // ------------------------------------------------------------
     //  ID-input tests
@@ -457,17 +563,38 @@ module testbench;
         end
     endtask
     task automatic show_cdb_packet (
-        input CDB_PACKET pkt,
-        input string     prefix = "CDB"   // let caller override label
-    );
-        if (!pkt.valid) begin
-            $display("[%0t] %s : (invalid)", $time, prefix);
-        end
-        else begin
-            $display("[%0t] %s : tag=%0d  value=0x%08h",
-                    $time, prefix, pkt.tag, pkt.value);
-        end
-    endtask
+            input CDB_PACKET pkt,
+            input string     prefix = "CDB"   // let caller override label
+        );
+            if (!pkt.valid) begin
+                $display("[%0t] %s : (invalid)", $time, prefix);
+            end
+            else begin
+                $display("[%0t] %s : tag=%0d  value=0x%08h",
+                        $time, prefix, pkt.tag, pkt.value);
+            end
+        endtask
+
+        function automatic string lsq_pkt_fmt (input LSQ_PACKET pkt);
+        string s;
+
+        if (!pkt.valid)          // early-out for bubble / NOP packets
+            return "(LSQ_PACKET — invalid —)";
+
+        $sformat(s,
+            "(rob:%2d  data:%08h  dtag:%2d  dval:%0b  rd:%0b  wr:%0b  v:%0b rd_unsigned:%0b mem_size: %s)",
+            pkt.rob_tag,
+            pkt.store_data,
+            pkt.store_data_tag,
+            pkt.store_data_valid,
+            pkt.rd_mem,
+            pkt.wr_mem,
+            pkt.valid,
+            pkt.rd_unsigned,
+            mem_size_str(pkt.mem_size));
+
+        return s;
+    endfunction
 
     // Show contents of a range of Unified Memory, in both hex and decimal
     task show_mem_with_decimal;
@@ -553,6 +680,34 @@ module testbench;
             $display("------------------------------------------------------------");
             $display("reg file information: ");
             show_regfile(debug_reg, "DEBUG_REG");
+
+            $display("------------------------------------------------------------");
+            $display("LSQ contents:");
+            dump_lsq(lsq_out);
+
+            $display("LSQ PACKET CONTENTS : %s ", lsq_pkt_fmt(lsq_packet));
+
+
+            $display("PRIVATE ADDR contents: %s",priv_addr_pkt_fmt(priv_addr_in));
+            $display("rest of the contents:");
+            $display("store ready =%b, store tag=%d", store_ready, store_tag);
+            $display("lsq free =%b", lsq_free);
+            $display("head ready for mem =%b", head_ready_for_mem);
+            $display("head ptr =%d", head_ptr);
+            $display("tail ptr =%d", tail_ptr);
+            $display("dcache data out =%h", dcache_data_out);
+            $display("dcache tag =%b", dcache_tag);
+            $display("dcache response =%b", dcache_response);
+            $display("dcache hit =%b", dcache_hit);
+            $display("dcache command =%b", dcache_command);
+            $display("dcache data =%h", dcache_data);
+            $display("dcache addr =%h", dcache_addr);
+            $display("mem tag =%d", mem_tag);
+            $display("mem valid =%b", mem_valid);
+            $display("CDB LSQ:");
+            show_ex_packet(cdb_lsq, fu_busy, cdb_busy);
+
+            
             $display("------------------------------------------------------------");
         end
     endtask
@@ -639,7 +794,7 @@ module testbench;
             #2;
             $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");
             display_all_signals();
-            
+
             // print the pipeline debug outputs via c code to the pipeline output file
             // print_cycles();
             // $display(" @@ %h", id_opA);

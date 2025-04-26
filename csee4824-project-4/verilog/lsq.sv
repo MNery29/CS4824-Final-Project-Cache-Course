@@ -40,20 +40,6 @@
 // ASSUMPTIONS MADE BY MY LSQ
 // stores and loads are stored in one queue (together)
 
-typedef struct packed {
-    logic              valid;      // if entry is occupied
-    logic              is_store;   // distinguish load vs store
-    logic [4:0]  rob_tag; // tag of the transaction
-
-    logic [4:0]        address_tag;    // tag that will produce the address on a private channel
-    logic [31:0]       address;    // memory address (OPA + OPB)
-    logic         address_valid; // if we have the address from private channel
-    logic [63:0]       store_data; // data to store (if store)
-    logic [4:0]        store_data_tag;    // tag from the ROB
-    logic store_data_valid; // if we have the data from CDB
-    logic              retired;    // store can only write if retired
-} lsq_entry_t;
-
 //this private addr packet will only be READ by LSQ's and only be written to by functional units
 // this is to prevent other modules from mistaking the tag as register values
 // typedef struct packed {
@@ -97,10 +83,13 @@ module lsq#(
     output logic head_ready_for_mem, // debugging
 
     output logic [LSQ_SIZE_W:0] head_ptr, //points to OLDEST entry debugging
-    output logic [LSQ_SIZE_W:0] tail_ptr //points to next free entry debugging
+    output logic [LSQ_SIZE_W:0] tail_ptr, //points to next free entry debugging
+
+    output lsq_entry_t lsq_out [LSQ_SIZE-1:0] // debugging
 );
 
     lsq_entry_t lsq [LSQ_SIZE-1:0];
+    assign lsq_out = lsq;
     // logic [LSQ_SIZE_W:0] head_ptr; //points to OLDEST entry
     // logic [LSQ_SIZE_W:0] tail_ptr; //points to next free entry
 
@@ -108,6 +97,8 @@ module lsq#(
     logic [4:0] cache_tag_in_flight [3:0]; //indexed by dcache_tag (3 bits)
     logic cache_in_flight_valid [3:0]; //indexed by dcache_tag (3 bits)
     logic cache_offset_in_flight [3:0]; //indexed by dcache_tag (3 bits) gets us whether it is top half of cache line or bottom half    
+    logic cache_in_flight_rd_unsigned [3:0]; //indexed by dcache_tag (3 bits) gets us whether it is unsigned or signed
+    MEM_SIZE cache_in_flight_mem_size [3:0]; //indexed by dcache_tag (3 bits) gets us whether it is 8, 16, or 32 bit
 
 
 
@@ -155,7 +146,6 @@ module lsq#(
 
     assign store_ready = ( head_entry.valid
                            && head_entry.is_store
-                           && head_entry.retired
                            && head_entry.address_valid
                            && head_entry.store_data_valid
                            && !cache_in_flight );
@@ -192,10 +182,59 @@ module lsq#(
     assign dcache_command = dcache_cmd_next;
     assign dcache_addr    = dcache_addr_next;
     assign dcache_data    = dcache_data_next;
+
     
     logic load_completed;
 
     logic [31:0] data_to_broadcast;
+    logic [31:0] next_data_to_broadcast;
+    //right now, my lsq is allowing duplicates in, so we will use this to track duplicates
+    // logic [4:0] last_tag;
+
+    // for indexing mem of cache data (from returns of tag)
+    always_comb begin
+        if (dcache_tag != 0) begin
+            next_data_to_broadcast = cache_offset_in_flight[dcache_tag] ? dcache_data_out[63:32] : dcache_data_out[31:0];
+            if (cache_in_flight_rd_unsigned[dcache_tag]) begin
+                // unsigned: zero-extend the data
+                if (cache_in_flight_mem_size[dcache_tag] == BYTE) begin
+                    next_data_to_broadcast[`XLEN-1:8] = 0;
+                end else if (cache_in_flight_mem_size[dcache_tag] == HALF) begin
+                    next_data_to_broadcast[`XLEN-1:16] = 0;
+                end
+            end else begin
+                // signed: sign-extend the data
+                if (cache_in_flight_mem_size[dcache_tag][1:0] == BYTE) begin
+                    next_data_to_broadcast[`XLEN-1:8] = {(`XLEN-8){next_data_to_broadcast[7]}}; //replicates the next_data[7] however many times
+                end else if (cache_in_flight_mem_size[dcache_tag] == HALF) begin
+                    next_data_to_broadcast[`XLEN-1:16] = {(`XLEN-16){next_data_to_broadcast[15]}};
+                end
+            end
+        end
+        else if (dcache_hit) begin
+            next_data_to_broadcast = head_entry.address[2] ? dcache_data_out[63:32] : dcache_data_out[31:0];
+            if (head_entry.rd_unsigned) begin
+                // unsigned: zero-extend the data
+                if (head_entry.mem_size == BYTE) begin
+                    next_data_to_broadcast[`XLEN-1:8] = 0;
+                end else if (head_entry.mem_size == HALF) begin
+                    next_data_to_broadcast[`XLEN-1:16] = 0;
+                end
+            end else begin
+                // signed: sign-extend the data
+                if (head_entry.mem_size == BYTE) begin
+                    next_data_to_broadcast[`XLEN-1:8] = {(`XLEN-8){next_data_to_broadcast[7]}};
+                end else if (head_entry.mem_size == HALF) begin
+                    next_data_to_broadcast[`XLEN-1:16] = {(`XLEN-16){next_data_to_broadcast[15]}};
+                end
+            end
+        end
+        else begin
+            next_data_to_broadcast = 32'b0;
+        end
+    end
+
+    
 
     always_ff @(posedge clk or posedge reset) begin
         if (reset) begin
@@ -204,6 +243,7 @@ module lsq#(
             load_completed          <= 1'b0;
             data_to_broadcast       <= 31'b0;
             cache_in_flight       <= 1'b0;
+            // last_tag             <= 5'b0;
 
             for (int i = 0; i < LSQ_SIZE; i++) begin
                 lsq[i].valid             <= 1'b0;
@@ -234,6 +274,8 @@ module lsq#(
                     cache_tag_in_flight[dcache_response] <= lsq[next_head_ptr-1].rob_tag;
                     cache_in_flight_valid[dcache_response] <= 1'b1;
                     cache_offset_in_flight[dcache_response] <= lsq[next_head_ptr-1].address[2]; // 0 for lower half, 1 for upper half
+                    cache_in_flight_rd_unsigned[dcache_response] <= lsq[next_head_ptr-1].rd_unsigned;
+                    cache_in_flight_mem_size[dcache_response] <= lsq[next_head_ptr-1].mem_size;
 
 
                     // but we still want the pointer to advance
@@ -249,7 +291,7 @@ module lsq#(
                     //means a hit
                     // we dont have to track the cache_in_flight, data is already there
                     load_completed <= 1'b1;
-                    data_to_broadcast <= lsq[next_head_ptr-1].address[2] ? dcache_data_out[63:32] : dcache_data_out[31:0];
+                    data_to_broadcast <= next_data_to_broadcast;
                     tag_to_broadcast <= lsq[next_head_ptr-1].rob_tag;
 
                     // advance pointer
@@ -280,7 +322,7 @@ module lsq#(
                 load_completed <= 1'b1;
 
 
-                data_to_broadcast <= cache_offset_in_flight[dcache_tag] ? dcache_data_out[63:32] : dcache_data_out[31:0];
+                data_to_broadcast <= next_data_to_broadcast;
                 tag_to_broadcast <= cache_tag_in_flight[dcache_tag];
                 cache_in_flight_valid[dcache_tag] <= 1'b0;
 
@@ -292,6 +334,8 @@ module lsq#(
                 lsq[tail_ptr].valid      <= 1'b1;
                 lsq[tail_ptr].is_store   <= is_store_op;
                 lsq[tail_ptr].retired    <= 1'b0;
+
+                lsq[tail_ptr].rd_unsigned <= lsq_packet.rd_unsigned;
 
                 // Store the 5-bit ROB tag for retirement & final broadcasting
                 lsq[tail_ptr].rob_tag    <= lsq_packet.rob_tag;
@@ -306,6 +350,10 @@ module lsq#(
                 lsq[tail_ptr].store_data_tag   <= lsq_packet.store_data_tag;  
                 lsq[tail_ptr].store_data_valid <= lsq_packet.store_data_valid;
                 lsq[tail_ptr].store_data       <= lsq_packet.store_data; 
+
+                lsq[tail_ptr].mem_size <= lsq_packet.mem_size;
+
+                // last_tag <= lsq_packet.rob_tag;
 
                 // Bump tail
                 tail_ptr <= next_tail_ptr;

@@ -81,7 +81,31 @@ module pipeline (
     output ROB_RETIRE_PACKET rob_retire_packet,
     output logic rob_ready, rob_valid,
 
-    output logic [31:1] [`XLEN-1:0] debug_reg
+    output logic [31:1] [`XLEN-1:0] debug_reg,
+
+    //lsq debug wires
+    output LSQ_PACKET lsq_packet,
+    output lsq_entry_t lsq_out [7:0], // debugging
+    output logic store_ready,
+    output logic [4:0] store_tag, // tag of store ready to write
+    output logic lsq_free, // stall dispatch if lsq is full
+    output priv_addr_packet priv_addr_packet, 
+    output logic cache_in_flight, //debugging
+    output logic head_ready_for_mem, // debugging
+    output logic [2:0] head_ptr, //points to OLDEST entry debugging
+    output logic [2:0] tail_ptr, //points to next free entry debugging
+    output logic [63:0]dcache_data_out, // data coming back from cache
+    output logic [3:0] dcache_tag, // high when valid
+    output logic [3:0] dcache_response, // 0 = can't accept, other=tag of transaction]
+    output logic dcache_hit, // 1 if hit, 0 if miss
+    output logic [1:0] dcache_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
+    output logic [63:0] dcache_data, // data going to cache for store
+    output logic [`XLEN-1:0] dcache_addr, // sending address to dcache
+
+    output logic [4:0] mem_tag, // from rt stage
+    output logic mem_valid, // from rt stage
+    output EX_CP_PACKET cdb_lsq // broadcast load data
+
 
 
 );
@@ -121,7 +145,7 @@ module pipeline (
     // ROB_RETIRE_PACKET id_rob_retire_out;
     // logic rob_ready, rob_valid;
 
-    LSQ_PACKET lsq_packet;
+    // LSQ_PACKET lsq_packet;
 
 
     //////////////////////////////////////////////////
@@ -215,26 +239,26 @@ module pipeline (
     //               LSQ Wires                     //
     //////////////////////////////////////////////////
 
-    priv_addr_packet priv_addr_packet; // this is correct // packet to send to memory stage
-    logic [63:0]dcache_data_out; // data coming back from cache
-    logic [3:0] dcache_tag; // high when valid
-    logic [3:0] dcache_response; // 0 = can't accept, other=tag of transaction]
-    logic dcache_hit; // 1 if hit, 0 if miss
-    logic [1:0] dcache_command; // `BUS_NONE `BUS_LOAD or `BUS_STORE
-    logic [63:0] dcache_data; // data going to cache for store
-    logic [`XLEN-1:0] dcache_addr; // sending address to dcache
+    // priv_addr_packet priv_addr_packet; // this is correct // packet to send to memory stage
+    // logic [63:0]dcache_data_out; // data coming back from cache
+    // logic [3:0] dcache_tag; // high when valid
+    // logic [3:0] dcache_response; // 0 = can't accept, other=tag of transaction]
+    // logic dcache_hit; // 1 if hit, 0 if miss
+    // logic [1:0] dcache_command; // `BUS_NONE `BUS_LOAD or `BUS_STORE
+    // logic [63:0] dcache_data; // data going to cache for store
+    // logic [`XLEN-1:0] dcache_addr; // sending address to dcache
 
-    logic [4:0] mem_tag; // from rt stage
-    logic mem_valid; // from rt stage
-    EX_CP_PACKET cdb_lsq; // broadcast load data
+    // logic [4:0] mem_tag; // from rt stage
+    // logic mem_valid; // from rt stage
+    // EX_CP_PACKET cdb_lsq; // broadcast load data
 
-    logic store_ready;
-    logic [4:0] store_tag; // tag of store ready to write
-    logic lsq_free; // stall dispatch if lsq is full
-    logic cache_in_flight; //debugging
-    logic head_ready_for_mem; // debugging
-    logic [2:0] head_ptr; //points to OLDEST entry debugging
-    logic [2:0] tail_ptr; //points to next free entry debugging
+    // logic store_ready;
+    // logic [4:0] store_tag; // tag of store ready to write
+    // logic lsq_free; // stall dispatch if lsq is full
+    // logic cache_in_flight; //debugging
+    // logic head_ready_for_mem; // debugging
+    // logic [2:0] head_ptr; //points to OLDEST entry debugging
+    // logic [2:0] tail_ptr; //points to next free entry debugging
     //////////////////////////////////////////////////
     //           Temporary Branch Logic             //
     //////////////////////////////////////////////////
@@ -536,7 +560,8 @@ module pipeline (
         .cache_in_flight(cache_in_flight), //debugging
         .head_ready_for_mem(head_ready_for_mem), // debugging
         .head_ptr(head_ptr), //points to OLDEST entry debugging
-        .tail_ptr(tail_ptr) //points to next free entry debugging
+        .tail_ptr(tail_ptr), //points to next free entry debugging
+        .lsq_out(lsq_out) // debugging
     );
 
     //////////////////////////////////////////////////

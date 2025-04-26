@@ -518,12 +518,14 @@ module stage_id (
     assign rob_tag_out = rob_dispatch_out.tag;
 
     assign is_branch = cond_branch || uncond_branch;
-    assign lsq_packet.valid = if_id_reg.valid;
+    assign lsq_packet.valid = if_id_reg.valid && dispatch_ok;
     assign lsq_packet.rd_mem = rd_mem;
     assign lsq_packet.wr_mem = wr_mem;
     assign lsq_packet.store_data = rs1_opb_valid ? rs1_opb_in : 32'b0;
     assign lsq_packet.store_data_valid = rs1_opb_valid;
     assign lsq_packet.store_data_tag = rs1_opb_valid ? 5'b0 : rs1_opb_in[4:0]; //omit MSB
     assign lsq_packet.rob_tag = rob_tag_out;
+    assign lsq_packet.rd_unsigned = if_id_reg.inst.r.funct3[2];
+    assign lsq_packet.mem_size = MEM_SIZE'(if_id_reg.inst.r.funct3[1:0]);
 
 endmodule 
