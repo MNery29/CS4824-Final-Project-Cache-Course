@@ -74,6 +74,7 @@ module lsq#(
     output logic [1:0] dcache_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
     output logic [`XLEN-1:0] dcache_addr, // sending address to dcache
     output logic [63:0] dcache_data, // data for current command (if store)
+    output logic [1:0] dcache_size, // size of the data (BYTE, HALF, WORD or DOUBLE)
 
     output logic store_ready, // let ROB know that store ready to write
     output logic [4:0] store_ready_tag, // tag of store ready to write
@@ -160,17 +161,20 @@ module lsq#(
         dcache_cmd_next  = BUS_NONE;
         dcache_addr_next = 32'b0;
         dcache_data_next = 64'b0;
+        dcache_size = 0;
 
         if (head_ready_for_mem) begin
             if (head_entry.is_store) begin
                 dcache_cmd_next  = BUS_STORE;
                 dcache_addr_next = head_entry.address;
-                dcache_data_next = head_entry.store_data;
+                dcache_data_next[31:0] = head_entry.store_data;
+                dcache_size = head_entry.mem_size;
             end
             else begin
                 if ((NONBLOCKING || !cache_in_flight)) begin
                     dcache_cmd_next  = BUS_LOAD;
                     dcache_addr_next = head_entry.address;
+                    dcache_size = head_entry.mem_size;
                 end
                 else begin
                 end

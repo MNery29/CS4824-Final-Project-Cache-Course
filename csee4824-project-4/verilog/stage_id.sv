@@ -226,6 +226,7 @@ module stage_id (
     input [4:0] rob_dest_reg,
     input [31:0] rob_to_regfile_value,
     input retire_entry,
+    input [4:0] retire_tag,
     // input retire_entry,
 
 
@@ -417,7 +418,7 @@ module stage_id (
         .read_cdb(cdb_valid),
         .retire_addr(rob_dest_reg),
         .retire_entry(retire_entry),
-        .retire_tag(rob_retire_tag_out),
+        .retire_tag(retire_tag),
         .rs1_tag(mt_to_rs_tag1),
         .rs2_tag(mt_to_rs_tag2),
         .regfile_rs1_addr(mt_to_regfile_rs1),

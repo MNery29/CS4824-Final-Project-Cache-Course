@@ -29,6 +29,7 @@ module stage_rt (
     output logic [31:0] retire_value, // data to write to register file
     output logic [4:0] retire_dest, // destination register to write to
     output logic retire_valid_out, // valid bit to register file
+    output logic [4:0] retire_tag, // retire tag to maptable
 
     //memory outputs
     // output logic [63:0] mem_addr, // memory address to write to
@@ -51,6 +52,7 @@ module stage_rt (
 logic [31:0] retire_value_reg;
 logic [4:0] retire_dest_reg;
 logic retire_valid_reg;
+logic [4:0] retire_tag_reg;
 logic [4:0] mem_tag_reg;
 logic mem_valid_reg;
 logic clear_rob_reg;
@@ -66,6 +68,7 @@ logic [31:0] new_addr_reg;
 assign retire_value = retire_value_reg;
 assign retire_dest = retire_dest_reg;
 assign retire_valid_out = retire_valid_reg;
+assign retire_tag = retire_tag_reg;
 assign mem_tag = mem_tag_reg;
 assign mem_valid = mem_valid_reg;
 assign clear_rob = clear_rob_reg;
@@ -87,6 +90,7 @@ always_ff @(posedge clock) begin
         retire_value_reg <= 0;
         retire_dest_reg <= 0;
         retire_valid_reg<= 1'b0;
+        retire_tag_reg <= 0;
 
         clear_rob_reg <= 1;
         clear_map_table_reg <= 1;
@@ -110,6 +114,7 @@ always_ff @(posedge clock) begin
             retire_value_reg <= rob_retire_packet.value;
             retire_dest_reg  <= rob_retire_packet.dest_reg;
             retire_valid_reg <= 1'b1;
+            retire_tag_reg <= rob_retire_packet.tag[4:0];
             // mem_addr     <= rob_retire_packet.mem_addr;
             mem_tag_reg      <= rob_retire_packet.tag[4:0];
             mem_valid_reg    <= rob_retire_packet.mem_valid;
@@ -127,6 +132,7 @@ always_ff @(posedge clock) begin
             retire_value_reg <= 0;
             retire_dest_reg <= 0;
             retire_valid_reg <= 0;
+            retire_tag_reg <= 0;
             clear_rob_reg <= 0;
             clear_map_table_reg <= 0;
             clear_lsq_reg <= 0;

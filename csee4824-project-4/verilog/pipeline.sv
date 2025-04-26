@@ -112,6 +112,7 @@ module pipeline (
     output logic [`XLEN-1:0] retire_value_out,
     output logic [4:0]       retire_dest_out,
     output logic             retire_valid_out,
+    output logic [4:0] retire_tag,
     output ROB_RETIRE_PACKET rob_retire_packet,
     output logic rob_ready, rob_valid,
 
@@ -135,6 +136,7 @@ module pipeline (
     output logic [1:0] dcache_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
     output logic [63:0] dcache_data, // data going to cache for store
     output logic [`XLEN-1:0] dcache_addr, // sending address to dcache
+    output logic [1:0] dcache_size, // size of data to send to cache
 
     output logic [4:0] mem_tag, // from rt stage
     output logic mem_valid, // from rt stage
@@ -358,12 +360,15 @@ module pipeline (
     // )
 
     // for now lets just do passthroughs:
-    assign proc2Dcache_addr = dcache2mem_addr;
-    assign proc2Dcache_command = dcache2mem_command;
+    assign dcache2mem_addr = dcache_addr;
+    assign dcache2mem_data = dcache_data;
+    assign dcache2mem_command = dcache_command;
 
-    assign data_tag = mem2dcache_tag;
-    assign hit_data = mem2dcache_data;
-    assign data_response = mem2dcache_response;
+
+    assign dcache_tag = mem2dcache_tag;
+    assign dcache_hit = mem2dcache_tag == mem2dcache_response && mem2dcache_response != 0;
+    assign dcache_response = mem2dcache_response;
+    assign dcache_data_out = mem2dcache_data;
 
 
     //////////////////////////////////////////////////
@@ -424,6 +429,7 @@ module pipeline (
         .rob_dest_reg(retire_dest_out),
         .rob_to_regfile_value(retire_value_out),
         .retire_entry(retire_valid_out),
+        .retire_tag(retire_tag),
         // .rob_regfile_valid(retire_valid_out),
         .rob_clear(rob_clear), 
         .maptable_clear(maptable_clear),
@@ -584,6 +590,7 @@ module pipeline (
         .dcache_command(dcache_command),
         .dcache_addr(dcache_addr), // sending address to dcache
         .dcache_data(dcache_data), // data for current command (if store)
+        .dcache_size(dcache_size), // size of data to send to cache
 
         .store_ready(store_ready), // let ROB know that store ready to write
         .store_ready_tag(store_tag), // tag of store ready to write
@@ -707,6 +714,7 @@ module pipeline (
         .retire_value(retire_value_out),
         .retire_dest(retire_dest_out),
         .retire_valid_out(retire_valid_out),
+        .retire_tag(retire_tag),
         .mem_tag(mem_tag),
         .mem_valid(mem_valid),
         .clear_rob(rob_clear),
@@ -743,12 +751,12 @@ module pipeline (
 
     always_comb begin
         owner_d = owner_q;
-        if (dcache_command != BUS_NONE) begin
+        if (dcache2mem_command != BUS_NONE) begin
             proc2mem_command = dcache2mem_command;
             proc2mem_addr    = dcache2mem_addr;
             proc2mem_data = dcache2mem_data;
 `ifndef CACHE_MODE
-            proc2mem_size    = dcache2mem_size;
+            proc2mem_size    = dcache_size;
 `endif
             //if data mmodule sent the request
             owner_d = `OWN_D;
@@ -761,7 +769,7 @@ module pipeline (
             // then if instruction module sent the request
             owner_d = `OWN_I;
         end
-        proc2mem_data = {32'b0, proc2Dmem_data};
+        proc2mem_data = {32'b0, proc2mem_data[31:0]}; 
     end
 
 
@@ -790,9 +798,9 @@ module pipeline (
     
     always_comb begin
         // Default: de‑assert
-        dcache_response     = 0;
-        dcache_data_out     = 0;
-        dcache_tag          = 0;
+        mem2dcache_response     = 0;
+        mem2dcache_data     = 0;
+        mem2dcache_tag          = 0;
 
         Imem2proc_response  = 0;
         Imem2proc_data      = 0;

@@ -102,6 +102,7 @@ module testbench;
 
     logic [4:0] rob_dest_reg;
     logic [31:0] rob_to_regfile_value;
+    logic [4:0] retire_tag;
 
     logic maptable_clear;
     logic rob_clear;
@@ -158,6 +159,7 @@ module testbench;
     logic [1:0] dcache_command; // `BUS_NONE `BUS_LOAD or `BUS_STORE
     logic [63:0] dcache_data; // data going to cache for store
     logic [`XLEN-1:0] dcache_addr; // sending address to 
+    logic [1:0] dcache_size; // size of data being sent to cache
     logic [4:0] mem_tag; // from rt stage
     logic mem_valid; // from rt stage
 
@@ -257,6 +259,7 @@ module testbench;
         .retire_value_out     (retire_value_out),
         .retire_dest_out      (retire_dest_out),
         .retire_valid_out     (retire_valid_out),
+        .retire_tag          (retire_tag),
         .rob_retire_packet    (rob_retire_packet),
 
         .rob_valid           (rob_valid),
@@ -287,6 +290,7 @@ module testbench;
         .dcache_command      (dcache_command),
         .dcache_data         (dcache_data),
         .dcache_addr         (dcache_addr),
+        .dcache_size         (dcache_size),
         .mem_tag             (mem_tag),
         .mem_valid           (mem_valid),
         .cdb_lsq             (cdb_lsq)
@@ -675,7 +679,7 @@ module testbench;
             show_rs_debug(rs_debug, "RS[0]");
             show_cdb_packet(cdb_packet, "CDB");
             $display("RETIRE STAGE INFORMATION: ");
-            $display("RETIRE VALUE=%h, RETIRE DEST=%d, RETIRE VALID=%b", retire_value_out, retire_dest_out, retire_valid_out);
+            $display("RETIRE VALUE=%h, RETIRE DEST=%d, RETIRE VALID=%b RETIRE_TAG=%b", retire_value_out, retire_dest_out, retire_valid_out, retire_tag);
             //display rob full, rs1 available, dispatch ok
             $display("ROB FULL=%b RS1 AVAIL=%b DISPATCH OK=%b", rob_full, rs1_available, dispatch_ok);  
 
@@ -707,10 +711,21 @@ module testbench;
             $display("dcache command =%b", dcache_command);
             $display("dcache data =%h", dcache_data);
             $display("dcache addr =%h", dcache_addr);
+            $display("dcache size =%b", dcache_size);
             $display("mem tag =%d", mem_tag);
             $display("mem valid =%b", mem_valid);
             $display("CDB LSQ:");
             show_ex_packet(cdb_lsq, fu_busy, cdb_busy);
+
+            $display("real memory modules signasl:");
+            $display("proc2mem_command =%b", proc2mem_command);
+            $display("proc2mem_addr =%h", proc2mem_addr);
+            $display("proc2mem_data =%h", proc2mem_data);
+            $display("proc2mem_size =%s", mem_size_str(proc2mem_size));
+            $display("mem2proc_response =%b", mem2proc_response);
+            $display("mem2proc_data =%h", mem2proc_data);
+            $display("mem2proc_tag =%b", mem2proc_tag);
+            
 
             
             $display("------------------------------------------------------------");

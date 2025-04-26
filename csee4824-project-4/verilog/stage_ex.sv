@@ -313,29 +313,11 @@ module stage_ex (
 
     // ALU opA mux
     assign opa_mux_out = is_ex_reg.OPA;
-    // always_comb begin
-    //     case (is_ex_reg.opa_select)
-    //         OPA_IS_RS1:  opa_mux_out = is_ex_reg.OPA; // before it was: id_ex_reg.rs1_value;
-    //         OPA_IS_NPC:  opa_mux_out = is_ex_reg.NPC;
-    //         OPA_IS_PC:   opa_mux_out = is_ex_reg.NPC; // just marking as NPC for now, cuz idk if this is really necessary
-    //         OPA_IS_ZERO: opa_mux_out = 0;
-    //         default:     opa_mux_out = `XLEN'hdeadface; // dead face
-    //     endcase
-    // end
+
 
     // ALU opB mux
     assign opb_mux_out = is_ex_reg.OPB;
-    // always_comb begin
-    //     case (is_ex_reg.opb_select)
-    //         OPB_IS_RS2:   opb_mux_out =  is_ex_reg.OPB; //id_ex_reg.rs2_value;
-    //         OPB_IS_I_IMM: opb_mux_out = `RV32_signext_Iimm(is_ex_reg.inst);
-    //         OPB_IS_S_IMM: opb_mux_out = `RV32_signext_Simm(is_ex_reg.inst);
-    //         OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(is_ex_reg.inst);
-    //         OPB_IS_U_IMM: opb_mux_out = `RV32_signext_Uimm(is_ex_reg.inst);
-    //         OPB_IS_J_IMM: opb_mux_out = `RV32_signext_Jimm(is_ex_reg.inst);
-    //         default:      opb_mux_out = `XLEN'hfacefeed; // face feed
-    //     endcase
-    // end
+
 
     // Instantiate the ALU
     alu alu_0 (
