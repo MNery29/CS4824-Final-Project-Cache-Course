@@ -106,6 +106,9 @@ module testbench;
     logic [4:0] rob_dest_reg;
     logic [31:0] rob_to_regfile_value;
     logic [4:0] retire_tag;
+    logic rs_halt_out;
+    logic rs_illegal_out;
+    logic rs_csr_op_out;
 
     logic maptable_clear;
     logic rob_clear;
@@ -172,6 +175,10 @@ module testbench;
 
     EX_CP_PACKET cdb_lsq; // broadcast load data
 
+
+    logic illegal_rt;
+    logic halt_rt;
+    logic csr_op_rt;
     
 
 
@@ -265,8 +272,9 @@ module testbench;
 
         .id_inst_out          (id_inst_out),
 
-
-
+        .illegal_rt         (illegal_rt),
+        .halt_rt            (halt_rt),
+        .csr_op_rt          (csr_op_rt),
 
 
 
@@ -701,6 +709,7 @@ module testbench;
             show_rs_debug(rs_debug, "RS[0]");
             show_cdb_packet(cdb_packet, "CDB");
             $display("RETIRE STAGE INFORMATION: ");
+            $display("RETIRE HALT =%b, RETIRE ILLEGAL=%b, RETIRE CSR OP=%b", halt_rt, illegal_rt, csr_op_rt);
             $display("RETIRE VALUE=%h, RETIRE DEST=%d, RETIRE VALID=%b RETIRE_TAG=%b", retire_value_out, retire_dest_out, retire_valid_out, retire_tag);
             //display rob full, rs1 available, dispatch ok
             $display("ROB FULL=%b RS1 AVAIL=%b DISPATCH OK=%b", rob_full, rs1_available, dispatch_ok);  

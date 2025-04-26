@@ -36,6 +36,7 @@ always_ff @(posedge clock) begin
             cdb_packet_out.tag   <= 5'b0;
             cdb_packet_out.valid <= 1'b0;
             cdb_packet_out.take_branch <= 1'b0;
+
         end else begin
             if (lsq_cp_packet.done && lsq_cp_packet.valid) begin
 
@@ -47,6 +48,7 @@ always_ff @(posedge clock) begin
                 cdb_packet_out.value <= ex_cp_packet.value;
                 cdb_packet_out.tag   <= ex_cp_packet.rob_tag;
                 cdb_packet_out.valid <= 1'b1;
+
                 cdb_packet_out.take_branch <= ex_cp_packet.take_branch;
             end else begin
                 cdb_packet_out.value <= 64'b0; 

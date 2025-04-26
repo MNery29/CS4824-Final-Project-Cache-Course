@@ -98,6 +98,7 @@ module pipeline (
     output logic issue_valid,
     output logic fu_ready,
     output logic [`RS_SIZE-1:0] rs_issue_enable,
+   
 
     //EX stage debugging wires
     output EX_CP_PACKET ex_cp_reg,
@@ -145,7 +146,10 @@ module pipeline (
 
     output logic [4:0] mem_tag, // from rt stage
     output logic mem_valid, // from rt stage
-    output EX_CP_PACKET cdb_lsq // broadcast load data
+    output EX_CP_PACKET cdb_lsq, // broadcast load data
+    output logic halt_rt,
+    output logic illegal_rt,
+    output logic csr_op_rt
 
 
 
@@ -229,10 +233,10 @@ module pipeline (
     logic [`XLEN-1:0] mem_addr_out;
     logic             mem_valid_out;
 
-    logic lsq_clear;
-    logic is_clear;
-    logic fu_clear;
-    logic cp_clear;
+    logic clear_lsq;
+    logic clear_is;
+    logic stall_if_rt;
+
     logic take_branch;
     logic [31:0] new_addr;
 
@@ -305,7 +309,7 @@ module pipeline (
     //////////////////////////////////////////////////
     //           Temporary Branch Logic             //
     //////////////////////////////////////////////////
-    assign if_valid = dispatch_ok && ~if_stall && ~is_clear;                // Always fetch for now
+    assign if_valid = dispatch_ok && ~if_stall && ~stall_if_rt;                // Always fetch for now
     assign branch_target = 32'b0;          // Default branch target
 
     //////////////////////////////////////////////////
@@ -386,7 +390,7 @@ module pipeline (
     //////////////////////////////////////////////////
     // IF_ID_PACKET      if_id_reg;
     always_ff @(posedge clock or posedge reset) begin
-        if (reset || is_clear) begin
+        if (reset || clear_is) begin
             if_id_reg <= '0;
         end else begin
             if (if_packet.valid) begin
@@ -420,7 +424,7 @@ module pipeline (
     //);
     // stage reset 
     logic stage_id_reset;
-    assign stage_id_reset = reset ||rob_clear;
+    assign stage_id_reset = reset || clear_is;
     stage_id stage_id_0 (
         .clock(clock),
         .reset(stage_id_reset),
@@ -445,9 +449,6 @@ module pipeline (
         .retire_entry(retire_valid_out),
         .retire_tag(retire_tag),
         // .rob_regfile_valid(retire_valid_out),
-        .rob_clear(rob_clear), 
-        .maptable_clear(maptable_clear),
-        .rs_clear(rs_clear),
 
         .lsq_free(lsq_free),
 
@@ -552,7 +553,7 @@ module pipeline (
     //////////////////////////////////////////////////
     // EX_CP_PACKET ex_packet;
     logic ex_reset;
-    assign ex_reset = reset || fu_clear;
+    assign ex_reset = reset || clear_is;
 
     stage_ex stage_ex_0 (
         .clk(clock),
@@ -596,7 +597,7 @@ module pipeline (
     // we will issue the instruction in the reservation station
     // 
     logic lsq_reset;
-    assign lsq_reset = reset || lsq_clear;
+    assign lsq_reset = reset || clear_lsq;
 
     lsq lsq_0 (
         .clk(clock),
@@ -633,7 +634,7 @@ module pipeline (
     //           EX/CP Pipeline Register            //
     //////////////////////////////////////////////////
     always_ff @(posedge clock or posedge reset) begin
-        if (reset) begin
+        if (reset || clear_lsq) begin
             ex_cp_reg <= '0;
         end else begin
             ex_cp_reg <= ex_packet;
@@ -644,7 +645,7 @@ module pipeline (
     //               Complete Stage                 //
     //////////////////////////////////////////////////
     logic cp_reset;
-    assign cp_reset = reset || cp_clear;
+    assign cp_reset = reset || clear_lsq;
     stage_cp stage_cp_0 (
         .clock(clock),
         .reset(cp_reset),
@@ -742,15 +743,14 @@ module pipeline (
         .retire_dest(retire_dest_out),
         .retire_valid_out(retire_valid_out),
         .retire_tag(retire_tag),
+        .halt(halt_rt),
+        .illegal(illegal_rt),
+        .csr_op(csr_op_rt),
         .mem_tag(mem_tag),
         .mem_valid(mem_valid),
-        .clear_rob(rob_clear),
-        .clear_map_table(maptable_clear),
-        .clear_lsq(lsq_clear),
-        .clear_rs(rs_clear),
-        .clear_is(is_clear),
-        .clear_fu(fu_clear),
-        .clear_cp(cp_clear),
+        .clear_is(clear_is),
+        .stall_if(stall_if_rt),
+        .clear_lsq(clear_lsq),
 
         .take_branch(take_branch),
         .new_addr(new_addr)
@@ -870,6 +870,8 @@ module pipeline (
     assign pipeline_commit_wr_data  = retire_value_out;
     assign pipeline_commit_NPC      = rob_retire_packet.mem_addr; 
     assign pipeline_completed_insts = retire_valid_out ? 4'd1 : 4'd0;
-    assign pipeline_error_status    = NO_ERROR;
+    assign pipeline_error_status = illegal_rt        ? ILLEGAL_INST :
+                                   halt_rt           ? HALTED_ON_WFI :
+                                    NO_ERROR;
 
 endmodule // pipeline

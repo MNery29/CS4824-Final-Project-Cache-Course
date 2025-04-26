@@ -376,6 +376,9 @@ typedef struct packed {
     logic [6:0] opcode;     // Opcode for the instruction
     logic       valid;    // Whether the instruction is valid
     logic       is_branch; // Whether the instruction is a branch
+    logic illegal;
+    logic halt;          // Is this a halt?
+    logic csr_op;        // Is this a CSR operation? (we only used this as a cheap way to get return code)
 } DISPATCH_ROB_PACKET;
 
 
@@ -452,6 +455,9 @@ typedef struct packed {
     logic [31:0] mem_addr; // Memory address to write back to the register file
     logic is_branch; // Whether the instruction is a branch, if it is, a positive VALUE would mean that the branch was taken
     logic take_branch;
+    logic       halt;          // Is this a halt?
+    logic       illegal;       // Is this instruction illegal?
+    logic       csr_op;        // Is this a CSR operation? (we only used this as a cheap way to get return code)
 } ROB_RETIRE_PACKET;
 
 

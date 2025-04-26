@@ -135,7 +135,6 @@ always_ff @(posedge clock) begin
             rs_opa_select_internal <= rs_opa_select;
             rs_opb_select_internal <= rs_opb_select;
             internal_inst <= rs_inst;
-
         end else begin
             // CDB broadcasts update operand readiness
             if (LoadAFromCDB) begin
@@ -166,6 +165,7 @@ always_ff @(posedge clock) begin
                 internal_uncond_branch <= 1'b0;
                 rs_opa_select_internal <= OPA_IS_RS1;
                 rs_opb_select_internal <= OPB_IS_RS2;
+
             end
         end
     end

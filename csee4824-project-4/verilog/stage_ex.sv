@@ -293,6 +293,7 @@ module stage_ex (
     logic take_branch;
     logic is_branch;
     // logic take_conditional;
+   
 
 
     assign is_mem_op = is_ex_reg.rd_mem || is_ex_reg.wr_mem;

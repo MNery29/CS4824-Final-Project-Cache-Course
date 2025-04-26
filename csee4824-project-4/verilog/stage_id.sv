@@ -237,10 +237,7 @@ module stage_id (
 
     input lsq_free,
 
-    //reset signals from retire (for branch)
-    input maptable_clear,
-    input rob_clear,
-    input rs_clear,
+
 
 
     
@@ -289,6 +286,7 @@ module stage_id (
 
 );
     logic rd_mem, wr_mem, is_branch;
+    logic halt, illegal, csr_op;
     logic cond_branch, uncond_branch;
     ALU_FUNC alu_func;
     logic [6:0] opcode;
@@ -346,6 +344,9 @@ module stage_id (
     assign rob_dispatch_packet.opcode   = opcode;
     assign rob_dispatch_packet.valid    = rob_load_entry;
     assign rob_dispatch_packet.is_branch = cond_branch || uncond_branch;
+    assign rob_dispatch_packet.halt = halt;
+    assign rob_dispatch_packet.illegal = illegal;
+    assign rob_dispatch_packet.csr_op = csr_op;
 
     //operand select (OPA)
     
@@ -439,7 +440,7 @@ module stage_id (
         //     rs1_opb_valid = 1;
     end
     logic mt_reset;
-    assign mt_reset = reset || maptable_clear;
+    assign mt_reset = reset;
     
     // Map Table
     map_table map_table_0 (
@@ -462,7 +463,7 @@ module stage_id (
         //.tags_debug(mt_tags_debug)
     );
     logic rs_reset;
-    assign rs_reset = reset || rs_clear;
+    assign rs_reset = reset;
 
     // Reservation Station
     reservation_station reservation_station_1 (
@@ -474,6 +475,7 @@ module stage_id (
         .rs_rob_tag(rob_tag_out),
         .rs_cdb_in(cdb_value),
         .rs_cdb_tag(cdb_tag),
+
         .rs_cdb_valid(cdb_valid),
         .rs_opa_in(rs1_opa_in),
         .rs_opb_in(rs1_opb_in),
@@ -522,7 +524,7 @@ module stage_id (
         //.rob_cdb_in('{tag: cdb_tag, value: cdb_value, valid: cdb_valid}), Synthesis Issues, Replacing with, with other instantiations above:
         .rob_cdb_in(rob_cdb_packet),
         .retire_entry(rob_retire_entry),
-        .rob_clear(rob_clear),
+        .rob_clear(1'b0),
         .store_retire(store_retire),
         .store_tag(store_tag),
         .rob_retire_out(rob_retire_out),
@@ -560,6 +562,9 @@ module stage_id (
         .wr_mem(wr_mem),
         .cond_branch(cond_branch),
         .uncond_branch(uncond_branch),
+        .halt(halt),
+        .illegal(illegal),
+        .csr_op(csr_op),
         
         .has_dest(has_dest_reg)
     );
