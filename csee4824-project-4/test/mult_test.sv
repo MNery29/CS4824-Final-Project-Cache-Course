@@ -25,9 +25,13 @@ module testbench;
     end
 
 
-    assign cres = a * b;
-    assign correct = ~done || (cres === result);
+    logic [127:0] full_product;
+    assign full_product = a * b;
 
+    // Check either low or high bits depending on mul_type
+    assign correct = ~done || 
+                    ((mul_type == 2'b00) ? (full_product[63:0] === result) :
+                                            (full_product[127:64] === result));
 
     always @(posedge clock) begin
         #(`CLOCK_PERIOD*0.2); // a short wait to let signals stabilize

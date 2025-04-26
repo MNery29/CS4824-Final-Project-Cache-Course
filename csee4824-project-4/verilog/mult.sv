@@ -19,41 +19,60 @@
 // assign unsigned_mul = opa * opb;
 // assign mixed_mul    = signed_opa * opb;
 
-module booth_mult (
+
+//Used to determine which type of multiplication to perform 
+typedef enum logic [1:0] {
+    MUL_ALU_MUL    = 2'b00, // result = low 64 bits of signed_mul
+    MUL_ALU_MULH   = 2'b01, // result = high 64 bits of signed_mul
+    MUL_ALU_MULHSU = 2'b10, // result = high 64 bits of mixed_mul
+    MUL_ALU_MULHU  = 2'b11  // result = high 64 bits of unsigned_mul
+} mul_type_t;
+
+
+module mult (
     input clock, reset,
     input [63:0] mcand, mplier,
+    input [1:0] mul_type, // which kind of multiplication to compute 
     input start,
 
     output [63:0] product,
     output done
 );
 
-    logic [`MULT_STAGES-2:0] internal_dones, internal_phantoms;
-    logic [(64*(`MULT_STAGES-1))-1:0] internal_mcands;
-    logic [(128*(`MULT_STAGES-1))-1:0] internal_product_sums;
-    logic [127:0] full_product;
-    logic [63:0] mcand_out, mplier_out; // unused, just for wiring
-    logic [127:0] initial_product_sum; // this is the initial product sum, {AC, QR} = {0, mplier}
-    logic initial_phantom_bit; // this is the initial phantom bit, starts off as 0
-    logic out_phantom_bit; // this is the output phantom bit, used for the next stage
+    logic [`STAGES-2:0] internal_dones;
+    logic [(64*(`STAGES-1))-1:0] internal_product_sums, internal_mcands, internal_mpliers;
+    logic [63:0] mcand_out, mplier_out;
+    logic [127:0] full_product_sum; // full 128-bit product at output
 
-    assign initial_product_sum = {64'h0, mplier};
-    assign initial_phantom_bit = 1'b0;
+
+
 
     // instantiate an array of mult_stage modules
     // this uses concatenation syntax for internal wiring, see lab 2 slides
-    booth_mult_stage mstage [`MULT_STAGES-1:0] (
+    mult_stage mstage [`STAGES-1:0] (
         .clock (clock),
         .reset (reset),
-        .start       ({internal_dones,        start}), // forward prev done as next start
-        .prev_sum    ({internal_product_sums, initial_product_sum}), // start the sum at 0
+        .start       ({internal_dones, start}), // forward prev done as next start
+        .prev_sum    ({internal_product_sums, 128'h0}), // start the sum at 0, use the full 128 bits. 
+        .mplier      ({internal_mpliers,      mplier}),
         .mcand       ({internal_mcands,       mcand}),
-        .phantom_bit ({internal_phantoms,      initial_phantom_bit}), // start the phantom bit at 0
-        .product_sum ({full_product,    internal_product_sums}),
-        .out_phantom_bit ({out_phantom_bit, internal_phantoms}), // phantom bit for next stage
+        .product_sum ({full_product_sum,    internal_product_sums}),
+        .next_mplier ({mplier_out, internal_mpliers}),
         .next_mcand  ({mcand_out,  internal_mcands}),
         .done        ({done,       internal_dones}) // done when the final stage is done
     );
-    assign product = full_product[63:0]; // this is the final product
+
+    // assign the output product to be either high 64 bits or low 64 bits of the full product sum, based on type of mult
+
+    always_comb begin
+        case (mul_type)
+            MUL_ALU_MUL:    product = full_product_sum[63:0];    // low 64 bits (normal multiply)
+            MUL_ALU_MULH:   product = full_product_sum[127:64];  // high 64 bits (signed x signed)
+            MUL_ALU_MULHSU: product = full_product_sum[127:64];  // high 64 bits (signed x unsigned)
+            MUL_ALU_MULHU:  product = full_product_sum[127:64];  // high 64 bits (unsigned x unsigned)
+            default:        product = 64'b0;
+        endcase
+    end
 
 endmodule
+
