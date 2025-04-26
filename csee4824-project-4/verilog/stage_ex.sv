@@ -268,34 +268,6 @@ module conditional_branch (
 
 endmodule // conditional_branch
 
-// typedef struct packed {
-//     logic [4:0]  tag;     // ROB tag
-//     logic [63:0] value;   // Result value
-//     logic        valid;   // Valid signal
-// } CDB_PACKET;
-
-
-// //packet from IS (issue stage) to EX (execute stage)
-// typedef struct packed {
-//     logic [31:0] OPA;         // Operand A
-//     logic [31:0] OPB;         // Operand B
-//     logic [4:0]  rob_tag;     // ROB tag for destination
-//     logic [5:0]  RS_tag;      // Optional: ID of issuing RS
-//     ALU_FUNC alu_func;    // ALU operation selector
-//     logic [31:0] NPC;         // Next PC (for branch evaluation)
-//     logic [31:0] inst;        // Raw instruction bits
-//     logic        issue_valid; // This packet is valid to execute
-//     logic rd_mem;
-//     logic wr_mem;
-// } IS_EX_PACKET;
-
-
-// typedef struct packed {
-//     logic [4:0]  rob_tag;   // Where in the ROB the result belongs
-//     logic [63:0] value;     // Result to commit
-//     logic        done;      // Result is ready
-//     logic valid; //whether this packet is valid yet
-// } EX_CP_PACKET;
 
 module stage_ex (
     input logic clk, rst,
