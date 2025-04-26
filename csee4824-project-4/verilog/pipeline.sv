@@ -86,7 +86,7 @@ module pipeline (
 
     //if stage
     output IF_ID_PACKET if_packet,
-    output IF_ID_PACKET if_id_reg,
+
 
    
 
@@ -217,10 +217,7 @@ module pipeline (
     logic [`XLEN-1:0] mem_addr_out;
     logic             mem_valid_out;
 
-    logic maptable_clear;
-    logic rob_clear;
     logic lsq_clear;
-    logic rs_clear;
     logic is_clear;
     logic fu_clear;
     logic cp_clear;

@@ -99,12 +99,9 @@ module testbench;
     logic rob_retire_entry;
 
     logic store_retire;
-    logic [4:0] store_tag;
 
     logic [4:0] rob_dest_reg;
     logic [31:0] rob_to_regfile_value;
-
-    logic lsq_free;
 
     logic maptable_clear;
     logic rob_clear;
