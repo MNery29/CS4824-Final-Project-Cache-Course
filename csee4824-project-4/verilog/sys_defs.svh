@@ -482,6 +482,12 @@ typedef struct packed {
     MEM_SIZE mem_size; // size of the memory operation
 } lsq_entry_t;
 
+typedef enum logic [1:0] {
+    MUL_ALU_MUL    = 2'b00, // result = low 64 bits of signed_mul
+    MUL_ALU_MULH   = 2'b01, // result = high 64 bits of signed_mul
+    MUL_ALU_MULHSU = 2'b10, // result = high 64 bits of mixed_mul
+    MUL_ALU_MULHU  = 2'b11  // result = high 64 bits of unsigned_mul
+} mult_type_t;
 
 
 `endif // __SYS_DEFS_SVH__
