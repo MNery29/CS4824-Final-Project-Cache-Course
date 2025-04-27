@@ -74,6 +74,7 @@ module reorder_buffer(
     logic rob_illegal[`ROB_SZ-1:0]; 
     logic rob_halt[`ROB_SZ-1:0]; 
     logic rob_csr_op[`ROB_SZ-1:0]; 
+    logic [31:0] npc_rob[`ROB_SZ-1:0]; //used to track the next program counter for branch instructions
 
     //head and tail pointers for queue FIFO structure
     logic [`ROB_TAG_BITS:0] head, tail;
@@ -114,6 +115,7 @@ module reorder_buffer(
             rob_retire_out.halt      = rob_halt[head[`ROB_TAG_BITS-1:0]];
             rob_retire_out.illegal   = rob_illegal[head[`ROB_TAG_BITS-1:0]];
             rob_retire_out.csr_op    = rob_csr_op[head[`ROB_TAG_BITS-1:0]];
+            rob_retire_out.npc        = npc_rob[head[`ROB_TAG_BITS-1:0]]; // this will only be used if we do TAKE BRANCH (RT will handle this)
         end else begin
             rob_retire_out = '{default: 0};
         end
@@ -159,6 +161,7 @@ module reorder_buffer(
                 rob_halt[i] <= 1'b0;
                 rob_illegal[i] <= 1'b0;
                 rob_csr_op[i] <= 1'b0;
+                npc_rob[i] <= 32'b0;
             end
             head <= 1;
             tail <= 1;
@@ -174,6 +177,7 @@ module reorder_buffer(
                 rob_halt[tail[`ROB_TAG_BITS-1:0]] <= rob_dispatch_in.halt;
                 rob_illegal[tail[`ROB_TAG_BITS-1:0]] <= rob_dispatch_in.illegal;
                 rob_csr_op[tail[`ROB_TAG_BITS-1:0]] <= rob_dispatch_in.csr_op;
+                npc_rob[tail[`ROB_TAG_BITS-1:0]] <= rob_dispatch_in.npc;
                 tail <= next_tail;
             end
 
@@ -204,6 +208,7 @@ module reorder_buffer(
                         rob_halt[i] <= 1'b0;
                         rob_illegal[i] <= 1'b0;
                         rob_csr_op[i] <= 1'b0;
+                        npc_rob[i] <= 32'b0;
                     end
                     head <= tail;
                 end else begin
@@ -216,6 +221,7 @@ module reorder_buffer(
                     rob_halt[head[`ROB_TAG_BITS-1:0]] <= 1'b0;
                     rob_illegal[head[`ROB_TAG_BITS-1:0]] <= 1'b0;
                     rob_csr_op[head[`ROB_TAG_BITS-1:0]] <= 1'b0;
+                    npc_rob[head[`ROB_TAG_BITS-1:0]] <= 32'b0;
                     head <= next_head;
                 end
             end

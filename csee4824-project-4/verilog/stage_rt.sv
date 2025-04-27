@@ -35,6 +35,8 @@ module stage_rt (
     output logic illegal,
     output logic csr_op,
 
+    output logic [31:0] npc,
+
     //memory outputs
     // output logic [63:0] mem_addr, // memory address to write to
     output logic [4:0] mem_tag,
@@ -64,7 +66,9 @@ logic halt_reg;
 logic illegal_reg;
 logic csr_op_reg;
 
-assign retire_value = retire_value_reg;
+logic [31:0] npc_reg;
+
+assign retire_value = take_branch ? npc_reg : retire_value_reg;
 assign retire_dest = retire_dest_reg;
 assign retire_valid_out = retire_valid_reg;
 assign retire_tag = retire_tag_reg;
@@ -79,6 +83,8 @@ assign new_addr = take_branch ? retire_value_reg : 0; // if we take the branch, 
 assign halt = halt_reg;
 assign illegal = illegal_reg;
 assign csr_op = csr_op_reg;
+
+assign npc = npc_reg;
 
 
 
@@ -104,13 +110,15 @@ always_ff @(posedge clock) begin
         // mem_addr <= 64'b0;
         mem_tag_reg <= 0;
         mem_valid_reg <= 0;
+        npc_reg <= 0;
     end else begin
         // if is a branch, and we predicted correct (not taken), then we can just ignore it
         if (rob_ready && rob_valid) begin
             // retiring an instruction: valid entry from ROB
+            
             retire_value_reg <= rob_retire_packet.value;
             retire_dest_reg  <= rob_retire_packet.dest_reg;
-            retire_valid_reg <= !rob_retire_packet.mem_valid;
+            retire_valid_reg <= !rob_retire_packet.mem_valid || rob_retire_packet.take_branch;
             retire_tag_reg <= rob_retire_packet.tag[4:0];
             // mem_addr     <= rob_retire_packet.mem_addr;
             mem_tag_reg      <= rob_retire_packet.tag[4:0];
@@ -119,6 +127,8 @@ always_ff @(posedge clock) begin
             halt_reg <= rob_retire_packet.halt;
             illegal_reg <= rob_retire_packet.illegal;
             csr_op_reg <= rob_retire_packet.csr_op;
+
+            npc_reg <= rob_retire_packet.npc;
             if (rob_retire_packet.is_branch) begin
                 // if it is a branch, we need to check if we take the branch
                 if (rob_retire_packet.take_branch) begin
@@ -155,6 +165,8 @@ always_ff @(posedge clock) begin
             halt_reg <= 0;
             illegal_reg <= 0;
             csr_op_reg <= 0;
+
+            npc_reg <= 0;
 
         end
     end

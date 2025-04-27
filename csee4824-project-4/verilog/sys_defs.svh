@@ -374,6 +374,7 @@ typedef struct packed {
 typedef struct packed {
     logic [4:0] dest_reg; // Destination register for the instruction
     logic [6:0] opcode;     // Opcode for the instruction
+    logic [31:0] npc;
     logic       valid;    // Whether the instruction is valid
     logic       is_branch; // Whether the instruction is a branch
     logic illegal;
@@ -450,8 +451,9 @@ typedef struct packed {
     logic [5:0] tag;     // ROB tag for the newly allocated entry
     logic [4:0]   dest_reg; // Destination register for the instruction
     logic [31:0]  value;  // Value to write back to the register file
+    logic [31:0] npc;
     logic        reg_valid; // Whether the output is valid (i.e., we dispatched)
-    logic        mem_valid; 
+    logic        mem_valid;    
     logic [31:0] mem_addr; // Memory address to write back to the register file
     logic is_branch; // Whether the instruction is a branch, if it is, a positive VALUE would mean that the branch was taken
     logic take_branch;

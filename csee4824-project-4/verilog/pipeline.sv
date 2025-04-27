@@ -180,6 +180,7 @@ module pipeline (
     // logic [`ROB_TAG_BITS-1:0] id_tag;
     logic [31:0] npc_out;
     logic [31:0] pc_out;
+    logic [31:0] npc_rt;
     // INST id_inst_out;
     // ALU_OPA_SELECT id_opa_select;
     // logic [`RS_SIZE-1:0][31:0] rs1_inst_out;
@@ -746,6 +747,7 @@ module pipeline (
         .halt(halt_rt),
         .illegal(illegal_rt),
         .csr_op(csr_op_rt),
+        .npc(npc_rt),
         .mem_tag(mem_tag),
         .mem_valid(mem_valid),
         .clear_is(clear_is),
@@ -868,7 +870,7 @@ module pipeline (
     assign pipeline_commit_wr_en    = retire_valid_out;
     assign pipeline_commit_wr_idx   = retire_dest_out;
     assign pipeline_commit_wr_data  = retire_value_out;
-    assign pipeline_commit_NPC      = rob_retire_packet.mem_addr; 
+    assign pipeline_commit_NPC      = npc_rt; 
     assign pipeline_completed_insts = retire_valid_out ? 4'd1 : 4'd0;
     assign pipeline_error_status = illegal_rt        ? ILLEGAL_INST :
                                    halt_rt           ? HALTED_ON_WFI :

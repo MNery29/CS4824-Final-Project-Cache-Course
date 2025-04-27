@@ -347,6 +347,7 @@ module stage_id (
     assign rob_dispatch_packet.halt = halt;
     assign rob_dispatch_packet.illegal = illegal;
     assign rob_dispatch_packet.csr_op = csr_op;
+    assign rob_dispatch_packet.npc = if_id_reg.NPC;
 
     //operand select (OPA)
     

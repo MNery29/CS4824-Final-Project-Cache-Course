@@ -407,8 +407,8 @@ module testbench;
                 pkt.tag, pkt.dest_reg,
                 pkt.reg_valid, pkt.mem_valid, pkt.is_branch);
 
-        $display("            value=0x%08h  mem_addr=0x%08h take_branch=%b",
-                pkt.value, pkt.mem_addr, pkt.take_branch);
+        $display("            value=0x%08h  mem_addr=0x%08h take_branch=%b NPC = 0x%08h",
+                pkt.value, pkt.mem_addr, pkt.take_branch, pkt.npc);
     endtask
     task automatic show_id_stage (
         input [`ROB_TAG_BITS-1:0] id_tag,
@@ -584,8 +584,8 @@ module testbench;
                 $time, pkt.issue_valid, pkt.rob_tag, pkt.RS_tag,
                 alu_func_str(pkt.alu_func),
                 pkt.rd_mem, pkt.wr_mem);
-        $display("            OPA=0x%08h  OPB=0x%08h  NPC=0x%08h  inst=0x%08h",
-                pkt.OPA, pkt.OPB, pkt.NPC, pkt.inst);
+        $display("            OPA=0x%08h  OPB=0x%08h  NPC=0x%08h  PC=0x%08h inst=0x%08h",
+                pkt.OPA, pkt.OPB, pkt.NPC, pkt.PC, pkt.inst);
         $display("            issue_valid=%b  fu_ready=%b  rs_issue_enable=%b cond_branch=%b uncond_branch=%b",
                 issue_valid, fu_ready, rs_issue_en, pkt.cond_branch, pkt.uncond_branch);
         $display(" opa_sel=%s  opb_sel=%s",

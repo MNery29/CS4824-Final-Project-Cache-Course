@@ -25,8 +25,8 @@ module stage_is (
     input ALU_OPB_SELECT rs_opb_select_out ,
     input  logic [`RS_SIZE-1:0][4:0]    rs_tag_out,
     input ALU_FUNC [`RS_SIZE-1:0]       rs_alu_func_out,
-    input logic [`RS_SIZE-1:0][31:0]    rs_npc_out,       // Next PC
-    input logic [`RS_SIZE-1:0][31:0]    rs_pc_out,       // PC
+    input logic [31:0]    rs_npc_out,       // Next PC
+    input logic [31:0]    rs_pc_out,       // PC
     input INST rs_inst_out,
     // input logic [`RS_SIZE-1:0][31:0]    rs_inst_out,       // Instruction word
     input logic rd_mem, wr_mem, cond_branch,uncond_branch,// read/write memory
@@ -61,8 +61,8 @@ always_comb begin
                 is_packet.rob_tag      = rs_tag_out[i][4:0]; // fix to only send the last 4 bits of tag, keep msb internal
                 is_packet.issue_valid  = 1;
                 is_packet.alu_func     = rs_alu_func_out[i];
-                is_packet.NPC          = rs_npc_out[i];
-                is_packet.PC = rs_pc_out[i];
+                is_packet.NPC          = rs_npc_out;
+                is_packet.PC = rs_pc_out;
                 is_packet.inst = rs_inst_out;
                 // is_packet.inst         = rs_inst_out[i];
                 is_packet.RS_tag       = i;
