@@ -86,6 +86,8 @@ assign csr_op = csr_op_reg;
 
 assign npc = npc_reg;
 
+assign duplicate = rob_retire_packet.value == retire_value_reg && rob_retire_packet.dest_reg == retire_dest_reg && rob_retire_packet.tag[4:0] == retire_tag_reg && rob_retire_packet.mem_valid == mem_valid_reg && rob_retire_packet.halt == halt_reg && rob_retire_packet.illegal == illegal_reg && rob_retire_packet.csr_op == csr_op_reg;
+
 
 
 always_ff @(posedge clock) begin
@@ -113,7 +115,7 @@ always_ff @(posedge clock) begin
         npc_reg <= 0;
     end else begin
         // if is a branch, and we predicted correct (not taken), then we can just ignore it
-        if (rob_ready && rob_valid) begin
+        if (rob_ready && rob_valid && !duplicate) begin
             // retiring an instruction: valid entry from ROB
             
             retire_value_reg <= rob_retire_packet.value;

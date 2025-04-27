@@ -32,6 +32,7 @@ module reorder_buffer(
 
     //input signals from retire stage
     input retire_entry,
+    input [4:0] retire_tag,
     input rob_clear, //flush all entries 
 
     input store_retire, //store retire signal from LSQ
@@ -75,6 +76,7 @@ module reorder_buffer(
     logic rob_halt[`ROB_SZ-1:0]; 
     logic rob_csr_op[`ROB_SZ-1:0]; 
     logic [31:0] npc_rob[`ROB_SZ-1:0]; //used to track the next program counter for branch instructions
+    logic rob_is_store[`ROB_SZ-1:0]; //used to track if instruction is a store or not
 
     //head and tail pointers for queue FIFO structure
     logic [`ROB_TAG_BITS:0] head, tail;
@@ -101,9 +103,10 @@ module reorder_buffer(
     assign rob_dispatch_out.tag   = tail[`ROB_TAG_BITS-1:0];
     assign rob_dispatch_out.valid = (rob_dispatch_in.valid && !rob_full);
 
+
     // RETIRE PACKET OUTPUT
     always_comb begin
-        if ((retire_entry && rob_status[head[`ROB_TAG_BITS-1:0]] == READY) && (!rob_clear)) begin
+        if ((rob_status[head[`ROB_TAG_BITS-1:0]] == READY) && (!rob_clear)) begin
             rob_retire_out.tag       = head[`ROB_TAG_BITS-1:0];
             rob_retire_out.dest_reg  = regfile_retire(rob_opcode[head[`ROB_TAG_BITS-1:0]]) ? rob_dest[head[`ROB_TAG_BITS-1:0]] : `ZERO_REG;
             rob_retire_out.value     = rob_values[head[`ROB_TAG_BITS-1:0]];
@@ -162,6 +165,7 @@ module reorder_buffer(
                 rob_illegal[i] <= 1'b0;
                 rob_csr_op[i] <= 1'b0;
                 npc_rob[i] <= 32'b0;
+                rob_is_store[i] <= 1'b0;
             end
             head <= 1;
             tail <= 1;
@@ -178,6 +182,7 @@ module reorder_buffer(
                 rob_illegal[tail[`ROB_TAG_BITS-1:0]] <= rob_dispatch_in.illegal;
                 rob_csr_op[tail[`ROB_TAG_BITS-1:0]] <= rob_dispatch_in.csr_op;
                 npc_rob[tail[`ROB_TAG_BITS-1:0]] <= rob_dispatch_in.npc;
+                rob_is_store[tail[`ROB_TAG_BITS-1:0]] <= 0;
                 tail <= next_tail;
             end
 
@@ -193,10 +198,12 @@ module reorder_buffer(
             if (store_retire && rob_status[store_tag] == BUSY) begin
                 rob_values[store_tag] <= 32'b0;
                 rob_status[store_tag] <= READY;
+                rob_is_store[store_tag] <= 1'b1;
             end
 
             // Retire stage
-            if (retire_entry && rob_status[head[`ROB_TAG_BITS-1:0]] == READY) begin
+            if ( (retire_entry && rob_status[head[`ROB_TAG_BITS-1:0]] == READY && retire_tag == head[`ROB_TAG_BITS-1:0] )||
+                rob_is_store[head[`ROB_TAG_BITS-1:0]] ) begin
                 if (rob_clear) begin
                     for (int i = 0; i < `ROB_SZ; i++) begin
                         rob_values[i] <= 32'b0;
@@ -209,6 +216,7 @@ module reorder_buffer(
                         rob_illegal[i] <= 1'b0;
                         rob_csr_op[i] <= 1'b0;
                         npc_rob[i] <= 32'b0;
+                        rob_is_store[i] <= 1'b0;
                     end
                     head <= tail;
                 end else begin
@@ -222,6 +230,7 @@ module reorder_buffer(
                     rob_illegal[head[`ROB_TAG_BITS-1:0]] <= 1'b0;
                     rob_csr_op[head[`ROB_TAG_BITS-1:0]] <= 1'b0;
                     npc_rob[head[`ROB_TAG_BITS-1:0]] <= 32'b0;
+                    rob_is_store[head[`ROB_TAG_BITS-1:0]] <= 1'b0;
                     head <= next_head;
                 end
             end

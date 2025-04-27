@@ -82,6 +82,8 @@ module pipeline (
     output logic [31:0] rs1_value, rs2_value,
     output logic [31:0] rob_to_rs_value1, rob_to_rs_value2,
 
+    output logic [31:0] rs1_opa_in, rs1_opb_in,
+
     output ALU_OPA_SELECT id_opa_select, 
     output ALU_OPB_SELECT id_opb_select,
 
@@ -440,7 +442,7 @@ module pipeline (
         .fu_busy(fu_busy),
         .rs1_clear(rs_issue_enable[0]), //this means its the first register
 
-        .rob_retire_entry(1'b1), // TODO: connect properly
+        .rob_retire_entry(retire_valid_out), // TODO: connect properly
 
         .store_retire(store_ready),
         .store_tag(store_tag),
@@ -494,7 +496,10 @@ module pipeline (
         .debug_reg(debug_reg),
 
         .mt_to_regfile_rs1(mt_to_regfile_rs1),
-        .mt_to_regfile_rs2(mt_to_regfile_rs2)
+        .mt_to_regfile_rs2(mt_to_regfile_rs2),
+
+        .rs1_opa_in(rs1_opa_in),
+        .rs1_opb_in(rs1_opb_in)
 
     );
 
@@ -774,6 +779,7 @@ module pipeline (
     logic [`XLEN-1:0] proc2Dmem_addr;
     logic [`XLEN-1:0] proc2Dmem_data;
     logic [1:0]       proc2Dmem_command;
+    logic read_data;
 `ifndef CACHE_MODE
     MEM_SIZE          proc2Dmem_size;
 `endif
@@ -818,13 +824,16 @@ module pipeline (
     // );
 
     always_ff @(posedge clock or posedge reset) begin
-        if (reset)
+        if (reset) begin
             owner_q <= `OWN_NONE;
         // for now, we have to wait for data to respond, so not just tag
-        else if (mem2proc_data != 0)   // memory sent a reply -> done
+        end
+        else if (read_data != 0) begin  // memory sent a reply -> done
             owner_q <= `OWN_NONE;
-        else
+        end
+        else begin
             owner_q <= owner_d;
+        end
     end
     
     always_comb begin
@@ -836,6 +845,7 @@ module pipeline (
         Imem2proc_response  = 0;
         Imem2proc_data      = 0;
         Imem2proc_tag       = 0;
+        read_data=0;
         if_stall = 0;
 
         case (owner_q)
@@ -844,11 +854,17 @@ module pipeline (
                 mem2dcache_response = mem2proc_response;
                 mem2dcache_data = mem2proc_data;
                 mem2dcache_tag      = mem2proc_tag;
+                if (mem2proc_response != 0) begin
+                    read_data = 1'b1;
+                end
             end
             `OWN_I: begin
                 Imem2proc_response = mem2proc_response;
                 Imem2proc_data     = mem2proc_data;
                 Imem2proc_tag      = mem2proc_tag;
+                if (mem2proc_response != 0) begin
+                    read_data = 1'b1;
+                end
             end
             default: begin
             end

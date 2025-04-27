@@ -114,6 +114,9 @@ module testbench;
     logic rob_clear;
     logic rs_clear;
 
+    logic [31:0] rs1_opa_in;
+    logic [31:0] rs1_opb_in;
+
 
 
     //EX stage debugging wires
@@ -316,7 +319,10 @@ module testbench;
         .dcache_size         (dcache_size),
         .mem_tag             (mem_tag),
         .mem_valid           (mem_valid),
-        .cdb_lsq             (cdb_lsq)
+        .cdb_lsq             (cdb_lsq),
+
+        .rs1_opa_in         (rs1_opa_in),
+        .rs1_opb_in         (rs1_opb_in)
         
         
 
@@ -690,6 +696,8 @@ module testbench;
             $display("REG INDX 1 =%d, REG INDX 2=%d", mt_to_regfile_rs1, mt_to_regfile_rs2);
             $display("ROB TAG=%d, RS1 READY=%b, mt_to_rs_tag1=%b, mt_to_rs_tag2=%b", id_tag, rs1_ready, mt_to_rs_tag1, mt_to_rs_tag2);
             $display("RS1 VALUE=%h, RS2 VALUE=%h", rs1_value, rs2_value);
+            $display("RS A IN (FROM ID STAGE ): %h", rs1_opa_in);
+            $display("RS B IN (FROM ID STAGE ): %h", rs1_opb_in);
             $display("ROB TO RS VALUE1=%h, ROB TO RS VALUE2=%h", rob_to_rs_value1, rob_to_rs_value2);
             show_if_packet(if_packet);
             show_if_packet(if_id_reg);

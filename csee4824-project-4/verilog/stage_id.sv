@@ -280,7 +280,9 @@ module stage_id (
     output logic [31:0] rob_to_rs_value1, rob_to_rs_value2,
 
     output logic [31:1] [`XLEN-1:0] debug_reg,
-    output logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2
+    output logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2,
+
+    output logic [31:0] rs1_opa_in, rs1_opb_in
 
 
 
@@ -320,7 +322,7 @@ module stage_id (
     // logic [31:0] rs1_value, rs2_value;
 
     // RS operand handling
-    logic [31:0] rs1_opa_in, rs1_opb_in;
+    // logic [31:0] rs1_opa_in, rs1_opb_in;
     logic rs1_opa_valid, rs1_opb_valid;
 
     // ROB to RS read signals
@@ -360,8 +362,8 @@ module stage_id (
             rs1_opa_in = rs1_value;
             rs1_opa_valid = 1;
         end else if (!mt_to_rs_tag1[0]) begin
-            rs1_opa_in = {28'b0, mt_to_rs_tag1[5:1]};
-            rs1_opa_valid = 0;
+            rs1_opa_in = (cdb_valid && cdb_tag == mt_to_rs_tag1[5:1]) ? cdb_value :  {28'b0, mt_to_rs_tag1[5:1]};
+            rs1_opa_valid = (cdb_valid && cdb_tag == mt_to_rs_tag1[5:1]) ? 1 : 0;
         end else begin
             rob_to_rs_read1 = 1;
             rob_read_tag1 = mt_to_rs_tag1[5:1];
@@ -406,8 +408,8 @@ module stage_id (
             rs1_opb_in = rs2_value;
             rs1_opb_valid = 1;
         end else if (!mt_to_rs_tag2[0]) begin
-            rs1_opb_in = {28'b0, mt_to_rs_tag2[5:1]};
-            rs1_opb_valid = 0;
+            rs1_opb_in = (cdb_valid && cdb_tag == mt_to_rs_tag2[5:1]) ? cdb_value : {28'b0, mt_to_rs_tag2[5:1]};
+            rs1_opb_valid = (cdb_valid && cdb_tag == mt_to_rs_tag2[5:1]) ? 1 : 0;
         end else begin
             rob_to_rs_read2 = 1;
             rob_read_tag2 = mt_to_rs_tag2[5:1];
@@ -524,7 +526,8 @@ module stage_id (
         .rob_read_tag2(rob_read_tag2),
         //.rob_cdb_in('{tag: cdb_tag, value: cdb_value, valid: cdb_valid}), Synthesis Issues, Replacing with, with other instantiations above:
         .rob_cdb_in(rob_cdb_packet),
-        .retire_entry(rob_retire_entry),
+        .retire_entry(retire_entry),
+        .retire_tag(retire_tag),
         .rob_clear(1'b0),
         .store_retire(store_retire),
         .store_tag(store_tag),
