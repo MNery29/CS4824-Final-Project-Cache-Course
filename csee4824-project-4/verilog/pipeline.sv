@@ -291,7 +291,8 @@ module pipeline (
     //////////////////////////////////////////////////
     //           Temporary Branch Logic             //
     //////////////////////////////////////////////////
-    assign if_valid = dispatch_ok && ~if_stall && ~stall_if_rt;                // Always fetch for now
+    assign if_valid = 1'b1; // always valid for now, fixing mult_no_lsq
+    //assign if_valid = dispatch_ok && ~if_stall && ~stall_if_rt;                // Always fetch for now
     assign branch_target = 32'b0;          // Default branch target
 
     //////////////////////////////////////////////////
