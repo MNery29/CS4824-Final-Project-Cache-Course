@@ -25,7 +25,6 @@ module pipeline (
 `ifndef CACHE_MODE
     output MEM_SIZE          proc2mem_size,    // Data size sent to memory
 `endif
-
     output logic [3:0]       pipeline_completed_insts,
     output EXCEPTION_CODE    pipeline_error_status,
     output logic [4:0]       pipeline_commit_wr_idx,
@@ -46,31 +45,20 @@ module pipeline (
     output logic [`ROB_TAG_BITS-1:0] cdb_tag,
     output logic [31:0] cdb_value,
 
-
     output logic rs1_clear,
     output logic rob_retire_entry,
 
-
-
     output logic  store_retire,
-
 
     output logic [4:0] rob_dest_reg,
     output logic [31:0] rob_to_regfile_value,
     output logic retire_entry,
 
-
-
-
-
     output logic lsq_free,
-
 
     output logic maptable_clear,
     output logic rob_clear,
     output logic rs_clear,
-
-
 
     //id stage debugging wires
     output logic [`ROB_TAG_BITS-1:0] id_tag,
@@ -89,16 +77,12 @@ module pipeline (
     output IF_ID_PACKET if_packet,
     output INST id_inst_out,
 
-
-   
-
     //IS stage debugging wires
     output IS_EX_PACKET is_packet,
     output IS_EX_PACKET is_ex_reg,
     output logic issue_valid,
     output logic fu_ready,
-    output logic [`RS_SIZE-1:0] rs_issue_enable,
-   
+    output logic [`RS_SIZE-1:0] rs_issue_enable,   
 
     //EX stage debugging wires
     output EX_CP_PACKET ex_cp_reg,
@@ -150,8 +134,6 @@ module pipeline (
     output logic halt_rt,
     output logic illegal_rt,
     output logic csr_op_rt
-
-
 
 );
 
@@ -389,15 +371,28 @@ module pipeline (
     //         IF/ID Pipeline Register              //
     //////////////////////////////////////////////////
     // IF_ID_PACKET      if_id_reg;
+    // fixed for synthesis
     always_ff @(posedge clock or posedge reset) begin
-        if (reset || clear_is) begin
+        if (reset) begin
             if_id_reg <= '0;
         end else begin
-            if (if_packet.valid) begin
+            if (clear_is) begin
+                if_id_reg <= '0;
+            end else if (if_packet.valid) begin
                 if_id_reg <= if_packet;
             end
         end
     end
+    
+    // always_ff @(posedge clock or posedge reset) begin
+    //     if (reset || clear_is) begin
+    //         if_id_reg <= '0;
+    //     end else begin
+    //         if (if_packet.valid) begin
+    //             if_id_reg <= if_packet;
+    //         end
+    //     end
+    // end
 
 
     //////////////////////////////////////////////////
@@ -633,13 +628,26 @@ module pipeline (
     //////////////////////////////////////////////////
     //           EX/CP Pipeline Register            //
     //////////////////////////////////////////////////
+    // fixed for synthesis
     always_ff @(posedge clock or posedge reset) begin
-        if (reset || clear_lsq) begin
+        if (reset) begin
             ex_cp_reg <= '0;
         end else begin
-            ex_cp_reg <= ex_packet;
+            if (clear_lsq) begin
+                ex_cp_reg <= '0;
+            end else begin
+                ex_cp_reg <= ex_packet;
+            end
         end
     end
+    
+    // always_ff @(posedge clock or posedge reset) begin
+    //     if (reset || clear_lsq) begin
+    //         ex_cp_reg <= '0;
+    //     end else begin
+    //         ex_cp_reg <= ex_packet;
+    //     end
+    // end
 
     //////////////////////////////////////////////////
     //               Complete Stage                 //
