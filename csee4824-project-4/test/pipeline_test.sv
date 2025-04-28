@@ -205,6 +205,8 @@ module testbench;
     
     logic [3:0] current_mem_tag;
 
+    logic lsq_op_in_progress;
+
 
     // logic [`XLEN-1:0] if_NPC_dbg;
     // logic [31:0]      if_inst_dbg;
@@ -364,7 +366,9 @@ module testbench;
         .cache_valid        (cache_valid),
         .cache_dirty        (cache_dirty),
 
-        .current_mem_tag     (current_mem_tag)
+        .current_mem_tag     (current_mem_tag),
+
+        .lsq_op_in_progress (lsq_op_in_progress)
         
 
         // .if_NPC_dbg       (if_NPC_dbg),
@@ -827,6 +831,7 @@ module testbench;
             show_rs_debug(rs_debug, "RS[0]");
             show_cdb_packet(cdb_packet, "CDB");
             $display("RETIRE STAGE INFORMATION: ");
+            $display("LSQ IN PROGRESS : %b", lsq_op_in_progress);
             $display("RETIRE HALT =%b, RETIRE ILLEGAL=%b, RETIRE CSR OP=%b", halt_rt, illegal_rt, csr_op_rt);
             $display("RETIRE VALUE=%h, RETIRE DEST=%d, RETIRE VALID=%b RETIRE_TAG=%b", retire_value_out, retire_dest_out, retire_valid_out, retire_tag);
             //display rob full, rs1 available, dispatch ok

@@ -28,7 +28,7 @@ module dcache
     input logic [`XLEN-1:0] proc2Dcache_addr,
     input logic [63:0] proc2Dcache_data, // datafor current command (if store)
     input logic [1:0] proc2Dcache_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
-    input logic [2:0] proc2Dcache_size, // `MEM_BYTE, `MEM_HALF, `MEM_WORD, `MEM_DOUBLE
+    input logic [1:0] proc2Dcache_size, // `MEM_BYTE, `MEM_HALF, `MEM_WORD, `MEM_DOUBLE
 
     input logic [3:0]  mem2dcache_response, // 0 = can't accept, other=tag of transaction
     input logic [63:0] mem2dcache_data,     // data resulting from a load
