@@ -337,8 +337,11 @@ module stage_id (
     logic [`ROB_TAG_BITS-1:0] rob_tag_out;
     logic [`ROB_TAG_BITS-1:0] rob_retire_tag_out;
 
+    logic is_call; //for branch predictor
+    logic is_return; //for branch predictor
 
-    //packets
+    assign is_call   = (opcode == 7'b1101111); // opcode for JAL
+    assign is_return = (opcode == 7'b1100111) && (if_id_reg.inst.r.rd == 5'd0); // opcode for JALR + destination register x0 packets
     DISPATCH_ROB_PACKET rob_dispatch_packet;
     ROB_DISPATCH_PACKET rob_dispatch_out;
 
@@ -350,6 +353,9 @@ module stage_id (
     assign rob_dispatch_packet.illegal = illegal;
     assign rob_dispatch_packet.csr_op = csr_op;
     assign rob_dispatch_packet.npc = if_id_reg.NPC;
+    assign rob_dispatch_packet.is_call = is_call;
+    assign rob_dispatch_packet.is_return = is_return;
+
 
     //operand select (OPA)
     
