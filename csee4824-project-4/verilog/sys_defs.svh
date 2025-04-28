@@ -452,6 +452,7 @@ typedef struct packed {
     logic [4:0]   dest_reg; // Destination register for the instruction
     logic [31:0]  value;  // Value to write back to the register file
     logic [31:0] npc;
+    logic [31:0] pc;  // for branch prediction
     logic        reg_valid; // Whether the output is valid (i.e., we dispatched)
     logic        mem_valid;    
     logic [31:0] mem_addr; // Memory address to write back to the register file
@@ -460,6 +461,8 @@ typedef struct packed {
     logic       halt;          // Is this a halt?
     logic       illegal;       // Is this instruction illegal?
     logic       csr_op;        // Is this a CSR operation? (we only used this as a cheap way to get return code)
+    logic is_call;   // for branch prediction
+    logic is_return; // for branch prediction
 } ROB_RETIRE_PACKET;
 
 

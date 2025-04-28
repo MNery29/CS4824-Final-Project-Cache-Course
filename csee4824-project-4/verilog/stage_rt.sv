@@ -46,7 +46,12 @@ module stage_rt (
     output logic stall_if,
     output logic clear_lsq,
     output logic [31:0] new_addr, // new address to write to
-    output logic take_branch // take branch bit
+    output logic take_branch, // take branch bit
+
+    //for branch prediction
+    output logic [31:0] retired_pc,
+    output logic retire_is_call,
+    output logic retire_is_return
 
 );
 
@@ -65,6 +70,11 @@ logic take_branch_reg;
 logic halt_reg;
 logic illegal_reg;
 logic csr_op_reg;
+
+// for branch predictor
+logic [31:0] retired_pc_reg;
+logic retire_is_call_reg;
+logic retire_is_return_reg;
 
 logic [31:0] npc_reg;
 
@@ -88,7 +98,10 @@ assign npc = npc_reg;
 
 assign duplicate = rob_retire_packet.value == retire_value_reg && rob_retire_packet.dest_reg == retire_dest_reg && rob_retire_packet.tag[4:0] == retire_tag_reg && rob_retire_packet.mem_valid == mem_valid_reg && rob_retire_packet.halt == halt_reg && rob_retire_packet.illegal == illegal_reg && rob_retire_packet.csr_op == csr_op_reg;
 
-
+// for branch predictor
+assign retired_pc = retired_pc_reg;
+assign retire_is_call = retire_is_call_reg;
+assign retire_is_return = retire_is_return_reg;
 
 always_ff @(posedge clock) begin
     // ok so we check to see if it is a branch, and if it is a branch, we check if we take the branch (we always assume no taking branches)
@@ -129,6 +142,12 @@ always_ff @(posedge clock) begin
             halt_reg <= rob_retire_packet.halt;
             illegal_reg <= rob_retire_packet.illegal;
             csr_op_reg <= rob_retire_packet.csr_op;
+
+            retired_pc_reg <= rob_retire_packet.pc; // assuming your ROB_RETIRE_PACKET has .pc
+
+            // For CALL and RETURN:
+            retire_is_call_reg <= rob_retire_packet.is_call;    // <- assuming exists
+            retire_is_return_reg <= rob_retire_packet.is_return; // <- assuming exists
 
             npc_reg <= rob_retire_packet.npc;
             if (rob_retire_packet.is_branch) begin

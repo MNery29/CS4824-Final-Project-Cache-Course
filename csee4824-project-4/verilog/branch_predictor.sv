@@ -8,9 +8,9 @@
 
 `timescale 1ns/1ps
 `include "verilog/sys_defs.svh"
-`include "verilog/btb.sv"
-`include "verilog/predictor_table.sv"
-`include "verilog/ras.sv"
+//`include "verilog/btb.sv"
+//`include "verilog/predictor_table.sv"
+//`include "verilog/ras.sv"
 
 module branch_predictor(
     input  logic         clock,

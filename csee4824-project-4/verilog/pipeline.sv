@@ -46,31 +46,20 @@ module pipeline (
     output logic [`ROB_TAG_BITS-1:0] cdb_tag,
     output logic [31:0] cdb_value,
 
-
     output logic rs1_clear,
     output logic rob_retire_entry,
 
-
-
     output logic  store_retire,
-
 
     output logic [4:0] rob_dest_reg,
     output logic [31:0] rob_to_regfile_value,
     output logic retire_entry,
 
-
-
-
-
     output logic lsq_free,
-
 
     output logic maptable_clear,
     output logic rob_clear,
     output logic rs_clear,
-
-
 
     //id stage debugging wires
     output logic [`ROB_TAG_BITS-1:0] id_tag,
@@ -91,9 +80,6 @@ module pipeline (
     output IF_ID_PACKET if_packet,
     output INST id_inst_out,
 
-
-   
-
     //IS stage debugging wires
     output IS_EX_PACKET is_packet,
     output IS_EX_PACKET is_ex_reg,
@@ -101,7 +87,6 @@ module pipeline (
     output logic fu_ready,
     output logic [`RS_SIZE-1:0] rs_issue_enable,
    
-
     //EX stage debugging wires
     output EX_CP_PACKET ex_cp_reg,
     output EX_CP_PACKET ex_packet,
@@ -152,8 +137,6 @@ module pipeline (
     output logic halt_rt,
     output logic illegal_rt,
     output logic csr_op_rt
-
-
 
 );
 
@@ -243,6 +226,19 @@ module pipeline (
     logic take_branch;
     logic [31:0] new_addr;
 
+//////////////////////////////////////////////////
+// Branch Predictor Wires
+//////////////////////////////////////////////////
+    logic predict_taken;
+    logic [`XLEN-1:0] predict_target;
+    
+    logic branch_resolve_valid;
+    logic [`XLEN-1:0] branch_resolve_pc;
+    logic branch_resolve_taken;
+    logic [`XLEN-1:0] branch_resolve_target;
+    logic branch_resolve_is_call;
+    logic branch_resolve_is_return;
+    
     //////////////////////////////////////////////////
     //                ROB + Map Table Wires         //
     //////////////////////////////////////////////////
@@ -309,11 +305,27 @@ module pipeline (
     // logic head_ready_for_mem; // debugging
     // logic [2:0] head_ptr; //points to OLDEST entry debugging
     // logic [2:0] tail_ptr; //points to next free entry debugging
+    
     //////////////////////////////////////////////////
-    //           Temporary Branch Logic             //
+    //           Branch Predictor                    //
     //////////////////////////////////////////////////
-    assign if_valid = dispatch_ok && ~if_stall && ~stall_if_rt;                // Always fetch for now
-    assign branch_target = 32'b0;          // Default branch target
+    branch_predictor branch_predictor_0 (
+    .clock(clock),
+    .reset(reset),
+
+    // Fetch interface
+    .fetch_pc(proc2Icache_addr),
+    .predict_taken(predict_taken),
+    .predict_target(predict_target),
+
+    // Resolve interface (hook up from Retire Stage later)
+    .resolve_valid(branch_resolve_valid),
+    .resolve_pc(branch_resolve_pc),
+    .resolve_taken(branch_resolve_taken),
+    .resolve_target(branch_resolve_target),
+    .resolve_is_return(branch_resolve_is_return),
+    .resolve_is_call(branch_resolve_is_call)
+    );
 
     //////////////////////////////////////////////////
     //         Fetch Stage                          //
@@ -330,6 +342,9 @@ module pipeline (
         .proc2Icache_addr(proc2Icache_addr),
         .stall_if(stall_if)
     );
+
+    assign take_branch = predict_taken;
+    assign new_addr = predict_target;
 
     //////////////////////////////////////////////////
     //                  I-Cache                     //
@@ -744,7 +759,8 @@ module pipeline (
         .rob_retire_packet(rob_retire_packet),
         .rob_ready(rob_ready),
         .rob_valid(rob_valid),
-        .branch_mispredict(1'b0),
+        
+        .branch_mispredict(branch_resolve_valid),
         .retire_value(retire_value_out),
         .retire_dest(retire_dest_out),
         .retire_valid_out(retire_valid_out),
@@ -758,12 +774,14 @@ module pipeline (
         .clear_is(clear_is),
         .stall_if(stall_if_rt),
         .clear_lsq(clear_lsq),
-
-        .take_branch(take_branch),
-        .new_addr(new_addr)
+    
+        // Branch resolution outputs
+        .take_branch(branch_resolve_taken),
+        .new_addr(branch_resolve_target),
+        .retired_pc(branch_resolve_pc),
+        .retire_is_call(branch_resolve_is_call),
+        .retire_is_return(branch_resolve_is_return)
     );
-
-
 
     `define OWN_NONE 2'b00
     `define OWN_D    2'b01
