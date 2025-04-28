@@ -62,7 +62,9 @@ module icache (
 
     // To fetch stage
     output logic [63:0] Icache_data_out, // Data is mem[proc2Icache_addr]
-    output logic        Icache_valid_out // When valid is high
+    output logic        Icache_valid_out, // When valid is high
+
+    output logic [3:0] current_mem_tag
 );
 
     // ---- Cache data ---- //
@@ -83,7 +85,7 @@ module icache (
 
     // ---- Main cache logic ---- //
 
-    logic [3:0] current_mem_tag; // The current memory tag we might be waiting on
+    // logic [3:0] current_mem_tag; // The current memory tag we might be waiting on
     logic miss_outstanding; // Whether a miss has received its response tag to wait on
 
     wire got_mem_data = (current_mem_tag == Imem2proc_tag) && (current_mem_tag != 0);
@@ -120,7 +122,7 @@ module icache (
             if (update_mem_tag) begin
                 current_mem_tag <= Imem2proc_response;
             end
-            if (got_mem_data) begin // If data came from memory, meaning tag matches
+            if (got_mem_data && !changed_addr) begin // If data came from memory, meaning tag matches
                 icache_data[current_index].data  <= Imem2proc_data;
                 icache_data[current_index].tags  <= current_tag;
                 icache_data[current_index].valid <= 1;

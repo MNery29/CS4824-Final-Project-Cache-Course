@@ -197,8 +197,13 @@ module testbench;
     logic [1:0] next_state;
 
     logic [3:0] Imeme2proc_response;
-    
 
+    logic [63:0] cache_data [0:63]; // 64 lines of 8 bytes
+    logic [22:0] cache_tag [0:63]; // 64 lines of tag bits
+    logic cache_valid [0:63]; // 64 lines of valid bits
+    logic cache_dirty [0:63]; // 64 lines of dirty bits
+    
+    logic [3:0] current_mem_tag;
 
 
     // logic [`XLEN-1:0] if_NPC_dbg;
@@ -352,7 +357,14 @@ module testbench;
         .state             (state),
         .next_state        (next_state),
 
-        .Imem2proc_response (Imeme2proc_response)
+        .Imem2proc_response (Imeme2proc_response),
+
+        .cache_data         (cache_data),
+        .cache_tag          (cache_tag),
+        .cache_valid        (cache_valid),
+        .cache_dirty        (cache_dirty),
+
+        .current_mem_tag     (current_mem_tag)
         
 
         // .if_NPC_dbg       (if_NPC_dbg),
@@ -417,6 +429,39 @@ module testbench;
                       clock_count * `CLOCK_PERIOD);
         end
     endtask // task show_clk_count
+   // ------------------------------------------------------------
+    // Pretty-printer for a 64-line cache (TAG_BITS = 23).
+    // Call with:  print_cache();
+    // ------------------------------------------------------------
+    task automatic print_cache;
+    int i;
+
+    // Header
+    $display("\n%-4s | V D | %-6s | %-23s",
+                "Idx", "Tag", "Data[63:0]  (byte-wise)");
+    $display("---- | --- | ------ | -----------------------");
+
+    // Body
+    for (i = 0; i < 64; i++) begin
+        $display("%4d | %1b %1b | 0x%06h | %02x %02x %02x %02x %02x %02x %02x %02x",
+                i,
+                cache_valid[i],
+                cache_dirty[i],
+                cache_tag[i][22:0],        // 23-bit tag
+                cache_data[i][63:56],      // byte 7 (MSB)
+                cache_data[i][55:48],      // byte 6
+                cache_data[i][47:40],      // byte 5
+                cache_data[i][39:32],      // byte 4
+                cache_data[i][31:24],      // byte 3
+                cache_data[i][23:16],      // byte 2
+                cache_data[i][15:8 ],      // byte 1
+                cache_data[i][7 :0 ]       // byte 0 (LSB)
+                );
+    end
+
+    $display("");   // trailing blank line
+    endtask
+
 
     task automatic show_if_packet (input IF_ID_PACKET pkt);
         // Extract indices (0–31).  For formats that lack rs1/rs2 these
@@ -748,6 +793,7 @@ module testbench;
             $display("------------------------------------------------------------");
             $display("DCACHE DATA: ");
             dump_tag_map(); 
+            print_cache();
             $display("IF STAGE CONTENT: ");
             $display("IF STALL : (BC OF DATA ARBITRATION : %0b)", if_stall);
             $display("PC=%x, VALID=%b STALL_IF= %b ICACHEDATA=%h",proc2Icache_addr, Icache_valid_out, stall_if, Icache_data_out);
@@ -837,7 +883,8 @@ module testbench;
             $display("mem2proc_data =%h", mem2proc_data);
             $display("mem2proc_tag =%b", mem2proc_tag);
 
-            $display("Imem2proc response =%b", Imeme2proc_response);    
+            $display("Imem2proc response =%b", Imeme2proc_response);  
+            $display("CURRENT MEM TAG =%b", current_mem_tag);  
             
 
             
@@ -910,8 +957,8 @@ module testbench;
         end else begin
             clock_count <= (clock_count + 1);
             instr_count <= (instr_count + pipeline_completed_insts);
-            $display("______________POS EDGE CLOCK CYCLE!!!________________");
-            display_all_signals();
+            // $display("______________POS EDGE CLOCK CYCLE!!!________________");
+            // display_all_signals();
         end
         
     end
@@ -925,8 +972,8 @@ module testbench;
             debug_counter <= 0;
         end else begin
             #2;
-            $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");
-            display_all_signals();
+            // $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");
+            // display_all_signals();
 
             // print the pipeline debug outputs via c code to the pipeline output file
             // print_cycles();

@@ -43,6 +43,7 @@ module dcache
     output logic [3:0] data_tag, 
     output logic [3:0] data_response, //im actaully going to increase the bits from my cache, because i want to be able to assign my own tags to certain requests
 
+    output logic [63:0] cur_addr,
     output logic next_state, //for debugging 
     output logic state, //for debugging 
 
@@ -50,7 +51,12 @@ module dcache
     output logic tag_to_addr_valid [15:0],
     output logic [1:0] tag_to_memsize [15:0],
     output logic [63:0] tag_to_memdata [15:0], // this is for stores exclusively
-    output logic tag_to_is_store [15:0]
+    output logic tag_to_is_store [15:0],
+
+    output logic [63:0] cache_data [0:63], // 64 lines of 8 bytes
+    output logic [TAG_BITS-1:0] cache_tag [0:63], // 64 lines of tag bits
+    output logic cache_valid [0:63], // 64 lines of valid bits
+    output logic cache_dirty [0:63] // 64 lines of dirty bits
     // output logic [3:0] number_of_waits, //for debugging
     // output logic [3:0] next_number_of_waits //for debugging
     /* 
@@ -86,10 +92,10 @@ module dcache
     end
 
     // cache information
-    logic [63:0] cache_data [0:63]; // 64 lines of 8 bytes
-    logic [TAG_BITS-1:0] cache_tag [0:63]; // 64 lines of tag bits
-    logic cache_valid [0:63]; // 64 lines of valid bits
-    logic cache_dirty [0:63]; // 64 lines of dirty bits
+    // logic [63:0] cache_data [0:63]; // 64 lines of 8 bytes
+    // logic [TAG_BITS-1:0] cache_tag [0:63]; // 64 lines of tag bits
+    // logic cache_valid [0:63]; // 64 lines of valid bits
+    // logic cache_dirty [0:63]; // 64 lines of dirty bits
 
     logic store_load_queue; // this will be high if we had a store request that was a miss, and now we need to queue a load request
 
@@ -111,6 +117,7 @@ module dcache
     logic [3:0] next_data_response;
 
     logic [63:0] next_store_write;
+    logic [63:0] next_addr;
 
     // state machine
     // logic [1:0] state; // this will track whether we are in a MISS state or IDLE state
@@ -145,6 +152,7 @@ module dcache
         dcache2mem_addr = 0;
         dcache2mem_data = 0;
         next_store_write = next_data;
+        next_addr = proc2Dcache_addr;
         // we are not checking whether the tags of cache lines are the same, because we have other
         // precautionary features to prevent a LD request from happening if the addr is alr in flight
         next_wb_eviction = (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) &&
@@ -277,6 +285,12 @@ module dcache
                 tag_to_is_store[i] <= 0;
             end
             state <= `IDLE;
+            hit <= 0;
+            hit_data <= 0;
+            data_tag <= 0;
+            data_response <= 0;
+            wb_eviction <= 0;
+            cur_addr <= 0;
         end
         else begin
             state <= next_state;
@@ -285,6 +299,7 @@ module dcache
             data_tag <= next_data_tag;
             data_response <= next_data_response;
             wb_eviction <= next_wb_eviction;
+            cur_addr <= next_addr;
 
             if (state == `MISS) begin
                 if (mem2dcache_response != 0) begin

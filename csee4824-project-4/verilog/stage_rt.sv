@@ -24,6 +24,7 @@ module stage_rt (
 
     // Commit control 
     input logic branch_mispredict, // branch mispredict bit from ROB
+    input logic lsq_op_in_progress,
 
     //outputs
     output logic [31:0] retire_value, // data to write to register file
@@ -115,7 +116,7 @@ always_ff @(posedge clock) begin
         npc_reg <= 0;
     end else begin
         // if is a branch, and we predicted correct (not taken), then we can just ignore it
-        if (rob_ready && rob_valid && !duplicate) begin
+        if (rob_ready && rob_valid && !duplicate && !lsq_op_in_progress) begin
             // retiring an instruction: valid entry from ROB
             
             retire_value_reg <= rob_retire_packet.value;

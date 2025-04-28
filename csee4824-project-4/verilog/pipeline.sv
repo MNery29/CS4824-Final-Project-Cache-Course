@@ -165,10 +165,21 @@ module pipeline (
     output logic [63:0] tag_to_memdata [15:0], // this is for stores exclusively
     output logic tag_to_is_store [15:0],
 
-    output logic [1:0] next_state,
-    output logic [1:0] state,
+    output logic  next_state,
+    output logic  state,
 
-    output logic [3:0] Imem2proc_response
+    output logic [3:0] Imem2proc_response,
+
+    output logic [63:0] cache_data [0:63], // 64 lines of 8 bytes
+    output logic [22:0] cache_tag [0:63], // 64 lines of tag bits
+    output logic cache_valid [0:63], // 64 lines of valid bits
+    output logic cache_dirty [0:63], // 64 lines of dirty bits
+
+    output logic [3:0] current_mem_tag,
+
+    output logic lsq_op_in_progress,
+
+    output logic [63:0] dcache_cur_addr
 
 
 
@@ -351,19 +362,19 @@ module pipeline (
     //////////////////////////////////////////////////
     //                  I-Cache                     //
     //////////////////////////////////////////////////
-    logic icache_reset;
-    assign icache_reset = reset || clear_is;
+
     icache icache_0 (
         .clock(clock),
-        .reset(icache_reset),
-        .Imem2proc_response(mem2proc_response),
-        .Imem2proc_data(mem2proc_data),
-        .Imem2proc_tag(mem2proc_tag),
+        .reset(reset),
+        .Imem2proc_response(Imem2proc_response),
+        .Imem2proc_data(Imem2proc_data),
+        .Imem2proc_tag(Imem2proc_tag),
         .proc2Icache_addr(proc2Icache_addr),
         .proc2Imem_command(proc2Imem_command),
         .proc2Imem_addr(proc2Imem_addr),
         .Icache_data_out(Icache_data_out),
-        .Icache_valid_out(Icache_valid_out)
+        .Icache_valid_out(Icache_valid_out),
+        .current_mem_tag(current_mem_tag)
     );
     // for now, no icache, i will pass through all the data
     // assign proc2Imem_addr = proc2Icache_addr;
@@ -373,11 +384,10 @@ module pipeline (
     //////////////////////////////////////////////////
     //                  D-Cache                     //
     //////////////////////////////////////////////////
-    logic dcache_reset;
-    assign dcache_reset = reset || clear_is;
+
     dcache dcache_0 (
         .clk(clock),
-        .reset(dcache_reset),
+        .reset(reset),
         .proc2Dcache_addr(dcache_addr),
         .proc2Dcache_data(dcache_data),
         .proc2Dcache_command(dcache_command),
@@ -396,11 +406,18 @@ module pipeline (
         .state(state),
         .next_state(next_state),
 
+        .cur_addr(dcache_cur_addr),
+
         .tag_to_addr(tag_to_addr),
         .tag_to_addr_valid(tag_to_addr_valid),
         .tag_to_memsize(tag_to_memsize),
         .tag_to_memdata(tag_to_memdata),
-        .tag_to_is_store(tag_to_is_store)
+        .tag_to_is_store(tag_to_is_store),
+
+        .cache_data(cache_data),
+        .cache_tag(cache_tag),
+        .cache_valid(cache_valid),
+        .cache_dirty(cache_dirty)
 
     );
 
@@ -644,6 +661,8 @@ module pipeline (
         .mem_tag(mem_tag),
         .mem_valid(mem_valid),
 
+        .dcache_cur_addr(dcache_cur_addr),
+
         .lsq_packet(lsq_packet),
         .cdb_in(cdb_packet), //check
         .priv_addr_in(priv_addr_packet),
@@ -653,6 +672,8 @@ module pipeline (
         .dcache_addr(dcache_addr), // sending address to dcache
         .dcache_data(dcache_data), // data for current command (if store)
         .dcache_size(dcache_size), // size of data to send to cache
+
+        .lsq_op_in_progress(lsq_op_in_progress), // this is a signal to the ROB to stall
 
         .store_ready(store_ready), // let ROB know that store ready to write
         .store_ready_tag(store_tag), // tag of store ready to write
@@ -671,7 +692,9 @@ module pipeline (
         if (reset || clear_lsq) begin
             ex_cp_reg <= '0;
         end else begin
-            ex_cp_reg <= ex_packet;
+            if (!cdb_busy) begin
+                ex_cp_reg <= ex_packet;
+            end
         end
     end
 
@@ -683,7 +706,7 @@ module pipeline (
     stage_cp stage_cp_0 (
         .clock(clock),
         .reset(cp_reset),
-        .ex_cp_packet(ex_cp_reg), // input packet from EX stage
+        .ex_cp_packet(ex_packet), // input packet from EX stage
         .lsq_cp_packet(cdb_lsq), // input packet from LSQ stage
         .cdb_packet_out(cdb_packet),
         .ex_rejected(cdb_busy)
@@ -773,6 +796,7 @@ module pipeline (
         .rob_ready(rob_ready),
         .rob_valid(rob_valid),
         .branch_mispredict(1'b0),
+        .lsq_op_in_progress(lsq_op_in_progress),
         .retire_value(retire_value_out),
         .retire_dest(retire_dest_out),
         .retire_valid_out(retire_valid_out),
@@ -887,8 +911,13 @@ module pipeline (
                 end
             end
             `OWN_I: begin
-                Imem2proc_response = mem2proc_response;
-                if (mem2proc_response != 0) begin
+                if (owner_d != `OWN_D) begin
+                    Imem2proc_response = mem2proc_response;
+                    if (mem2proc_response != 0) begin
+                        read_data = 1'b1;
+                    end
+                end
+                else begin
                     read_data = 1'b1;
                 end
                 
