@@ -330,6 +330,8 @@ module pipeline (
     //////////////////////////////////////////////////
     //         Fetch Stage                          //
     //////////////////////////////////////////////////
+
+    assign if_valid = ~stall_if;
     stage_if stage_if_0 (
         .clock(clock),
         .reset(reset),
@@ -343,8 +345,8 @@ module pipeline (
         .stall_if(stall_if)
     );
 
-    assign take_branch = predict_taken;
-    assign new_addr = predict_target;
+    assign take_branch = (if_id_reg.valid && predict_taken);
+    assign new_addr = predict_target;    
 
     //////////////////////////////////////////////////
     //                  I-Cache                     //
