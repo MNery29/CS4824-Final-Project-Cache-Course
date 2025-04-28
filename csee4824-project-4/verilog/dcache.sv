@@ -17,9 +17,9 @@ dcache specifications:
 
 module dcache
 #(
-    TAG_BITS = 26,
+    TAG_BITS = 23,
     INDEX_BITS = 6,
-    OFFSET_BITS = 0
+    OFFSET_BITS = 3
 )
 (
     input logic clk,
@@ -28,6 +28,7 @@ module dcache
     input logic [`XLEN-1:0] proc2Dcache_addr,
     input logic [63:0] proc2Dcache_data, // datafor current command (if store)
     input logic [1:0] proc2Dcache_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
+    input logic [2:0] proc2Dcache_size, // `MEM_BYTE, `MEM_HALF, `MEM_WORD, `MEM_DOUBLE
 
     input logic [3:0]  mem2dcache_response, // 0 = can't accept, other=tag of transaction
     input logic [63:0] mem2dcache_data,     // data resulting from a load
@@ -36,17 +37,22 @@ module dcache
     output logic [`XLEN-1:0] dcache2mem_addr,
     output logic [63:0]      dcache2mem_data, // address for current command
     output logic [1:0]       dcache2mem_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
-    output MEM_SIZE    dcache2mem_size,
 
     output logic [63:0] hit_data, // data resulting from a load
     output logic hit, // 1 if hit, 0 if miss
-    output logic [3:0] data_tag,
-    output logic [3:0] data_response,
+    output logic [3:0] data_tag, 
+    output logic [3:0] data_response, //im actaully going to increase the bits from my cache, because i want to be able to assign my own tags to certain requests
 
     output logic next_state, //for debugging 
     output logic state, //for debugging 
-    output logic [3:0] number_of_waits, //for debugging
-    output logic [3:0] next_number_of_waits //for debugging
+
+    output logic [`XLEN-1:0] tag_to_addr [15:0],
+    output logic tag_to_addr_valid [15:0],
+    output logic [1:0] tag_to_memsize [15:0],
+    output logic [63:0] tag_to_memdata [15:0], // this is for stores exclusively
+    output logic tag_to_is_store [15:0]
+    // output logic [3:0] number_of_waits, //for debugging
+    // output logic [3:0] next_number_of_waits //for debugging
     /* 
     so the way this module works is that,
     when a miss occurs, we will send you a data_response,
@@ -62,184 +68,268 @@ module dcache
 
     THe data_response being 0 means that this module is preoccupied with something, and 
     cannot handle your request this timestep (for example, returning previously requested data)
+
+    FOR STORES: 
+    we will first load the cache line (evict anything that is in its way), then edit the cache line and send it for a store request
     */
 );
     logic [TAG_BITS-1:0] addr_tag;
     logic [INDEX_BITS-1:0] addr_index;
-    // logic [OFFSET_BITS-1:0] addr_offset;
+    logic [OFFSET_BITS-1:0] addr_offset;
+    EXAMPLE_CACHE_BLOCK c;
 
     //extract tag, index, and offset from address
     always_comb begin
         addr_tag    = proc2Dcache_addr[`XLEN-1 : INDEX_BITS + OFFSET_BITS];
         addr_index  = proc2Dcache_addr[INDEX_BITS + OFFSET_BITS - 1 : OFFSET_BITS];
-        //addr_offset = proc2Dcache_addr[OFFSET_BITS-1 : 0];
+        addr_offset = proc2Dcache_addr[OFFSET_BITS-1 : 0];
     end
 
+    // cache information
     logic [63:0] cache_data [0:63]; // 64 lines of 8 bytes
     logic [TAG_BITS-1:0] cache_tag [0:63]; // 64 lines of tag bits
     logic cache_valid [0:63]; // 64 lines of valid bits
-    // this is for storing the tag -> addr from mem module
-    logic [`XLEN-1:0] tag_addr [3:0]; 
-    logic tag_addr_valid [3:0]; // 4 lines of tag bits
+    logic cache_dirty [0:63]; // 64 lines of dirty bits
 
-    logic [3:0] prev_tag; //we dont need this if we can guarentee the mem module's tag is only HIGH for ONE CYCLE
+    logic store_load_queue; // this will be high if we had a store request that was a miss, and now we need to queue a load request
 
-    // logic state;
-    // logic next_state;
+    // request information (if we have requests in flight)
+    // logic [`XLEN-1:0] tag_to_addr [15:0];
+    // logic tag_to_addr_valid [15:0];
+    // logic [1:0] tag_to_memsize [15:0];
+    // logic [63:0] tag_to_memdata [15:0]; // this is for stores exclusively
+    // logic tag_to_is_store [15:0];
 
-    // // this is so we can gauge how many addresses we are waiting for a response with
-    // logic [3:0] number_of_waits;
-    // logic [3:0] next_number_of_waits;
-    logic [`XLEN-1:0] saved_addr; //used for misses, saves the address of the missed lookup
+    logic [63:0] next_data_to_write; // this will be for when a load comes back, and we need to write it for store
 
+    logic in_flight; //this will check if the incoming request is already inflight in a previous request
+
+    // hit detection
     logic next_hit;
-    logic [63:0] next_hit_data;
-    logic [`XLEN-1:0] next_tag;
+    logic [63:0] next_data;
+    logic [3:0] next_data_tag;
+    logic [3:0] next_data_response;
+
+    logic [63:0] next_store_write;
+
+    // state machine
+    // logic [1:0] state; // this will track whether we are in a MISS state or IDLE state
+    // logic [1:0] next_state; // this will track whether we are in a MISS state or IDLE state
+
+    //eviction stuff
+    logic wb_eviction; // this will be high if we need to evict a DIRTY line from the cache
+    logic next_wb_eviction; // this will be high if we need to evict a DIRTY line from the cache
+    logic [`XLEN-1:0] evict_addr;
+    logic [63:0] evict_data;
+    logic [`XLEN-1:0] next_evict_addr;
+    logic [63:0] next_evict_data;
+
+    //helpers
+    logic [INDEX_BITS-1:0] current_tag_index;
+    assign current_tag_index = tag_to_addr[mem2dcache_tag][`XLEN-1-TAG_BITS:OFFSET_BITS]; // this means nothing if tag_to_addr_valid is low
     
     always_comb begin
-        next_hit_data = cache_data[addr_index]; //hit_data only valid if hit is high
-        next_hit = (cache_tag[addr_index] == addr_tag) && cache_valid[addr_index] && 
-                    (proc2Dcache_command == BUS_LOAD || proc2Dcache_command == BUS_STORE);
-        dcache2mem_command = BUS_NONE;
-        dcache2mem_addr = 32'b0;
-        dcache2mem_data = 64'b0;
-        dcache2mem_size = 1'b1;
-        next_number_of_waits = number_of_waits;
-        next_state = state;
-        next_tag = 0;
-        //ok so the reason i have an idle and miss state, is because when we send a request to memory,
-        // im assuming we will get the tag ONLY 
+        // hit only true if the cache is valid and theres no returning data
+        next_hit = cache_valid[addr_index] && (cache_tag[addr_index] == addr_tag) 
+                    && !(mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) 
+                    && (proc2Dcache_command == BUS_LOAD || proc2Dcache_command == BUS_STORE);
 
-        if (next_hit && proc2Dcache_command == BUS_STORE) begin
-            // update the word in the cache line (entire 64‑bit for now)
-            next_hit_data = proc2Dcache_data;
-            // drive the bus
+        next_data = (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) ? 
+                            mem2dcache_data
+                            : cache_data[addr_index];
+        next_data_response = (proc2Dcache_command == BUS_STORE & next_hit) ? next_hit : mem2dcache_response;
+        next_data_tag = (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) ? 
+                            mem2dcache_tag
+                            : 0;
+        dcache2mem_command = BUS_NONE;
+        dcache2mem_addr = 0;
+        dcache2mem_data = 0;
+        next_store_write = next_data;
+        // we are not checking whether the tags of cache lines are the same, because we have other
+        // precautionary features to prevent a LD request from happening if the addr is alr in flight
+        next_wb_eviction = (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) &&
+                            (cache_dirty[current_tag_index] == 1) && 
+                            (cache_valid[current_tag_index] == 1);
+
+        next_evict_addr = {cache_tag[current_tag_index], current_tag_index, 3'b000};
+        next_evict_data = cache_data[current_tag_index];
+
+
+        if (wb_eviction) begin
+            dcache2mem_addr = evict_addr;
             dcache2mem_command = BUS_STORE;
-            dcache2mem_addr = {proc2Dcache_addr[`XLEN-1:OFFSET_BITS]};
-            dcache2mem_data = proc2Dcache_data;
-            // keep size = 1 (8‑B line) for now
+            dcache2mem_data = evict_data;
         end
+        in_flight = 0;
+        for (int i = 0; i < 16; i++) begin
+            if (tag_to_addr_valid[i] && tag_to_addr[i][`XLEN-1:3] == proc2Dcache_addr[`XLEN-1:3]) begin
+                in_flight =1;
+            end
+        end
+
+        if (proc2Dcache_command == BUS_STORE && next_hit) begin
+            c.byte_level = cache_data[addr_index];
+            c.half_level = cache_data[addr_index];
+            c.word_level = cache_data[addr_index];
+            case (proc2Dcache_size) 
+                    BYTE: begin
+                        c.byte_level[proc2Dcache_addr[2:0]] = proc2Dcache_data[7:0];
+                        next_store_write = c.byte_level;
+                    end
+                    HALF: begin
+                        assert(proc2Dcache_addr[0] == 0);
+                        c.half_level[proc2Dcache_addr[2:1]] = proc2Dcache_data[15:0];
+                        next_store_write = c.half_level;
+                    end
+                    WORD: begin
+                        assert(proc2Dcache_addr[1:0] == 0);
+                        c.word_level[proc2Dcache_addr[2]] = proc2Dcache_data[31:0];
+                        next_store_write = c.word_level;
+                    end
+                    default: begin
+                        assert(proc2Dcache_addr[1:0] == 0);
+                        c.byte_level[proc2Dcache_addr[2]] = proc2Dcache_data[31:0];
+                        next_store_write = c.word_level;
+                    end
+                endcase
+        end
+        else if ((mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) && 
+                tag_to_is_store[mem2dcache_tag] == 1) begin
+                c.byte_level = mem2dcache_data;
+                c.half_level = mem2dcache_data;
+                c.word_level = mem2dcache_data;
+                case (tag_to_memsize[mem2dcache_tag]) 
+                    BYTE: begin
+                        c.byte_level[tag_to_addr[mem2dcache_tag][2:0]] = tag_to_memdata[mem2dcache_tag][7:0];
+                        next_data_to_write = c.byte_level;
+                    end
+                    HALF: begin
+                        assert(tag_to_addr[mem2dcache_tag][0] == 0);
+                        c.half_level[tag_to_addr[mem2dcache_tag][2:1]] = tag_to_memdata[mem2dcache_tag][15:0];
+                        next_data_to_write = c.half_level;
+                    end
+                    WORD: begin
+                        assert(tag_to_addr[mem2dcache_tag][1:0] == 0);
+                        c.word_level[tag_to_addr[mem2dcache_tag][2]] = tag_to_memdata[mem2dcache_tag][31:0];
+                        next_data_to_write = c.word_level;
+                    end
+                    default: begin
+                        assert(tag_to_addr[mem2dcache_tag][1:0] == 0);
+                        c.byte_level[tag_to_addr[mem2dcache_tag][2]] = tag_to_memdata[mem2dcache_tag][31:0];
+                        next_data_to_write = c.word_level;
+                    end
+                endcase
+                end
         else begin
-            dcache2mem_command = BUS_STORE;
-            dcache2mem_addr = {proc2Dcache_addr[`XLEN-1:OFFSET_BITS]};
-            dcache2mem_data = proc2Dcache_data;
         end
         case (state)
             `IDLE: begin
-                // so i am not doing some standard operation of load and storing,
-                // i am just sending the store request directly to memory, and saving the store request in local cache
-                if (!next_hit && (proc2Dcache_command == BUS_LOAD) ) begin
-                    next_state = `MISS;
-                    dcache2mem_command = BUS_LOAD;
-                    dcache2mem_addr = {proc2Dcache_addr[`XLEN-1:OFFSET_BITS]};
+                if (next_hit || proc2Dcache_command == BUS_NONE) begin
+                    next_state = `IDLE;
+                end
+                else if (in_flight || wb_eviction) begin
+                    next_state = `IDLE;
+                    next_data = 0;
+                    next_data_response=0;
+                    next_data_tag=0;
                 end
                 else begin
+                    next_state = `MISS;
                 end
             end
             `MISS: begin
-                //keep driving the bus until we get a response
-                if (mem2dcache_response == 0) begin
+                if (!wb_eviction) begin
+                    dcache2mem_addr = {addr_tag, addr_index, 3'b000};
                     dcache2mem_command = BUS_LOAD;
-                    dcache2mem_addr    = {saved_addr[`XLEN-1:OFFSET_BITS]};
-                end 
-                else begin
-                    tag_addr[mem2dcache_response] = saved_addr;
-                    next_tag = mem2dcache_response;
-                    next_state = `IDLE;
-                    next_number_of_waits = number_of_waits + 1;
-                    
-                end
-            end
-        endcase
-
-        case(number_of_waits) 
-            `NONE: begin
-            end
-            default begin
-                if (mem2dcache_tag != 0) begin
-                    // this if statement is to check if the tag we are waiting for is the same as the one we are getting
-                    // this is caused if the mem module is sending us a tag for more than one cycle
-                    if (mem2dcache_tag != prev_tag && tag_addr_valid[mem2dcache_tag]) begin
-                        next_number_of_waits = number_of_waits - 1;
+                    dcache2mem_data = 0;
+                    if (mem2dcache_response != 0) begin
+                        next_state = `IDLE;
+                    end
+                    else begin
+                        next_state = `MISS;
                     end
                 end
-                else begin 
+                else begin
+                    next_state = `MISS;
                 end
             end
+            default: begin
+                next_state = `IDLE;
+            end
         endcase
-
+        
 
     end
 
-
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge reset) begin
         if (reset) begin
-            //is there a better way to do this?
-            integer i;
-            for (i=0; i<64; i++) begin
-                cache_data[i]  <= 64'b0;
-                cache_tag[i]   <= {TAG_BITS{1'b0}};
-                cache_valid[i] <= 1'b0;
+            for (int i = 0; i < 64; i++) begin
+                cache_valid[i] <= 0;
+                cache_dirty[i] <= 0;
+                cache_tag[i] <= 0;
+                cache_data[i] <= 0;
             end
-            state       <= `IDLE;
-            saved_addr  <= 32'b0;
-            number_of_waits <= `NONE;
-            prev_tag <= 0;
-            for (i = 0; i < 4; i++) tag_addr_valid[i] <= 1'b0;
-
+            for (int i =0; i < 16; i++)begin
+                tag_to_addr[i] <= 0;
+                tag_to_addr_valid[i] <= 0;
+                tag_to_memsize[i] <= 0;
+                tag_to_memdata[i] <= 0;
+                tag_to_is_store[i] <= 0;
+            end
+            state <= `IDLE;
         end
         else begin
             state <= next_state;
-            number_of_waits <= next_number_of_waits;
-            data_tag <= 0;
-            data_response <= next_tag;
-            hit_data <= next_hit_data;
             hit <= next_hit;
-            if (state == `MISS) begin 
-                // so the states where this loop will execute is:
-                // when the user sends a request to the dcache, and it is a miss,
-                // therefore, this is returned. 
-                saved_addr <= proc2Dcache_addr;
-                tag_addr_valid[next_tag] <= 1'b1;
-                // okay we need to make sure to only set this saved_addr once!
-            end
-            else begin 
-            end
-            // this can happen regardless of miss or hit, so we will check for it here
-            if (mem2dcache_tag != 0 && number_of_waits != `NONE && tag_addr_valid[mem2dcache_tag]) begin
-                prev_tag <= mem2dcache_tag;
-                cache_data[tag_addr[mem2dcache_tag][INDEX_BITS + OFFSET_BITS - 1 : OFFSET_BITS]]  <= mem2dcache_data;
-                cache_tag[tag_addr[mem2dcache_tag][INDEX_BITS + OFFSET_BITS - 1 : OFFSET_BITS]]   <= tag_addr[mem2dcache_tag][`XLEN-1 : INDEX_BITS + OFFSET_BITS];
-                cache_valid[tag_addr[mem2dcache_tag][INDEX_BITS + OFFSET_BITS - 1 : OFFSET_BITS]] <= 1'b1;
-                //tag is not valid no more
-                tag_addr_valid[mem2dcache_tag] <= 1'b0;
+            hit_data <= next_data;
+            data_tag <= next_data_tag;
+            data_response <= next_data_response;
+            wb_eviction <= next_wb_eviction;
 
-                data_tag <= mem2dcache_tag;
-                hit_data <= mem2dcache_data;
-                data_response <= 0;
-                // because we are returning other data so, hit is not going to be high, regardless of what it is before.
-                hit <= 0;
-            end
-            else begin 
+            if (state == `MISS) begin
+                if (mem2dcache_response != 0) begin
+                    tag_to_addr_valid[mem2dcache_response] <= 1;
+                    tag_to_addr[mem2dcache_response] <= proc2Dcache_addr;
+                    tag_to_memsize[mem2dcache_response] <= proc2Dcache_size;
+                    tag_to_memdata[mem2dcache_response] <= proc2Dcache_data;
+                    tag_to_is_store[mem2dcache_response] <= (proc2Dcache_command == BUS_STORE);
+                end
             end
             if (proc2Dcache_command == BUS_STORE) begin
-                // are we storing to a line that is a miss?
-                
-                // next_hit just tells us this address line was originally here too
                 if (next_hit) begin
-                    cache_valid[addr_index] <= 1'b1;
-                    cache_tag[addr_index] <= addr_tag;
-                    cache_data[addr_index] <= proc2Dcache_data;
+                    cache_data[addr_index] <= next_store_write;
+                    cache_dirty[addr_index] <= 1;
                 end
                 else begin
-                    //do we wanna store for misses too?
-                    cache_valid[addr_index] <= 1'b1;
-                    cache_tag[addr_index] <= addr_tag;
-                    cache_data[addr_index] <= proc2Dcache_data;
+                    store_load_queue <= 1; // tells the dcache that we need to load a store queue
                 end
-                
             end
-            else begin
+
+            if (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) begin
+                if (next_wb_eviction) begin
+                    evict_addr <= next_evict_addr;
+                    evict_data <= next_evict_data;
+                end
+                if (tag_to_is_store[mem2dcache_tag]==1)begin
+                    cache_data[current_tag_index] <= next_data_to_write;
+                    cache_dirty[current_tag_index] <= 1;
+                end
+                else begin
+                    cache_data[current_tag_index] <= mem2dcache_data;
+                    cache_dirty[current_tag_index] <= 0;
+
+                    hit_data <= mem2dcache_data;
+                    data_tag <= mem2dcache_tag;
+                end
+                cache_tag[current_tag_index] <= tag_to_addr[mem2dcache_tag][`XLEN-1:OFFSET_BITS+INDEX_BITS];
+                cache_valid[current_tag_index] <= 1;
+                tag_to_addr_valid[mem2dcache_tag] <= 0;
+
+                tag_to_addr[mem2dcache_tag] <= 0;
+                tag_to_memsize[mem2dcache_tag] <= 0;
+                tag_to_memdata[mem2dcache_tag] <= 0;
+                tag_to_is_store[mem2dcache_tag] <= 0;
+
             end
         end
     end

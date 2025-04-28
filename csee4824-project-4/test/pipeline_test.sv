@@ -63,6 +63,10 @@ module testbench;
     logic             pipeline_commit_wr_en;
     logic [`XLEN-1:0] pipeline_commit_NPC;
 
+    logic [3:0]  mem2dcache_response; // 0 = can't accept, other=tag of transaction
+    logic [63:0] mem2dcache_data;    // data resulting from a load
+    logic [3:0]  mem2dcache_tag; 
+
    
     logic [45:0]      id_rob_debug[31:0];
 
@@ -182,6 +186,17 @@ module testbench;
     logic illegal_rt;
     logic halt_rt;
     logic csr_op_rt;
+
+    logic [`XLEN-1:0] tag_to_addr [15:0];
+    logic tag_to_addr_valid [15:0];
+    logic [1:0] tag_to_memsize [15:0];
+    logic [63:0] tag_to_memdata [15:0]; // this is for stores exclusively
+    logic tag_to_is_store [15:0];
+
+    logic [1:0] state;
+    logic [1:0] next_state;
+
+    logic [3:0] Imeme2proc_response;
     
 
 
@@ -219,6 +234,9 @@ module testbench;
 `ifndef CACHE_MODE
         .proc2mem_size    (proc2mem_size),
 `endif
+        .mem2dcache_response (mem2dcache_response),
+        .mem2dcache_data     (mem2dcache_data),
+        .mem2dcache_tag      (mem2dcache_tag),
 
         .pipeline_completed_insts (pipeline_completed_insts),
         .pipeline_error_status    (pipeline_error_status),
@@ -322,10 +340,20 @@ module testbench;
         .cdb_lsq             (cdb_lsq),
 
         .rs1_opa_in         (rs1_opa_in),
-        .rs1_opb_in         (rs1_opb_in)
-        
-        
+        .rs1_opb_in         (rs1_opb_in),
 
+        // dcache debugging
+        .tag_to_addr         (tag_to_addr),
+        .tag_to_addr_valid   (tag_to_addr_valid),
+        .tag_to_memsize      (tag_to_memsize),
+        .tag_to_memdata      (tag_to_memdata),
+        .tag_to_is_store     (tag_to_is_store),
+
+        .state             (state),
+        .next_state        (next_state),
+
+        .Imem2proc_response (Imeme2proc_response)
+        
 
         // .if_NPC_dbg       (if_NPC_dbg),
         // .if_inst_dbg      (if_inst_dbg),
@@ -416,6 +444,40 @@ module testbench;
         $display("            value=0x%08h  mem_addr=0x%08h take_branch=%b NPC = 0x%08h",
                 pkt.value, pkt.mem_addr, pkt.take_branch, pkt.npc);
     endtask
+    function automatic string memsize_str (input logic [1:0] sz);
+        // Assumes the standard MEM_SIZE encoding (`BYTE, HALF, WORD, DOUBLE`)
+        case (sz)
+            BYTE   : memsize_str = "B ";
+            HALF   : memsize_str = "H ";
+            WORD   : memsize_str = "W ";
+            DOUBLE : memsize_str = "D ";
+            default: memsize_str = "??";
+        endcase
+    endfunction
+
+    task automatic dump_tag_map;
+        int i;
+        $display("\n=== Tag-to-Address Map ================================================");
+        $display(" idx | V | isSt | Sz |          Address          |        Data");
+        $display("-----+---+------+----+---------------------------+-----------------------");
+        for (i = 0; i < 16; i++) begin
+            if (tag_to_addr_valid[i]) begin
+                $display(" %20d | %1b |  %1b   | %s | 0x%016h | 0x%016h",
+                        i,
+                        tag_to_addr_valid[i],
+                        tag_to_is_store[i],
+                        memsize_str(tag_to_memsize[i]),
+                        tag_to_addr[i],
+                        tag_to_memdata[i]);
+            end
+            else begin
+                // Print an empty row so the chart always shows 16 lines
+                $display(" %20d | 0 |  -   | -- | ----------------------- | ------------------", i);
+            end
+        end
+        $display("=======================================================================\n");
+    endtask
+
     task automatic show_id_stage (
         input [`ROB_TAG_BITS-1:0] id_tag,
         input logic               rs1_ready
@@ -683,7 +745,9 @@ module testbench;
                     id_rob_debug[i][36:32], id_rob_debug[i][31:0]);
             end
             //display mem/ if stuff in pipeline
-
+            $display("------------------------------------------------------------");
+            $display("DCACHE DATA: ");
+            dump_tag_map(); 
             $display("IF STAGE CONTENT: ");
             $display("IF STALL : (BC OF DATA ARBITRATION : %0b)", if_stall);
             $display("PC=%x, VALID=%b STALL_IF= %b ICACHEDATA=%h",proc2Icache_addr, Icache_valid_out, stall_if, Icache_data_out);
@@ -752,6 +816,13 @@ module testbench;
             $display("dcache data =%h", dcache_data);
             $display("dcache addr =%h", dcache_addr);
             $display("dcache size =%b", dcache_size);
+
+            $display("state =%b", state);
+            $display("next state =%b", next_state);
+
+            $display("mem2dcache response =%b", mem2dcache_response);
+            $display("mem2dcache data =%h", mem2dcache_data);
+            $display("mem2dcache tag =%b", mem2dcache_tag);
             $display("mem tag =%d", mem_tag);
             $display("mem valid =%b", mem_valid);
             $display("CDB LSQ:");
@@ -761,10 +832,12 @@ module testbench;
             $display("proc2mem_command =%b", proc2mem_command);
             $display("proc2mem_addr =%h", proc2mem_addr);
             $display("proc2mem_data =%h", proc2mem_data);
-            $display("proc2mem_size =%s", mem_size_str(proc2mem_size));
+            // $display("proc2mem_size =%s", mem_size_str(proc2mem_size));
             $display("mem2proc_response =%b", mem2proc_response);
             $display("mem2proc_data =%h", mem2proc_data);
             $display("mem2proc_tag =%b", mem2proc_tag);
+
+            $display("Imem2proc response =%b", Imeme2proc_response);    
             
 
             
@@ -837,8 +910,8 @@ module testbench;
         end else begin
             clock_count <= (clock_count + 1);
             instr_count <= (instr_count + pipeline_completed_insts);
-            // $display("______________POS EDGE CLOCK CYCLE!!!________________");
-            // display_all_signals();
+            $display("______________POS EDGE CLOCK CYCLE!!!________________");
+            display_all_signals();
         end
         
     end
@@ -852,8 +925,8 @@ module testbench;
             debug_counter <= 0;
         end else begin
             #2;
-            // $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");
-            // display_all_signals();
+            $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");
+            display_all_signals();
 
             // print the pipeline debug outputs via c code to the pipeline output file
             // print_cycles();

@@ -314,6 +314,7 @@ module stage_id (
     assign rob_cdb_packet.valid = cdb_valid;
     assign rob_cdb_packet.take_branch = cdb_take_branch;
 
+
     // Outputs from map table
     // logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2;
     // logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2;

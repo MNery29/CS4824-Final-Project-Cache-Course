@@ -37,6 +37,11 @@ module pipeline (
     output logic [`XLEN-1:0] proc2Icache_addr,
     output logic             Icache_valid_out,
     output logic [63:0] Icache_data_out,
+
+    output logic [3:0]  mem2dcache_response, // 0 = can't accept, other=tag of transaction
+    output logic [63:0] mem2dcache_data,    // data resulting from a load
+    output logic [3:0]  mem2dcache_tag,
+    
     
     //ID Input debug wires
     output IF_ID_PACKET if_id_reg,
@@ -151,7 +156,19 @@ module pipeline (
     output EX_CP_PACKET cdb_lsq, // broadcast load data
     output logic halt_rt,
     output logic illegal_rt,
-    output logic csr_op_rt
+    output logic csr_op_rt,
+
+    //dcache debugging:
+    output logic [`XLEN-1:0] tag_to_addr [15:0],
+    output logic tag_to_addr_valid [15:0],
+    output logic [1:0] tag_to_memsize [15:0],
+    output logic [63:0] tag_to_memdata [15:0], // this is for stores exclusively
+    output logic tag_to_is_store [15:0],
+
+    output logic [1:0] next_state,
+    output logic [1:0] state,
+
+    output logic [3:0] Imem2proc_response
 
 
 
@@ -256,7 +273,7 @@ module pipeline (
     //////////////////////////////////////////////////
     logic [1:0]       proc2Imem_command;
     logic [`XLEN-1:0] proc2Imem_addr;
-    logic [3:0]       Imem2proc_response;
+    // logic [3:0]       Imem2proc_response;
     logic [63:0]      Imem2proc_data;
     logic [3:0]       Imem2proc_tag;
 
@@ -267,9 +284,9 @@ module pipeline (
     logic [`XLEN-1:0] proc2Dcache_addr;
     logic [1:0] proc2Dcache_command; // `BUS_NONE `BUS_LOAD or `BUS_STORE
 
-    logic [3:0]  mem2dcache_response; // 0 = can't accept, other=tag of transaction
-    logic [63:0] mem2dcache_data;    // data resulting from a load
-    logic [3:0]  mem2dcache_tag;       // 0 = no value, other=tag of transaction
+    // logic [3:0]  mem2dcache_response; // 0 = can't accept, other=tag of transaction
+    // logic [63:0] mem2dcache_data;    // data resulting from a load
+    // logic [3:0]  mem2dcache_tag;       // 0 = no value, other=tag of transaction
 
     logic [`XLEN-1:0] dcache2mem_addr;
     logic [63:0]      dcache2mem_data; // address for current command
@@ -280,10 +297,10 @@ module pipeline (
     logic hit; // 1 if hit, 0 if miss
     logic [3:0] data_tag;
     logic [3:0] data_response;
-    logic next_state; //for debugging 
-    logic state; //for debugging 
-    logic [3:0] number_of_waits; //for debugging
-    logic [3:0] next_number_of_waits; //for debugging
+    // logic [1:0] next_state; //for debugging 
+    // logic [1:0] state; //for debugging 
+    // logic [3:0] number_of_waits; //for debugging
+    // logic [3:0] next_number_of_waits; //for debugging
 
     //////////////////////////////////////////////////
     //               LSQ Wires                     //
@@ -334,9 +351,11 @@ module pipeline (
     //////////////////////////////////////////////////
     //                  I-Cache                     //
     //////////////////////////////////////////////////
+    logic icache_reset;
+    assign icache_reset = reset || clear_is;
     icache icache_0 (
         .clock(clock),
-        .reset(reset),
+        .reset(icache_reset),
         .Imem2proc_response(mem2proc_response),
         .Imem2proc_data(mem2proc_data),
         .Imem2proc_tag(mem2proc_tag),
@@ -354,38 +373,47 @@ module pipeline (
     //////////////////////////////////////////////////
     //                  D-Cache                     //
     //////////////////////////////////////////////////
-    // dcache dcache_0 (
-    //     .clk(clock),
-    //     .reset(reset),
-    //     .proc2Dcache_addr(proc2Dcache_addr),
-    //     .proc2Dcache_command(proc2Dcache_command),
-    //     .mem2dcache_response(mem2dcache_response),
-    //     .mem2dcache_data(mem2dcache_data),
-    //     .mem2dcache_tag(mem2dcache_tag),
-    //     .dcache2mem_addr(dcache2mem_addr),
-    //     .dcache2mem_data(dcache2mem_data),
-    //     .dcache2mem_command(dcache2mem_command),
-    //     .dcache2mem_size(dcache2mem_size),
-    //     .hit_data(hit_data),
-    //     .hit(hit),
-    //     .data_tag(data_tag),
-    //     .data_response(data_response),
-    //     .number_of_waits(number_of_waits),
-    //     .next_number_of_waits(next_number_of_waits),
-    //     .state(state),
-    //     .next_state(next_state),
-    // )
+    logic dcache_reset;
+    assign dcache_reset = reset || clear_is;
+    dcache dcache_0 (
+        .clk(clock),
+        .reset(dcache_reset),
+        .proc2Dcache_addr(dcache_addr),
+        .proc2Dcache_data(dcache_data),
+        .proc2Dcache_command(dcache_command),
+        .proc2Dcache_size(dcache_size),
+        .mem2dcache_response(mem2dcache_response),
+        .mem2dcache_data(mem2dcache_data),
+        .mem2dcache_tag(mem2dcache_tag),
+        .dcache2mem_addr(dcache2mem_addr),
+        .dcache2mem_data(dcache2mem_data),
+        .dcache2mem_command(dcache2mem_command),
+        // .dcache2mem_size(dcache2mem_size),
+        .hit_data(dcache_data_out),
+        .hit(dcache_hit),
+        .data_tag(dcache_tag),
+        .data_response(dcache_response),
+        .state(state),
+        .next_state(next_state),
+
+        .tag_to_addr(tag_to_addr),
+        .tag_to_addr_valid(tag_to_addr_valid),
+        .tag_to_memsize(tag_to_memsize),
+        .tag_to_memdata(tag_to_memdata),
+        .tag_to_is_store(tag_to_is_store)
+
+    );
 
     // for now lets just do passthroughs:
-    assign dcache2mem_addr = dcache_addr;
-    assign dcache2mem_data = dcache_data;
-    assign dcache2mem_command = dcache_command;
+    // assign dcache2mem_addr = dcache_addr;
+    // assign dcache2mem_data = dcache_data;
+    // assign dcache2mem_command = dcache_command;
 
 
-    assign dcache_tag = mem2dcache_tag;
-    assign dcache_hit = mem2dcache_tag == mem2dcache_response && mem2dcache_response != 0;
-    assign dcache_response = mem2dcache_response;
-    assign dcache_data_out = mem2dcache_data;
+    // assign dcache_tag = mem2dcache_tag;
+    // assign dcache_hit = mem2dcache_tag == mem2dcache_response && mem2dcache_response != 0;
+    // assign dcache_response = mem2dcache_response;
+    // assign dcache_data_out = mem2dcache_data;
 
 
     //////////////////////////////////////////////////
@@ -396,7 +424,7 @@ module pipeline (
         if (reset || clear_is) begin
             if_id_reg <= '0;
         end else begin
-            if (if_packet.valid) begin
+            if (dispatch_ok) begin
                 if_id_reg <= if_packet;
             end
         end
@@ -828,43 +856,42 @@ module pipeline (
             owner_q <= `OWN_NONE;
         // for now, we have to wait for data to respond, so not just tag
         end
-        else if (read_data != 0) begin  // memory sent a reply -> done
-            owner_q <= `OWN_NONE;
-        end
         else begin
-            owner_q <= owner_d;
+            if (owner_q != owner_d && (read_data || owner_q == `OWN_NONE))begin
+                owner_q <= owner_d;
+            end
         end
     end
     
+    assign Imem2proc_data     = mem2proc_data;
+    assign Imem2proc_tag      = mem2proc_tag;
+    assign mem2dcache_data = mem2proc_data;
+    assign mem2dcache_tag      = mem2proc_tag;
     always_comb begin
         // Default: de‑assert
         mem2dcache_response     = 0;
-        mem2dcache_data     = 0;
-        mem2dcache_tag          = 0;
 
         Imem2proc_response  = 0;
-        Imem2proc_data      = 0;
-        Imem2proc_tag       = 0;
+
         read_data=0;
+
         if_stall = 0;
 
         case (owner_q)
             `OWN_D: begin
                 if_stall = 1'b1;
                 mem2dcache_response = mem2proc_response;
-                mem2dcache_data = mem2proc_data;
-                mem2dcache_tag      = mem2proc_tag;
+
                 if (mem2proc_response != 0) begin
                     read_data = 1'b1;
                 end
             end
             `OWN_I: begin
                 Imem2proc_response = mem2proc_response;
-                Imem2proc_data     = mem2proc_data;
-                Imem2proc_tag      = mem2proc_tag;
                 if (mem2proc_response != 0) begin
                     read_data = 1'b1;
                 end
+                
             end
             default: begin
             end
