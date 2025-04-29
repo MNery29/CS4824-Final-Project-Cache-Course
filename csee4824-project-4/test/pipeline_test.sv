@@ -193,8 +193,8 @@ module testbench;
     logic [63:0] tag_to_memdata [15:0]; // this is for stores exclusively
     logic tag_to_is_store [15:0];
 
-    logic [1:0] state;
-    logic [1:0] next_state;
+    logic  state;
+    logic  next_state;
 
     logic [3:0] Imeme2proc_response;
 
@@ -206,6 +206,14 @@ module testbench;
     logic [3:0] current_mem_tag;
 
     logic lsq_op_in_progress;
+
+    logic [31:0] dcache_cur_addr;
+    logic [4:0] cache_tag_in_flight [15:0]; //indexed by dcache_tag (3 bits)
+    logic cache_in_flight_valid [15:0]; //indexed by dcache_tag (3 bits)
+    logic cache_offset_in_flight [15:0]; //indexed by dcache_tag (3 bits) gets us whether it is top half of cache line or bottom half    
+    logic cache_in_flight_rd_unsigned [15:0]; //indexed by dcache_tag (3 bits) gets us whether it is unsigned or signed
+    MEM_SIZE cache_in_flight_mem_size [15:0]; //indexed by dcache_tag (3 bits) gets us whether it is 8, 16, or 32 bit
+
 
 
     // logic [`XLEN-1:0] if_NPC_dbg;
@@ -368,7 +376,14 @@ module testbench;
 
         .current_mem_tag     (current_mem_tag),
 
-        .lsq_op_in_progress (lsq_op_in_progress)
+        .lsq_op_in_progress (lsq_op_in_progress),
+
+        .dcache_cur_addr (dcache_cur_addr),
+        .cache_in_flight(cache_in_flight),
+        .cache_in_flight_valid(cache_in_flight_valid),
+        .cache_in_flight_rd_unsigned(cache_in_flight_rd_unsigned),
+        .cache_offset_in_flight(cache_offset_in_flight),
+        .cache_in_flight_mem_size(cache_in_flight_mem_size)
         
 
         // .if_NPC_dbg       (if_NPC_dbg),
@@ -464,6 +479,23 @@ module testbench;
     end
 
     $display("");   // trailing blank line
+    endtask
+    task automatic display_inflight_table;
+        $display("┌─────┬──────────┬──────┬──────┬────────┬──────┐");
+        $display("│Idx  │ Tag[4:0] │Valid │Offset│Unsigned│Size  │");
+        $display("├─────┼──────────┼──────┼──────┼────────┼──────┤");
+
+        for (int i = 0; i < 16; i++) begin
+            $display("│%0d   │  %05b   │  %0d   │  %0d   │   %0d    │ %s  │",
+                    i,
+                    cache_tag_in_flight[i],
+                    cache_in_flight_valid[i],
+                    cache_offset_in_flight[i],
+                    cache_in_flight_rd_unsigned[i],
+                    mem_size_str(cache_in_flight_mem_size[i]));
+        end
+
+        $display("└─────┴──────────┴──────┴──────┴────────┴──────┘");
     endtask
 
 
@@ -862,6 +894,7 @@ module testbench;
             $display("dcache data out =%h", dcache_data_out);
             $display("dcache tag =%b", dcache_tag);
             $display("dcache response =%b", dcache_response);
+            $display("Dcache cur addr = %h", dcache_cur_addr);
             $display("dcache hit =%b", dcache_hit);
             $display("dcache command =%b", dcache_command);
             $display("dcache data =%h", dcache_data);
@@ -890,6 +923,11 @@ module testbench;
 
             $display("Imem2proc response =%b", Imeme2proc_response);  
             $display("CURRENT MEM TAG =%b", current_mem_tag);  
+
+            $display("additional cache in flight info:");
+            display_inflight_table();
+
+
             
 
             
@@ -962,8 +1000,8 @@ module testbench;
         end else begin
             clock_count <= (clock_count + 1);
             instr_count <= (instr_count + pipeline_completed_insts);
-            // $display("______________POS EDGE CLOCK CYCLE!!!________________");
-            // display_all_signals();
+            $display("______________POS EDGE CLOCK CYCLE!!!________________");
+            display_all_signals();
         end
         
     end
@@ -977,8 +1015,8 @@ module testbench;
             debug_counter <= 0;
         end else begin
             #2;
-            // $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");
-            // display_all_signals();
+            $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");
+            display_all_signals();
 
             // print the pipeline debug outputs via c code to the pipeline output file
             // print_cycles();

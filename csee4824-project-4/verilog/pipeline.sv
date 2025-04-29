@@ -179,9 +179,12 @@ module pipeline (
 
     output logic lsq_op_in_progress,
 
-    output logic [63:0] dcache_cur_addr
-
-
+    output logic [31:0] dcache_cur_addr,
+    output logic [4:0] cache_tag_in_flight [15:0], //indexed by dcache_tag (3 bits)
+    output logic cache_in_flight_valid [15:0], //indexed by dcache_tag (3 bits)
+    output logic cache_offset_in_flight [15:0], //indexed by dcache_tag (3 bits) gets us whether it is top half of cache line or bottom half    
+    output logic cache_in_flight_rd_unsigned [15:0], //indexed by dcache_tag (3 bits) gets us whether it is unsigned or signed
+    output MEM_SIZE cache_in_flight_mem_size [15:0] //indexed by dcache_tag (3 bits) gets us whether it is 8, 16, or 32 bit
 
 );
 
@@ -418,7 +421,6 @@ module pipeline (
         .cache_tag(cache_tag),
         .cache_valid(cache_valid),
         .cache_dirty(cache_dirty)
-
     );
 
     // for now lets just do passthroughs:
@@ -682,7 +684,13 @@ module pipeline (
         .head_ready_for_mem(head_ready_for_mem), // debugging
         .head_ptr(head_ptr), //points to OLDEST entry debugging
         .tail_ptr(tail_ptr), //points to next free entry debugging
-        .lsq_out(lsq_out) // debugging
+        .lsq_out(lsq_out), // debugging
+
+        .cache_in_flight_valid(cache_in_flight_valid),
+        .cache_tag_in_flight(cache_tag_in_flight),
+        .cache_in_flight_rd_unsigned(cache_in_flight_rd_unsigned),
+        .cache_offset_in_flight(cache_offset_in_flight),
+        .cache_in_flight_mem_size(cache_in_flight_mem_size)
     );
 
     //////////////////////////////////////////////////

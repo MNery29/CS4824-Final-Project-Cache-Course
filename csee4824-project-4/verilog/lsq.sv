@@ -61,7 +61,7 @@ module lsq#(
     input logic [3:0] dcache_tag, // high when valid
     input logic [3:0] dcache_response, // 0 = can't accept, other=tag of transaction
     input logic dcache_hit, // 1 if hit, 0 if miss
-    input logic [63:0] dcache_cur_addr, // address of the current transaction
+    input logic [31:0] dcache_cur_addr, // address of the current transaction
 
     input [4:0] mem_tag, // from rt stage
     input mem_valid, // from rt stage
@@ -89,7 +89,14 @@ module lsq#(
     output logic [LSQ_SIZE_W:0] head_ptr, //points to OLDEST entry debugging
     output logic [LSQ_SIZE_W:0] tail_ptr, //points to next free entry debugging
 
-    output lsq_entry_t lsq_out [LSQ_SIZE-1:0] // debugging
+    output lsq_entry_t lsq_out [LSQ_SIZE-1:0], // debugging
+
+    output logic [4:0] cache_tag_in_flight [15:0], //indexed by dcache_tag (3 bits)
+    output logic cache_in_flight_valid [15:0], //indexed by dcache_tag (3 bits)
+    output logic cache_offset_in_flight [15:0], //indexed by dcache_tag (3 bits) gets us whether it is top half of cache line or bottom half    
+    output logic cache_in_flight_rd_unsigned [15:0], //indexed by dcache_tag (3 bits) gets us whether it is unsigned or signed
+    output MEM_SIZE cache_in_flight_mem_size [15:0] //indexed by dcache_tag (3 bits) gets us whether it is 8, 16, or 32 bit
+
 );
 
     lsq_entry_t lsq [LSQ_SIZE-1:0];
@@ -98,11 +105,11 @@ module lsq#(
     // logic [LSQ_SIZE_W:0] tail_ptr; //points to next free entry
 
     // track whether we have an outstanding D‐cache request (or multiple since we have a nonblocking cache)
-    logic [4:0] cache_tag_in_flight [3:0]; //indexed by dcache_tag (3 bits)
-    logic cache_in_flight_valid [3:0]; //indexed by dcache_tag (3 bits)
-    logic cache_offset_in_flight [3:0]; //indexed by dcache_tag (3 bits) gets us whether it is top half of cache line or bottom half    
-    logic cache_in_flight_rd_unsigned [3:0]; //indexed by dcache_tag (3 bits) gets us whether it is unsigned or signed
-    MEM_SIZE cache_in_flight_mem_size [3:0]; //indexed by dcache_tag (3 bits) gets us whether it is 8, 16, or 32 bit
+    // logic [4:0] cache_tag_in_flight [3:0]; //indexed by dcache_tag (3 bits)
+    // logic cache_in_flight_valid [3:0]; //indexed by dcache_tag (3 bits)
+    // logic cache_offset_in_flight [3:0]; //indexed by dcache_tag (3 bits) gets us whether it is top half of cache line or bottom half    
+    // logic cache_in_flight_rd_unsigned [3:0]; //indexed by dcache_tag (3 bits) gets us whether it is unsigned or signed
+    // MEM_SIZE cache_in_flight_mem_size [3:0]; //indexed by dcache_tag (3 bits) gets us whether it is 8, 16, or 32 bit
 
 
 
@@ -119,8 +126,8 @@ module lsq#(
     end
 
     logic [LSQ_SIZE_W:0] next_head_ptr, next_tail_ptr;
-    assign next_head_ptr = head_ptr + 1;
-    assign next_tail_ptr = tail_ptr + 1;
+    assign next_head_ptr = head_ptr == 3'b111 ? 0 : head_ptr + 1;
+    assign next_tail_ptr = tail_ptr == 3'b111 ? 0 : tail_ptr + 1;
 
     logic empty, full;
     // we determine it is empty if the head pointer is the same as tail pointer
@@ -259,7 +266,13 @@ module lsq#(
                 lsq[i].retired           <= 1'b0;
                 lsq[i].address_valid     <= 1'b0;
                 lsq[i].store_data_valid  <= 1'b0;
+            end
+            for (int i = 0; i < 16; i++) begin
                 cache_in_flight_valid[i] <= 1'b0;
+                cache_tag_in_flight[i]   <= 5'b0;
+                cache_offset_in_flight[i] <= 1'b0;
+                cache_in_flight_rd_unsigned[i] <= 1'b0;
+                cache_in_flight_mem_size[i] <= 2'b0;
             end
         end 
         else begin
@@ -271,20 +284,20 @@ module lsq#(
             // ff we just sent a request and the cache accepted it (dcache_tag != 0),
             // then record it as "in flight"
             // we want to handle stores seperately
-            if (head_ready_for_mem && !lsq[next_head_ptr-1].is_store) begin
+            if (head_ready_for_mem && !lsq[next_head_ptr == 0 ? 3'b111 : next_head_ptr-1].is_store) begin
                 // this happens when we do testing
                 if (dcache_response != 0 && !dcache_hit && dcache_cur_addr == head_entry.address) begin
                     if (NONBLOCKING) begin
-                        lsq[next_head_ptr-1].valid <= 1'b0;
+                        lsq[next_head_ptr == 0 ? 3'b111 : next_head_ptr-1].valid <= 1'b0;
                     end
 
                     //means a miss
                     cache_in_flight       <= 1'b1; // this is rly only used for blocking case
-                    cache_tag_in_flight[dcache_response] <= lsq[next_head_ptr-1].rob_tag;
+                    cache_tag_in_flight[dcache_response] <= head_entry.rob_tag;
                     cache_in_flight_valid[dcache_response] <= 1'b1;
-                    cache_offset_in_flight[dcache_response] <= lsq[next_head_ptr-1].address[2]; // 0 for lower half, 1 for upper half
-                    cache_in_flight_rd_unsigned[dcache_response] <= lsq[next_head_ptr-1].rd_unsigned;
-                    cache_in_flight_mem_size[dcache_response] <= lsq[next_head_ptr-1].mem_size;
+                    cache_offset_in_flight[dcache_response] <= head_entry.address[2]; // 0 for lower half, 1 for upper half
+                    cache_in_flight_rd_unsigned[dcache_response] <= head_entry.rd_unsigned;
+                    cache_in_flight_mem_size[dcache_response] <= head_entry.mem_size;
 
 
                     // but we still want the pointer to advance
@@ -295,13 +308,13 @@ module lsq#(
                 end
 
                 if (dcache_hit && dcache_cur_addr == head_entry.address) begin
-                    lsq[next_head_ptr-1].valid <= 1'b0;
+                    lsq[next_head_ptr == 0 ? 3'b111 : next_head_ptr-1].valid <= 1'b0;
 
                     //means a hit
                     // we dont have to track the cache_in_flight, data is already there
                     load_completed <= 1'b1;
                     data_to_broadcast <= next_data_to_broadcast;
-                    tag_to_broadcast <= lsq[next_head_ptr-1].rob_tag;
+                    tag_to_broadcast <= lsq[next_head_ptr == 0 ? 3'b111 : next_head_ptr-1].rob_tag;
 
                     // advance pointer
                     head_ptr <= next_head_ptr;
@@ -312,7 +325,7 @@ module lsq#(
             if (head_ready_for_mem && (dcache_response != 0) && lsq[head_ptr].is_store && dcache_cur_addr == head_entry.address) begin
                 // we dont have to track request
                 // but we do need to wait for dcache_response != 0 as a handshake
-                lsq[next_head_ptr-1].valid <= 1'b0;
+                lsq[next_head_ptr == 0 ? 3'b111 : next_head_ptr-1].valid <= 1'b0;
 
                 head_ptr <= next_head_ptr;
             end
@@ -323,7 +336,7 @@ module lsq#(
             if ( (dcache_tag != 0) && cache_in_flight_valid[dcache_tag])
             begin
                 if (!NONBLOCKING) begin
-                    lsq[next_head_ptr-1].valid <= 1'b0;
+                    lsq[next_head_ptr == 0 ? 3'b111 : next_head_ptr-1].valid <= 1'b0;
                     cache_in_flight <= 1'b0;
                     head_ptr <= next_head_ptr;
                 end

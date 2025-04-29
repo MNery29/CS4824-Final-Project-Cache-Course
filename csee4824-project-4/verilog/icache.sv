@@ -123,6 +123,7 @@ module icache (
                 current_mem_tag <= Imem2proc_response;
             end
             if (got_mem_data && !changed_addr) begin // If data came from memory, meaning tag matches
+
                 icache_data[current_index].data  <= Imem2proc_data;
                 icache_data[current_index].tags  <= current_tag;
                 icache_data[current_index].valid <= 1;

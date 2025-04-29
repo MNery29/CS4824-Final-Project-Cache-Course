@@ -80,8 +80,8 @@
 // you are not allowed to change this definition for your final processor
 // the project 3 processor has a massive boost in performance just from having no mem latency
 // see if you can beat it's CPI in project 4 even with a 100ns latency!
-// `define MEM_LATENCY_IN_CYCLES  5
-`define MEM_LATENCY_IN_CYCLES (100.0/`CLOCK_PERIOD+0.49999)
+`define MEM_LATENCY_IN_CYCLES  5
+// `define MEM_LATENCY_IN_CYCLES (100.0/`CLOCK_PERIOD+0.49999)
 // the 0.49999 is to force ceiling(100/period). The default behavior for
 // float to integer conversion is rounding to nearest
 
@@ -429,7 +429,7 @@ typedef struct packed{
 // this is to prevent other modules from mistaking the tag as register values
 typedef struct packed {
     logic [`XLEN-1:0]       addr;      // data coming back from cache
-    logic [3:0]        tag;        // tag of the transaction
+    logic [4:0]        tag;        // tag of the transaction
     logic              valid;      // if entry is occupied
 } priv_addr_packet;
 

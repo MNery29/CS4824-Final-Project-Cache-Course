@@ -43,7 +43,7 @@ module dcache
     output logic [3:0] data_tag, 
     output logic [3:0] data_response, //im actaully going to increase the bits from my cache, because i want to be able to assign my own tags to certain requests
 
-    output logic [63:0] cur_addr,
+    output logic [31:0] cur_addr,
     output logic next_state, //for debugging 
     output logic state, //for debugging 
 
@@ -117,7 +117,7 @@ module dcache
     logic [3:0] next_data_response;
 
     logic [63:0] next_store_write;
-    logic [63:0] next_addr;
+    logic [31:0] next_addr;
 
     // state machine
     // logic [1:0] state; // this will track whether we are in a MISS state or IDLE state
