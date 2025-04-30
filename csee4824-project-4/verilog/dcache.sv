@@ -44,6 +44,8 @@ module dcache
     output logic [3:0] data_response, //im actaully going to increase the bits from my cache, because i want to be able to assign my own tags to certain requests
 
     output logic [31:0] cur_addr,
+    output logic [1:0] cur_command, // this is the command that we are currently executing
+    output logic [63:0] cur_data,
     output logic next_state, //for debugging 
     output logic state, //for debugging 
 
@@ -118,6 +120,9 @@ module dcache
 
     logic [63:0] next_store_write;
     logic [31:0] next_addr;
+    // logic [1:0] proc_command;
+    logic [1:0] next_cur_command;
+    logic [63:0] next_cur_data;
 
     // state machine
     // logic [1:0] state; // this will track whether we are in a MISS state or IDLE state
@@ -136,15 +141,26 @@ module dcache
     assign current_tag_index = tag_to_addr[mem2dcache_tag][`XLEN-1-TAG_BITS:OFFSET_BITS]; // this means nothing if tag_to_addr_valid is low
     
     always_comb begin
+
+        next_wb_eviction = (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) &&
+                            (cache_dirty[current_tag_index] == 1) && 
+                            (cache_valid[current_tag_index] == 1);
+
+        next_evict_addr = {cache_tag[current_tag_index], current_tag_index, 3'b000};
+        next_evict_data = cache_data[current_tag_index];
+
+        next_cur_command = proc2Dcache_command;
+        next_cur_data = proc2Dcache_data;
+
         // hit only true if the cache is valid and theres no returning data
         next_hit = cache_valid[addr_index] && (cache_tag[addr_index] == addr_tag) 
                     && !(mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) 
                     && (proc2Dcache_command == BUS_LOAD || proc2Dcache_command == BUS_STORE);
 
-        next_data = (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) ? 
+        next_data = next_wb_eviction ? 0 :  (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) ? 
                             mem2dcache_data
                             : cache_data[addr_index];
-        next_data_response = (proc2Dcache_command == BUS_STORE & next_hit) ? next_hit : mem2dcache_response;
+        next_data_response = next_wb_eviction ? 0 : (proc2Dcache_command == BUS_STORE & next_hit) ? next_hit : mem2dcache_response;
         next_data_tag = (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) ? 
                             mem2dcache_tag
                             : 0;
@@ -155,12 +171,7 @@ module dcache
         next_addr = proc2Dcache_addr;
         // we are not checking whether the tags of cache lines are the same, because we have other
         // precautionary features to prevent a LD request from happening if the addr is alr in flight
-        next_wb_eviction = (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) &&
-                            (cache_dirty[current_tag_index] == 1) && 
-                            (cache_valid[current_tag_index] == 1);
-
-        next_evict_addr = {cache_tag[current_tag_index], current_tag_index, 3'b000};
-        next_evict_data = cache_data[current_tag_index];
+       
 
 
         if (wb_eviction) begin
@@ -237,9 +248,6 @@ module dcache
                 end
                 else if (in_flight || wb_eviction) begin
                     next_state = `IDLE;
-                    next_data = 0;
-                    next_data_response=0;
-                    next_data_tag=0;
                 end
                 else begin
                     next_state = `MISS;
@@ -300,9 +308,11 @@ module dcache
             data_response <= next_data_response;
             wb_eviction <= next_wb_eviction;
             cur_addr <= next_addr;
+            cur_command <= next_cur_command;
+            cur_data <= next_cur_data;
 
             if (state == `MISS) begin
-                if (mem2dcache_response != 0) begin
+                if (mem2dcache_response != 0 && !wb_eviction) begin
                     tag_to_addr_valid[mem2dcache_response] <= 1;
                     tag_to_addr[mem2dcache_response] <= proc2Dcache_addr;
                     tag_to_memsize[mem2dcache_response] <= proc2Dcache_size;
@@ -310,7 +320,7 @@ module dcache
                     tag_to_is_store[mem2dcache_response] <= (proc2Dcache_command == BUS_STORE);
                 end
             end
-            if (proc2Dcache_command == BUS_STORE) begin
+            if (proc2Dcache_command == BUS_STORE && !wb_eviction) begin
                 if (next_hit) begin
                     cache_data[addr_index] <= next_store_write;
                     cache_dirty[addr_index] <= 1;

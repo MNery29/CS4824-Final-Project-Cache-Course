@@ -62,6 +62,8 @@ module lsq#(
     input logic [3:0] dcache_response, // 0 = can't accept, other=tag of transaction
     input logic dcache_hit, // 1 if hit, 0 if miss
     input logic [31:0] dcache_cur_addr, // address of the current transaction
+    input logic [1:0] dcache_cur_command,
+    input logic [63:0] dcache_cur_data,
 
     input [4:0] mem_tag, // from rt stage
     input mem_valid, // from rt stage
@@ -117,6 +119,8 @@ module lsq#(
     logic is_mem_op;
     logic is_store_op;
     logic is_load_op;
+
+    // for waiting one cycle
 
     // basically determines whether it is store or read
     always_comb begin
@@ -209,7 +213,7 @@ module lsq#(
 
     // for indexing mem of cache data (from returns of tag)
     always_comb begin
-        if (dcache_tag != 0 && !dcache_hit && dcache_cur_addr == head_entry.address) begin
+        if (dcache_tag != 0 && !dcache_hit && cache_in_flight_valid[dcache_tag]) begin
             next_data_to_broadcast = cache_offset_in_flight[dcache_tag] ? dcache_data_out[63:32] : dcache_data_out[31:0];
             if (cache_in_flight_rd_unsigned[dcache_tag]) begin
                 // unsigned: zero-extend the data
@@ -286,7 +290,7 @@ module lsq#(
             // we want to handle stores seperately
             if (head_ready_for_mem && !lsq[next_head_ptr == 0 ? 3'b111 : next_head_ptr-1].is_store) begin
                 // this happens when we do testing
-                if (dcache_response != 0 && !dcache_hit && dcache_cur_addr == head_entry.address) begin
+                if (dcache_response != 0 && !dcache_hit && dcache_cur_addr == head_entry.address && dcache_cur_command[1] == head_entry.is_store) begin
                     if (NONBLOCKING) begin
                         lsq[next_head_ptr == 0 ? 3'b111 : next_head_ptr-1].valid <= 1'b0;
                     end
@@ -307,7 +311,7 @@ module lsq#(
                     end
                 end
 
-                if (dcache_hit && dcache_cur_addr == head_entry.address) begin
+                if (dcache_hit && dcache_cur_addr == head_entry.address && dcache_cur_command[1] == head_entry.is_store) begin
                     lsq[next_head_ptr == 0 ? 3'b111 : next_head_ptr-1].valid <= 1'b0;
 
                     //means a hit
@@ -322,7 +326,8 @@ module lsq#(
                 end
                 
             end
-            if (head_ready_for_mem && (dcache_response != 0) && lsq[head_ptr].is_store && dcache_cur_addr == head_entry.address) begin
+            if (head_ready_for_mem && (dcache_response != 0) && lsq[head_ptr].is_store && dcache_cur_addr == head_entry.address 
+                    && dcache_cur_command[1] == head_entry.is_store && dcache_cur_data == head_entry.store_data) begin
                 // we dont have to track request
                 // but we do need to wait for dcache_response != 0 as a handshake
                 lsq[next_head_ptr == 0 ? 3'b111 : next_head_ptr-1].valid <= 1'b0;
@@ -333,7 +338,7 @@ module lsq#(
 
 
             // ff a response arrives that matches our in-flight tag, the transaction completes
-            if ( (dcache_tag != 0) && cache_in_flight_valid[dcache_tag])
+            if ( (dcache_tag != 0) && cache_in_flight_valid[dcache_tag] )
             begin
                 if (!NONBLOCKING) begin
                     lsq[next_head_ptr == 0 ? 3'b111 : next_head_ptr-1].valid <= 1'b0;

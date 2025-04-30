@@ -180,6 +180,8 @@ module pipeline (
     output logic lsq_op_in_progress,
 
     output logic [31:0] dcache_cur_addr,
+    output logic [1:0] dcache_cur_command,
+    output logic [63:0] dcache_cur_data,
     output logic [4:0] cache_tag_in_flight [15:0], //indexed by dcache_tag (3 bits)
     output logic cache_in_flight_valid [15:0], //indexed by dcache_tag (3 bits)
     output logic cache_offset_in_flight [15:0], //indexed by dcache_tag (3 bits) gets us whether it is top half of cache line or bottom half    
@@ -410,6 +412,8 @@ module pipeline (
         .next_state(next_state),
 
         .cur_addr(dcache_cur_addr),
+        .cur_command(dcache_cur_command),
+        .cur_data(dcache_cur_data),
 
         .tag_to_addr(tag_to_addr),
         .tag_to_addr_valid(tag_to_addr_valid),
@@ -664,6 +668,8 @@ module pipeline (
         .mem_valid(mem_valid),
 
         .dcache_cur_addr(dcache_cur_addr),
+        .dcache_cur_command(dcache_cur_command),
+        .dcache_cur_data(dcache_cur_data),
 
         .lsq_packet(lsq_packet),
         .cdb_in(cdb_packet), //check
