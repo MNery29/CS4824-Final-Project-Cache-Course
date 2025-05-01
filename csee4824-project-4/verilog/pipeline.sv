@@ -440,7 +440,7 @@ module pipeline (
         .cdb_take_branch(cdb_packet.take_branch),
 
         .fu_busy(fu_busy),
-        .rs1_clear(rs_issue_enable[0]), //this means its the first register
+        .rs_clear_vec(rs_issue_enable), //this means its the first register
 
         .rob_retire_entry(retire_valid_out), // TODO: connect properly
 

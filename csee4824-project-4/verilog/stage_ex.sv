@@ -13,7 +13,7 @@
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 `include "verilog/mult.sv"
-`include "verilog/booth_mult_stage.sv"
+`include "verilog/mult_stage.sv"
 
 // ALU function code input
 // probably want to leave these alone
@@ -205,6 +205,9 @@ module alu (
     output logic [`XLEN-1:0] result
 );
 
+
+
+
     logic signed [`XLEN-1:0]   signed_opa, signed_opb;
     logic signed [2*`XLEN-1:0] signed_mul, mixed_mul;
     logic        [2*`XLEN-1:0] unsigned_mul;
@@ -271,7 +274,7 @@ endmodule // conditional_branch
 
 module stage_ex (
     input logic clk, rst,
-    input IS_EX_PACKET is_ex_reg,
+    input IS_EX_PACKET is_ex_reg[2:0], //One packet per FU, ALU0/1 and MULT
     input cdb_packet_busy,
 
     // input ID_EX_PACKET id_ex_reg,
@@ -287,16 +290,39 @@ module stage_ex (
     output logic [`XLEN-1:0] opb_mux_out
 
 );
+    //functional unit inputs
+    logic [`XLEN-1:0] opa_mux_out0, opb_mux_out0;
+    logic [`XLEN-1:0] opa_mux_out1, opb_mux_out1;
+    logic [`XLEN-1:0] opa_mux_out2, opb_mux_out2;
+
 
     // logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
     logic [31:0] next_val;
     logic take_branch;
     logic is_branch;
     // logic take_conditional;
-   
+
+    //MULT logic inputs 
+    logic [63:0] mult_result;
+    logic mult_done;
+    logic mult_start;
+    logic is_mult_inst;   
 
 
-    assign is_mem_op = is_ex_reg.rd_mem || is_ex_reg.wr_mem;
+    
+    //Logic for which FU to select from: 
+    logic [1:0] fu_index;
+    always_comb begin
+        if (is_ex_reg[2].issue_valid) //MULT
+            fu_index = 2'd2;
+        else if (is_ex_reg[0].issue_valid) //ALU0
+            fu_index = 2'd0;
+        else if (is_ex_reg[1].issue_valid) //ALU1
+            fu_index = 2'd1;
+        else
+            fu_index = 2'd0; // default (NOP)
+    end
+
     // assign ex_packet.dest_reg_idx = id_ex_reg.dest_reg_idx;
 
     // assign ex_packet.halt         = id_ex_reg.halt;
@@ -308,7 +334,17 @@ module stage_ex (
     // assign ex_cp_packet.rd_unsigned  = is_ex_reg.inst.r.funct3[2]; // 1 if unsigned, 0 if signed
     // assign ex_cp_packet.mem_size     = MEM_SIZE'(is_ex_reg.inst.r.funct3[1:0]);
 
-    assign alu_busy = cdb_packet_busy;
+    //PACKETS FOR EACH UNIT: 
+
+
+    //check if issue is a valid op and the function is a mult instruction
+    //if so start mult. 
+    assign mult_start = is_ex_reg[2].issue_valid && (is_ex_reg[2].alu_func inside{MUL_ALU_MUL, MUL_ALU_MULH, MUL_ALU_MULHSU, MUL_ALU_MULHU});
+
+    assign is_mult_inst = (is_ex_reg[2].alu_func inside{MUL_ALU_MUL, MUL_ALU_MULH, MUL_ALU_MULHSU, MUL_ALU_MULHU});
+
+    assign alu_busy = cdb_packet_busy || (is_mult_inst && !mult_done);
+
 
     EX_CP_PACKET last_packet;
 
@@ -319,71 +355,177 @@ module stage_ex (
     // no branch 
     // assign ex_packet.take_branch = id_ex_reg.uncond_branch || (id_ex_reg.cond_branch && take_conditional);
 
-    // ALU opA mux
-    // assign opa_mux_out = is_ex_reg.OPA;
+
+    //ALU0 opA and opB selection: 
     always_comb begin
-        case (is_ex_reg.opa_select)
-            OPA_IS_RS1:  opa_mux_out = is_ex_reg.OPA;
-            OPA_IS_NPC:  opa_mux_out = is_ex_reg.NPC;
-            OPA_IS_PC:   opa_mux_out = is_ex_reg.PC;
-            OPA_IS_ZERO: opa_mux_out = 0;
-            default:     opa_mux_out = `XLEN'hdeadface; // dead face
+        case (is_ex_reg[0].opa_select)
+            OPA_IS_RS1:  opa_mux_out0 = is_ex_reg[0].OPA;
+            OPA_IS_NPC:  opa_mux_out0 = is_ex_reg[0].NPC;
+            OPA_IS_PC:   opa_mux_out0 = is_ex_reg[0].PC;
+            OPA_IS_ZERO: opa_mux_out0 = 0;
+            default:     opa_mux_out0 = `XLEN'hdeadface;
         endcase
     end
 
-    // ALU opB mux
-    // assign opb_mux_out = is_ex_reg.OPB;
     always_comb begin
-        case (is_ex_reg.opb_select)
-            OPB_IS_RS2:   opb_mux_out = is_ex_reg.OPB;
-            OPB_IS_I_IMM: opb_mux_out = `RV32_signext_Iimm(is_ex_reg.inst);
-            OPB_IS_S_IMM: opb_mux_out = `RV32_signext_Simm(is_ex_reg.inst);
-            OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(is_ex_reg.inst);
-            OPB_IS_U_IMM: opb_mux_out = `RV32_signext_Uimm(is_ex_reg.inst);
-            OPB_IS_J_IMM: opb_mux_out = `RV32_signext_Jimm(is_ex_reg.inst);
-            default:      opb_mux_out = `XLEN'hfacefeed; // face feed
+        case (is_ex_reg[0].opb_select)
+            OPB_IS_RS2:   opb_mux_out0 = is_ex_reg[0].OPB;
+            OPB_IS_I_IMM: opb_mux_out0 = `RV32_signext_Iimm(is_ex_reg[0].inst);
+            OPB_IS_S_IMM: opb_mux_out0 = `RV32_signext_Simm(is_ex_reg[0].inst);
+            OPB_IS_B_IMM: opb_mux_out0 = `RV32_signext_Bimm(is_ex_reg[0].inst);
+            OPB_IS_U_IMM: opb_mux_out0 = `RV32_signext_Uimm(is_ex_reg[0].inst);
+            OPB_IS_J_IMM: opb_mux_out0 = `RV32_signext_Jimm(is_ex_reg[0].inst);
+            default:      opb_mux_out0 = `XLEN'hfacefeed;
         endcase
+    end
+
+    // ALU1 operand selection
+    always_comb begin
+        case (is_ex_reg[1].opa_select)
+            OPA_IS_RS1:  opa_mux_out1 = is_ex_reg[1].OPA;
+            OPA_IS_NPC:  opa_mux_out1 = is_ex_reg[1].NPC;
+            OPA_IS_PC:   opa_mux_out1 = is_ex_reg[1].PC;
+            OPA_IS_ZERO: opa_mux_out1 = 0;
+            default:     opa_mux_out1 = `XLEN'hdeadface;
+        endcase
+    end
+
+    always_comb begin
+        case (is_ex_reg[1].opb_select)
+            OPB_IS_RS2:   opb_mux_out1 = is_ex_reg[1].OPB;
+            OPB_IS_I_IMM: opb_mux_out1 = `RV32_signext_Iimm(is_ex_reg[1].inst);
+            OPB_IS_S_IMM: opb_mux_out1 = `RV32_signext_Simm(is_ex_reg[1].inst);
+            OPB_IS_B_IMM: opb_mux_out1 = `RV32_signext_Bimm(is_ex_reg[1].inst);
+            OPB_IS_U_IMM: opb_mux_out1 = `RV32_signext_Uimm(is_ex_reg[1].inst);
+            OPB_IS_J_IMM: opb_mux_out1 = `RV32_signext_Jimm(is_ex_reg[1].inst);
+            default:      opb_mux_out1 = `XLEN'hfacefeed;
+        endcase
+    end
+
+    // MULT operand selection
+    always_comb begin
+        case (is_ex_reg[2].opa_select)
+            OPA_IS_RS1:  opa_mux_out2 = is_ex_reg[2].OPA;
+            OPA_IS_NPC:  opa_mux_out2 = is_ex_reg[2].NPC;
+            OPA_IS_PC:   opa_mux_out2 = is_ex_reg[2].PC;
+            OPA_IS_ZERO: opa_mux_out2 = 0;
+            default:     opa_mux_out2 = `XLEN'hdeadface;
+        endcase
+    end
+
+    always_comb begin
+        case (is_ex_reg[2].opb_select)
+            OPB_IS_RS2:   opb_mux_out2 = is_ex_reg[2].OPB;
+            OPB_IS_I_IMM: opb_mux_out2 = `RV32_signext_Iimm(is_ex_reg[2].inst);
+            OPB_IS_S_IMM: opb_mux_out2 = `RV32_signext_Simm(is_ex_reg[2].inst);
+            OPB_IS_B_IMM: opb_mux_out2 = `RV32_signext_Bimm(is_ex_reg[2].inst);
+            OPB_IS_U_IMM: opb_mux_out2 = `RV32_signext_Uimm(is_ex_reg[2].inst);
+            OPB_IS_J_IMM: opb_mux_out2 = `RV32_signext_Jimm(is_ex_reg[2].inst);
+            default:      opb_mux_out2 = `XLEN'hfacefeed;
+        endcase
+    end
+
+
+    //selecting what next_val to forward. 
+    always_comb begin
+        if (is_ex_reg[2].issue_valid)
+            next_val = mult_result;
+        else if (is_ex_reg[0].issue_valid)
+            next_val = alu0_result;
+        else if (is_ex_reg[1].issue_valid)
+            next_val = alu1_result;
+        else
+            next_val = 32'h0;
     end
 
 
     // Instantiate the ALU
     alu alu_0 (
         // Inputs
-        .opa(opa_mux_out),
-        .opb(opb_mux_out),
-        .func(is_ex_reg.alu_func),
+        .opa(opa_mux_out0),
+        .opb(opb_mux_out0),
+        .func(is_ex_reg[0].alu_func),
 
         // Output
-        .result(next_val)
+        .result(alu0_result)
+    );
+
+    alu alu_1 (
+        // Inputs
+        .opa(opa_mux_out1),
+        .opb(opb_mux_out1),
+        .func(is_ex_reg[1].alu_func),
+
+        // Output
+        .result(alu1_result)
+    );
+
+
+
+
+    //instantiate the MULT unit 
+    mult mult_0 (
+        //inputs
+        .clock(clk),
+        .reset(rst),
+        .mcand(opa_mux_out2),
+        .mplier(opb_mux_out2),
+        .mult_type(is_ex_reg[2].alu_func),
+        .start(mult_start),
+        .product(mult_result),
+        .done(mult_done)
     );
 
     // Instantiate the conditional branch module
     conditional_branch conditional_branch_0 (
         // Inputs
-        .func(is_ex_reg.inst.b.funct3), // instruction bits for which condition to check
-        .rs1(is_ex_reg.OPA),
-        .rs2(is_ex_reg.OPB),
+        .func(is_ex_reg[fu_index].inst.b.funct3), // instruction bits for which condition to check
+        .rs1(is_ex_reg[fu_index].OPA),
+        .rs2(is_ex_reg[fu_index].OPB),
 
         // Output
         .take(take_conditional)
     );
 
-    assign priv_addr_out.valid = is_ex_reg.issue_valid && is_mem_op;
-    assign priv_addr_out.tag = is_ex_reg.rob_tag;
-    assign priv_addr_out.addr = ex_cp_packet.value;
 
-    assign take_branch = is_ex_reg.uncond_branch || (is_ex_reg.cond_branch & take_conditional);
-    assign is_branch = is_ex_reg.cond_branch || is_ex_reg.uncond_branch;
+    assign is_mem_op = is_ex_reg[fu_index].rd_mem || is_ex_reg[fu_index].wr_mem;
 
-    assign ex_cp_packet.valid = cdb_packet_busy ? last_packet.valid : is_ex_reg.issue_valid && !is_mem_op;
-    assign ex_cp_packet.rob_tag = cdb_packet_busy ? last_packet.rob_tag : is_ex_reg.rob_tag;
-    assign ex_cp_packet.value   = cdb_packet_busy ? is_branch ? last_packet.value :
-                              is_ex_reg.uncond_branch            ? next_val :
-                              is_ex_reg.cond_branch              ? (take_branch ? next_val : is_ex_reg.NPC) :
-                                                           is_ex_reg.NPC : next_val;
-    assign ex_cp_packet.done = cdb_packet_busy ? last_packet.done : is_ex_reg.issue_valid && !is_mem_op;
+    assign priv_addr_out.valid = is_ex_reg[fu_index].issue_valid && is_mem_op;
+    assign priv_addr_out.tag   = is_ex_reg[fu_index].rob_tag;
+    assign priv_addr_out.addr  = ex_cp_packet.value;
 
-    assign ex_cp_packet.take_branch = cdb_packet_busy ? last_packet.take_branch : take_branch;
+    assign take_branch = is_ex_reg[fu_index].uncond_branch || 
+                        (is_ex_reg[fu_index].cond_branch && take_conditional);
+
+    assign is_branch = is_ex_reg[fu_index].cond_branch || 
+                    is_ex_reg[fu_index].uncond_branch;
+
+    assign ex_cp_packet.valid = cdb_packet_busy ? 
+                                last_packet.valid : 
+                                is_ex_reg[fu_index].issue_valid && 
+                                (!is_mem_op) && 
+                                (!is_mult_inst || mult_done);
+
+    assign ex_cp_packet.rob_tag = cdb_packet_busy ? 
+                                last_packet.rob_tag : 
+                                is_ex_reg[fu_index].rob_tag;
+
+    assign ex_cp_packet.value = cdb_packet_busy ? 
+        (is_branch ? last_packet.value :
+        is_ex_reg[fu_index].uncond_branch ? next_val :
+        is_ex_reg[fu_index].cond_branch   ? (take_branch ? next_val : is_ex_reg[fu_index].NPC) :
+                                            is_ex_reg[fu_index].NPC)
+        : (is_mult_inst ? mult_result : next_val);
+
+    assign ex_cp_packet.done = cdb_packet_busy ? 
+                            last_packet.done : 
+                            is_ex_reg[fu_index].issue_valid && 
+                            (!is_mem_op) && 
+                            (!is_mult_inst || mult_done);
+
+    assign ex_cp_packet.take_branch = cdb_packet_busy ? 
+                                    last_packet.take_branch : 
+                                    take_branch;
 
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
