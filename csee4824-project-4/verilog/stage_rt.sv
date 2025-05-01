@@ -87,7 +87,13 @@ assign csr_op = csr_op_reg;
 
 assign npc = npc_reg;
 
-assign duplicate = rob_retire_packet.value == retire_value_reg && rob_retire_packet.dest_reg == retire_dest_reg && rob_retire_packet.tag[4:0] == retire_tag_reg && rob_retire_packet.mem_valid == mem_valid_reg && rob_retire_packet.halt == halt_reg && rob_retire_packet.illegal == illegal_reg && rob_retire_packet.csr_op == csr_op_reg;
+assign duplicate = rob_retire_packet.value == retire_value_reg 
+        && rob_retire_packet.dest_reg == retire_dest_reg 
+        && rob_retire_packet.tag[4:0] == retire_tag_reg 
+        && rob_retire_packet.mem_valid == mem_valid_reg 
+        && rob_retire_packet.halt == halt_reg 
+        && rob_retire_packet.illegal == illegal_reg 
+        && rob_retire_packet.csr_op == csr_op_reg;
 
 
 
@@ -164,8 +170,8 @@ always_ff @(posedge clock) begin
             clear_is_reg <= 0;
             stall_if_reg <= 0;
             clear_lsq_reg <= 0;
-            take_branch_reg <= 0;
             halt_reg <= 0;
+            take_branch_reg <= 0;
             illegal_reg <= 0;
             csr_op_reg <= 0;
 
