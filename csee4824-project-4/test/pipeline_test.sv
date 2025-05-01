@@ -1000,12 +1000,15 @@ module testbench;
         end else begin
             clock_count <= (clock_count + 1);
             instr_count <= (instr_count + pipeline_completed_insts);
-            $display("______________POS EDGE CLOCK CYCLE!!!________________");
-            display_all_signals();
+            // $display("______________POS EDGE CLOCK CYCLE!!!________________");
+            // display_all_signals();
         end
         
     end
-
+    // initial forever begin
+    //     #(100*`CLOCK_PERIOD);
+    //     $display("[%0t] >>> watchdog tick", $time);
+    // end
 
 
     always @(negedge clock) begin
@@ -1015,8 +1018,8 @@ module testbench;
             debug_counter <= 0;
         end else begin
             #2;
-            $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");
-            display_all_signals();
+            // $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");
+            // display_all_signals();
 
             // print the pipeline debug outputs via c code to the pipeline output file
             // print_cycles();

@@ -34,6 +34,8 @@ module dcache
     input logic [63:0] mem2dcache_data,     // data resulting from a load
     input logic [3:0]  mem2dcache_tag,       // 0 = no value, other=tag of transaction
 
+    input logic halt,
+
     output logic [`XLEN-1:0] dcache2mem_addr,
     output logic [63:0]      dcache2mem_data, // address for current command
     output logic [1:0]       dcache2mem_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
@@ -46,8 +48,12 @@ module dcache
     output logic [31:0] cur_addr,
     output logic [1:0] cur_command, // this is the command that we are currently executing
     output logic [63:0] cur_data,
+
+    output logic halt_confirm, 
+
     output logic next_state, //for debugging 
     output logic state, //for debugging 
+
 
     output logic [`XLEN-1:0] tag_to_addr [15:0],
     output logic tag_to_addr_valid [15:0],
@@ -100,7 +106,8 @@ module dcache
     // logic cache_dirty [0:63]; // 64 lines of dirty bits
 
     logic store_load_queue; // this will be high if we had a store request that was a miss, and now we need to queue a load request
-
+    logic [2:0] waiting;
+    logic [2:0] next_waiting;
     // request information (if we have requests in flight)
     // logic [`XLEN-1:0] tag_to_addr [15:0];
     // logic tag_to_addr_valid [15:0];
@@ -123,6 +130,10 @@ module dcache
     // logic [1:0] proc_command;
     logic [1:0] next_cur_command;
     logic [63:0] next_cur_data;
+
+    logic next_halt_confirm;
+    logic [3:0] tag_in_flight; // this is for storing back
+
 
     // state machine
     // logic [1:0] state; // this will track whether we are in a MISS state or IDLE state
@@ -169,22 +180,47 @@ module dcache
         dcache2mem_data = 0;
         next_store_write = next_data;
         next_addr = proc2Dcache_addr;
+        next_waiting = waiting-1;
         // we are not checking whether the tags of cache lines are the same, because we have other
         // precautionary features to prevent a LD request from happening if the addr is alr in flight
        
-
+        tag_in_flight = 0;
 
         if (wb_eviction) begin
             dcache2mem_addr = evict_addr;
             dcache2mem_command = BUS_STORE;
             dcache2mem_data = evict_data;
         end
+        else begin
+        end
         in_flight = 0;
+        next_halt_confirm = 0;
         for (int i = 0; i < 16; i++) begin
             if (tag_to_addr_valid[i] && tag_to_addr[i][`XLEN-1:3] == proc2Dcache_addr[`XLEN-1:3]) begin
                 in_flight =1;
             end
         end
+        if (halt) begin
+            next_halt_confirm =1;
+            for (int i =0; i < 64; i++) begin
+                if (cache_valid[i] && cache_dirty[i] == 1) begin
+                    next_evict_addr = {cache_tag[i], i[INDEX_BITS-1:0], 3'b000};
+                    next_evict_data = cache_data[i];
+                    next_wb_eviction = 1;
+                    next_halt_confirm = 0;
+                end
+            end
+            for (int i =0; i < 16; i++) begin
+                if (tag_to_addr_valid[i] && tag_to_is_store[i] == 1) begin
+                    next_evict_addr = {tag_to_addr[i][`XLEN-1:3], 3'b000};
+                    next_evict_data = tag_to_memdata[i];
+                    next_wb_eviction = 1;
+                    next_halt_confirm = 0;
+                    tag_in_flight = i[3:0];
+                end
+            end
+        end
+
 
         if (proc2Dcache_command == BUS_STORE && next_hit) begin
             c.byte_level = cache_data[addr_index];
@@ -299,6 +335,7 @@ module dcache
             data_response <= 0;
             wb_eviction <= 0;
             cur_addr <= 0;
+            waiting <= 5;
         end
         else begin
             state <= next_state;
@@ -313,7 +350,9 @@ module dcache
             evict_addr <= next_evict_addr;
             evict_data <= next_evict_data;
 
-            if (state == `MISS) begin
+            halt_confirm <= next_halt_confirm;
+
+            if (state == `MISS && !halt) begin
                 if (mem2dcache_response != 0 && !wb_eviction) begin
                     tag_to_addr_valid[mem2dcache_response] <= 1;
                     tag_to_addr[mem2dcache_response] <= proc2Dcache_addr;
@@ -322,7 +361,7 @@ module dcache
                     tag_to_is_store[mem2dcache_response] <= (proc2Dcache_command == BUS_STORE);
                 end
             end
-            if (proc2Dcache_command == BUS_STORE && !wb_eviction) begin
+            if (proc2Dcache_command == BUS_STORE && !wb_eviction && !halt) begin
                 if (next_hit) begin
                     cache_data[addr_index] <= next_store_write;
                     cache_dirty[addr_index] <= 1;
@@ -332,7 +371,24 @@ module dcache
                 end
             end
 
-            if (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) begin
+            if (halt && mem2dcache_response != 0) begin
+                if (waiting == 0) begin
+                    if (tag_in_flight != 0) begin
+                        tag_to_addr_valid[tag_in_flight] <= 0;
+                        tag_to_is_store[tag_in_flight] <= 0;
+                        waiting <= 1;
+                    end
+                    else begin
+                        cache_dirty[next_evict_addr[`XLEN - 1 - TAG_BITS:OFFSET_BITS]] <= 0;
+                        waiting <= 1;
+                    end
+                end
+                else begin
+                    waiting <= next_waiting;
+                end
+            end
+
+            if (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1 && !halt) begin
                 if (tag_to_is_store[mem2dcache_tag]==1)begin
                     cache_data[current_tag_index] <= next_data_to_write;
                     cache_dirty[current_tag_index] <= 1;

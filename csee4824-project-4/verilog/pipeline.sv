@@ -165,6 +165,8 @@ module pipeline (
     output logic [63:0] tag_to_memdata [15:0], // this is for stores exclusively
     output logic tag_to_is_store [15:0],
 
+    output logic halt_confirm,
+
     output logic  next_state,
     output logic  state,
 
@@ -229,13 +231,17 @@ module pipeline (
     ALU_OPA_SELECT id_opa_select_out;
     ALU_OPB_SELECT id_opb_select_out;
     logic halt_rt_hack;
-    always_comb begin
-        if (halt_rt) begin
-            halt_rt_hack = 1'b1;
-        end
+
+    always_ff @(posedge clock or posedge reset) begin
+        if (reset) begin
+            halt_rt_hack <= 0;
+        end else if (halt_rt) begin
+            halt_rt_hack <= 1;
+        end 
         else begin
         end
     end
+
     // ROB_RETIRE_PACKET id_rob_retire_out;
     // logic rob_ready, rob_valid;
 
@@ -353,7 +359,7 @@ module pipeline (
     //////////////////////////////////////////////////
     //           Temporary Branch Logic             //
     //////////////////////////////////////////////////
-    assign if_valid = dispatch_ok && ~if_stall && ~stall_if_rt;                // Always fetch for now
+    assign if_valid = dispatch_ok && ~if_stall && ~stall_if_rt && !halt_rt_hack;                // Always fetch for now
     assign branch_target = 32'b0;          // Default branch target
 
     //////////////////////////////////////////////////
@@ -410,6 +416,7 @@ module pipeline (
         .mem2dcache_tag(mem2dcache_tag),
         .dcache2mem_addr(dcache2mem_addr),
         .dcache2mem_data(dcache2mem_data),
+        .halt(halt_rt_hack),
         .dcache2mem_command(dcache2mem_command),
         // .dcache2mem_size(dcache2mem_size),
         .hit_data(dcache_data_out),
@@ -432,7 +439,8 @@ module pipeline (
         .cache_data(cache_data),
         .cache_tag(cache_tag),
         .cache_valid(cache_valid),
-        .cache_dirty(cache_dirty)
+        .cache_dirty(cache_dirty),
+        .halt_confirm(halt_confirm)
     );
 
     // for now lets just do passthroughs:
@@ -452,7 +460,7 @@ module pipeline (
     //////////////////////////////////////////////////
     // IF_ID_PACKET      if_id_reg;
     always_ff @(posedge clock or posedge reset) begin
-        if (reset || clear_is) begin
+        if (reset || clear_is || halt_rt_hack) begin
             if_id_reg <= '0;
         end else begin
             if (dispatch_ok) begin
@@ -486,7 +494,7 @@ module pipeline (
     //);
     // stage reset 
     logic stage_id_reset;
-    assign stage_id_reset = reset || clear_is;
+    assign stage_id_reset = reset || clear_is || halt_rt_hack;
     stage_id stage_id_0 (
         .clock(clock),
         .reset(stage_id_reset),
@@ -618,7 +626,7 @@ module pipeline (
     //////////////////////////////////////////////////
     // EX_CP_PACKET ex_packet;
     logic ex_reset;
-    assign ex_reset = reset || clear_is;
+    assign ex_reset = reset || clear_is || halt_rt_hack;
 
     stage_ex stage_ex_0 (
         .clk(clock),
@@ -662,7 +670,7 @@ module pipeline (
     // we will issue the instruction in the reservation station
     // 
     logic lsq_reset;
-    assign lsq_reset = reset || clear_lsq;
+    assign lsq_reset = reset || clear_lsq || halt_rt_hack;
 
     lsq lsq_0 (
         .clk(clock),
@@ -711,7 +719,7 @@ module pipeline (
     //           EX/CP Pipeline Register            //
     //////////////////////////////////////////////////
     always_ff @(posedge clock or posedge reset) begin
-        if (reset || clear_lsq) begin
+        if (reset || clear_lsq || halt_rt_hack) begin
             ex_cp_reg <= '0;
         end else begin
             if (!cdb_busy) begin
@@ -724,7 +732,7 @@ module pipeline (
     //               Complete Stage                 //
     //////////////////////////////////////////////////
     logic cp_reset;
-    assign cp_reset = reset || clear_lsq;
+    assign cp_reset = reset || clear_lsq || halt_rt_hack;
     stage_cp stage_cp_0 (
         .clock(clock),
         .reset(cp_reset),
@@ -896,7 +904,7 @@ module pipeline (
     //     .mem2proc_tag(mem2proc_tag)
     // );
 
-    always_ff @(posedge clock or posedge reset) begin
+    always_ff @(negedge clock or posedge reset) begin
         if (reset) begin
             owner_q <= `OWN_NONE;
         // for now, we have to wait for data to respond, so not just tag
@@ -966,7 +974,7 @@ module pipeline (
     assign pipeline_commit_NPC      = npc_rt; 
     assign pipeline_completed_insts = retire_valid_out ? 4'd1 : 4'd0;
     assign pipeline_error_status = illegal_rt        ? ILLEGAL_INST :
-                                   halt_rt_hack          ? HALTED_ON_WFI :
+                                   halt_rt_hack && halt_confirm          ? HALTED_ON_WFI :
                                     NO_ERROR;
 
 endmodule // pipeline
