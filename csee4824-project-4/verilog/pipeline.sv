@@ -228,6 +228,14 @@ module pipeline (
 
     ALU_OPA_SELECT id_opa_select_out;
     ALU_OPB_SELECT id_opb_select_out;
+    logic halt_rt_hack;
+    always_comb begin
+        if (halt_rt) begin
+            halt_rt_hack = 1'b1;
+        end
+        else begin
+        end
+    end
     // ROB_RETIRE_PACKET id_rob_retire_out;
     // logic rob_ready, rob_valid;
 
@@ -872,7 +880,6 @@ module pipeline (
             // then if instruction module sent the request
             owner_d = `OWN_I;
         end
-        proc2mem_data = {32'b0, proc2mem_data[31:0]}; 
     end
 
 
@@ -959,7 +966,7 @@ module pipeline (
     assign pipeline_commit_NPC      = npc_rt; 
     assign pipeline_completed_insts = retire_valid_out ? 4'd1 : 4'd0;
     assign pipeline_error_status = illegal_rt        ? ILLEGAL_INST :
-                                   halt_rt           ? HALTED_ON_WFI :
+                                   halt_rt_hack          ? HALTED_ON_WFI :
                                     NO_ERROR;
 
 endmodule // pipeline

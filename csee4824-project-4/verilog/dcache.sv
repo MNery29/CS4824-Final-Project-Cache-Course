@@ -161,7 +161,7 @@ module dcache
                             mem2dcache_data
                             : cache_data[addr_index];
         next_data_response = next_wb_eviction ? 0 : (proc2Dcache_command == BUS_STORE & next_hit) ? next_hit : mem2dcache_response;
-        next_data_tag = (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) ? 
+        next_data_tag = (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1 && tag_to_is_store[mem2dcache_tag]) ? 
                             mem2dcache_tag
                             : 0;
         dcache2mem_command = BUS_NONE;
@@ -310,6 +310,8 @@ module dcache
             cur_addr <= next_addr;
             cur_command <= next_cur_command;
             cur_data <= next_cur_data;
+            evict_addr <= next_evict_addr;
+            evict_data <= next_evict_data;
 
             if (state == `MISS) begin
                 if (mem2dcache_response != 0 && !wb_eviction) begin
@@ -331,10 +333,6 @@ module dcache
             end
 
             if (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) begin
-                if (next_wb_eviction) begin
-                    evict_addr <= next_evict_addr;
-                    evict_data <= next_evict_data;
-                end
                 if (tag_to_is_store[mem2dcache_tag]==1)begin
                     cache_data[current_tag_index] <= next_data_to_write;
                     cache_dirty[current_tag_index] <= 1;

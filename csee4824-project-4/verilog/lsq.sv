@@ -288,7 +288,7 @@ module lsq#(
             // ff we just sent a request and the cache accepted it (dcache_tag != 0),
             // then record it as "in flight"
             // we want to handle stores seperately
-            if (head_ready_for_mem && !lsq[next_head_ptr == 0 ? 3'b111 : next_head_ptr-1].is_store) begin
+            if (head_ready_for_mem && !lsq[next_head_ptr == 0 ? 3'b111 : next_head_ptr-1].is_store && !cache_in_flight) begin
                 // this happens when we do testing
                 if (dcache_response != 0 && !dcache_hit && dcache_cur_addr == head_entry.address && dcache_cur_command[1] == head_entry.is_store) begin
                     if (NONBLOCKING) begin
@@ -327,7 +327,8 @@ module lsq#(
                 
             end
             if (head_ready_for_mem && (dcache_response != 0) && lsq[head_ptr].is_store && dcache_cur_addr == head_entry.address 
-                    && dcache_cur_command[1] == head_entry.is_store && dcache_cur_data == head_entry.store_data) begin
+                    && dcache_cur_command[1] == head_entry.is_store 
+                    && dcache_cur_data == head_entry.store_data) begin
                 // we dont have to track request
                 // but we do need to wait for dcache_response != 0 as a handshake
                 lsq[next_head_ptr == 0 ? 3'b111 : next_head_ptr-1].valid <= 1'b0;
