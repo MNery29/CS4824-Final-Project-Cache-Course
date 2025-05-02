@@ -157,8 +157,8 @@ module reservation_station (
     // Control signals
     input [1:0] rs_fu_select_in,
     input       rs_load_in,
-    input       rs_free_in [`RS_SIZE],
-    input       fu_busy [`RS_SIZE],
+    input [`RS_SIZE-1:0] rs_free_in,
+    input [`RS_SIZE-1:0] fu_busy,
 
     // Instruction info
     input INST rs_inst,

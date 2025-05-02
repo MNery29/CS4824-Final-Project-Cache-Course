@@ -24,17 +24,16 @@ module stage_is (
 
     // Reservation Station signals
     
-    input logic [`RS_SIZE-1:0]          rs_ready_out, // valid bits for reservation station
-    input logic [`RS_SIZE-1:0][31:0]    rs_opa_out [`RS_SIZE],  // changed from input  logic [31:0]  rs_opa_out   [`RS_SIZE],
-    input  logic [`RS_SIZE-1:0][31:0]   rs_opb_out [`RS_SIZE],
+    input logic [`RS_SIZE-1:0] rs_ready_out, // valid bits for reservation station
+    input logic [31:0]    rs_opa_out [`RS_SIZE],  // changed from input  logic [31:0]  rs_opa_out   [`RS_SIZE],
+    input  logic [31:0]   rs_opb_out [`RS_SIZE],
+    input INST rs_inst_out [`RS_SIZE],
     input ALU_OPA_SELECT rs_opa_select_out [`RS_SIZE],
     input ALU_OPB_SELECT rs_opb_select_out[`RS_SIZE],
-    input  logic [`RS_SIZE-1:0][4:0]    rs_tag_out [`RS_SIZE],
-    input ALU_FUNC [`RS_SIZE-1:0]       rs_alu_func_out [`RS_SIZE],
-    input logic [31:0]    rs_npc_out [`RS_SIZE],       // Next PC
-    input logic [31:0]    rs_pc_out [`RS_SIZE],       // PC
-    input INST rs_inst_out [`RS_SIZE],
-    // input logic [`RS_SIZE-1:0][31:0]    rs_inst_out,       // Instruction word
+    input  logic [4:0]    rs_tag_out [`RS_SIZE],
+    input ALU_FUNC rs_alu_func_out [`RS_SIZE],
+    input logic [31:0] rs_npc_out [`RS_SIZE], // Next PC
+    input logic [31:0] rs_pc_out [`RS_SIZE], // PC
     input logic rd_mem [`RS_SIZE], 
     input logic wr_mem [`RS_SIZE], 
     input logic cond_branch [`RS_SIZE],
@@ -46,7 +45,7 @@ module stage_is (
 
 
 
-    output IS_EX_PACKET [`RS_SIZE-1:0] is_packets,      // packets for each FU
+    output IS_EX_PACKET is_packets [2:0],      // packets for each FU
     output logic [`RS_SIZE-1:0] rs_issue_enable // one-hot enabling. 
     
 );

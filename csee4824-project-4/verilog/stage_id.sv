@@ -205,8 +205,8 @@ endmodule // decoder
 module stage_id (
     input              clock,           // system clock
     input              reset,           // system reset
+    
     input IF_ID_PACKET if_id_reg,
-
     input if_stall, //for when the inst has to stall bc of perhaps load or storing is happening
 
     //New I/O
@@ -216,9 +216,10 @@ module stage_id (
     input [31:0] cdb_value,
     input cdb_take_branch,
 
-    input fu_busy,
+    
+    input logic [2:0] fu_busy, //Now represents all 3 units: 0 = ALU0, 1 = ALU1, 2 = MULT
     input logic [`RS_SIZE-1:0] rs_clear_vec,
-    input rob_retire_entry,
+   
 
 
     //this is signal from LSQ to let ROB know that a store command is ready
@@ -238,18 +239,25 @@ module stage_id (
     input lsq_free,
 
 
-
+    //RS outputs
+    output logic [`RS_SIZE-1:0] rs_ready_out;
+    output logic [31:0] rs_opa_out [`RS_SIZE],
+    output logic [31:0] rs_opb_out [`RS_SIZE],
+    output ALU_OPA_SELECT rs_opa_select_out [`RS_SIZE],
+    output ALU_OPB_SELECT rs_opb_select_out [`RS_SIZE],
+    output INST rs_inst_out[`RS_SIZE],
+    output rs_tag_out [`RS_SIZE],
+    output [31:0] rs_npc_out [`RS_SIZE],
+    output [31:0] rs_pc_out [`RS_SIZE],
+    output ALU_FUNC rs_alu_func_out [`RS_SIZE],
+    output logic rs_rd_mem_out [`RS_SIZE],
+    output logic rs_wr_mem_out [`RS_SIZE],
+    output logic rs_cond_branch_out [`RS_SIZE],
+    output logic rs_uncond_branch_out [`RS_SIZE],
+    output logic rs_avail_out [`RS_SIZE],
 
     
-    output [31:0] opA,
-    output [31:0] opB,
-    output INST inst_out,
-    output ALU_OPA_SELECT opa_select_out,
-    output ALU_OPB_SELECT opb_select_out,
-    output [`ROB_TAG_BITS-1:0] output_tag,
-    output rs1_ready,
-    output [31:0] rs1_npc_out,
-    output [31:0] rs1_pc_out,
+    
 
     output logic [45:0] rob_debug [`ROB_SZ-1:0],
     output [11:0] rob_pointers_debug,
@@ -272,7 +280,7 @@ module stage_id (
     output logic rob_full, // ROB full signal debugging
     output logic rs1_available, // RS available signal debugging
     output logic dispatch_ok, // Dispatch OK signal debugging
-    output logic [73:0] rs_debug, // RS debug signal debugging
+    output logic [73:0] rs_debug [`RS_SIZE], // RS debug signal debugging
     
     output logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2,
 
@@ -282,12 +290,11 @@ module stage_id (
     output logic [31:1] [`XLEN-1:0] debug_reg,
     output logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2,
 
-    output logic [31:0] rs1_opa_in, rs1_opb_in
+    output logic [31:0] rs1_opa_in, rs1_opb_in,
 
     //FU select output 
 
-    output logic [$clog2(`RS_SIZE)-1:0] fu_select 
-
+    output logic [1:0] fu_select,
 );
     logic rd_mem, wr_mem, is_branch;
     logic halt, illegal, csr_op;
@@ -356,20 +363,22 @@ module stage_id (
 
 
 
+
+
+
     //FU select logic: 
-    logic [`RS_SIZE-1:0] rs_ready_out;
     logic rs_entry_found;
 
 
     
     always_comb begin
-        rs_entry_found = 0;
-        fu_select = '0;
+        rs_entry_found = 1'b0;
+        fu_select = 2'b00;  // Default to entry 0
 
         for (int i = 0; i < `RS_SIZE; i++) begin
             if (!rs_entry_found && rs_ready_out[i]) begin
-                fu_select = i[$clog2(`RS_SIZE)-1:0];
-                rs_entry_found = 1;
+                fu_select = i[1:0];  // Select first available RS entry
+                rs_entry_found = 1'b1;
             end
         end
     end
@@ -501,7 +510,7 @@ module stage_id (
         .rs_fu_select_in(fu_select), // [1:0] Selects which RS entry to load into
         .rs_load_in(rs1_load_entry), // Global "load" enable
         .rs_free_in(rs_clear_vec),// [`RS_SIZE] Vector of frees from Complete stage
-        .fu_busy(fu_busy_array),// [`RS_SIZE] Busy flags from each FU
+        .fu_busy(fu_busy),// [`RS_SIZE] Busy flags from each FU
 
         // Instruction
         .rs_inst(if_id_reg.inst),

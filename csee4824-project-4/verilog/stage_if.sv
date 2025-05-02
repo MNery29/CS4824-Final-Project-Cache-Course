@@ -21,13 +21,13 @@ module stage_if (
 
     output IF_ID_PACKET      if_packet,
     output logic [`XLEN-1:0] proc2Icache_addr, // address sent to icache
-    output logic stall_if // stall signal from IF to pass down pipeline
+    output logic stall_if_icache // stall signal from IF to pass down pipeline from icache
 );
 
     logic [`XLEN-1:0] PC_reg; // PC we are currently fetching
     logic [`XLEN-1:0] prev_PC_reg;
 
-    assign stall_if = ~Icache_valid_out;
+    assign stall_if_icache = ~Icache_valid_out;
 
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
@@ -35,7 +35,7 @@ module stage_if (
             PC_reg <= 0;             // initial PC value is 0 (the memory address where our program starts)
         end else if (take_branch) begin
             PC_reg <= branch_target; // update to a taken branch (does not depend on valid bit)
-        end else if (if_valid && ~stall_if) begin //only update if valid and not told to stall
+        end else if (if_valid && ~stall_if_icache) begin //only update if valid and not told to stall
             PC_reg <= PC_reg + 4;    // or transition to next PC if valid
         end
     end

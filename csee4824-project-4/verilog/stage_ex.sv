@@ -277,17 +277,15 @@ module stage_ex (
     input IS_EX_PACKET is_ex_reg[2:0], //One packet per FU, ALU0/1 and MULT
     input cdb_packet_busy,
 
-    // input ID_EX_PACKET id_ex_reg,
-
     // output EX_MEM_PACKET ex_packet,
-    output logic alu_busy,
     output logic take_conditional,
     output EX_CP_PACKET ex_cp_packet,
     //broad cast value + tag to cbd, so reorder buffer can be updated
     output priv_addr_packet priv_addr_out,
 
-    output logic [`XLEN-1:0] opa_mux_out,
-    output logic [`XLEN-1:0] opb_mux_out
+    //Output FU busy signals: 
+    output logic [2:0] fu_busy_signals,
+    output logic mult_done
 
 );
     //functional unit inputs
@@ -301,10 +299,10 @@ module stage_ex (
     logic take_branch;
     logic is_branch;
     // logic take_conditional;
+    logic is_mem_op
 
     //MULT logic inputs 
     logic [63:0] mult_result;
-    logic mult_done;
     logic mult_start;
     logic is_mult_inst;   
 
@@ -343,7 +341,9 @@ module stage_ex (
 
     assign is_mult_inst = (is_ex_reg[2].alu_func inside{MUL_ALU_MUL, MUL_ALU_MULH, MUL_ALU_MULHSU, MUL_ALU_MULHU});
 
-    assign alu_busy = cdb_packet_busy || (is_mult_inst && !mult_done);
+    assign fu_busy_signals[0] = is_ex_reg[0].issue_valid;                  // ALU0 is busy if it's issued
+    assign fu_busy_signals[1] = is_ex_reg[1].issue_valid;                  // ALU1 busy
+    assign fu_busy_signals[2] = is_ex_reg[2].issue_valid && !mult_done;    // MULT busy if issued and not done
 
 
     EX_CP_PACKET last_packet;
