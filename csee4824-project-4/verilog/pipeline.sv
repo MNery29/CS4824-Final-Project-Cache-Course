@@ -188,8 +188,16 @@ module pipeline (
     output logic cache_in_flight_valid [15:0], //indexed by dcache_tag (3 bits)
     output logic cache_offset_in_flight [15:0], //indexed by dcache_tag (3 bits) gets us whether it is top half of cache line or bottom half    
     output logic cache_in_flight_rd_unsigned [15:0], //indexed by dcache_tag (3 bits) gets us whether it is unsigned or signed
-    output MEM_SIZE cache_in_flight_mem_size [15:0] //indexed by dcache_tag (3 bits) gets us whether it is 8, 16, or 32 bit
+    output MEM_SIZE cache_in_flight_mem_size [15:0], //indexed by dcache_tag (3 bits) gets us whether it is 8, 16, or 32 bit
 
+
+    output logic [1:0] owner_q, owner_d, // this will keep track of who sent the memory request at the last time step
+    output logic [`XLEN-1:0] proc2Dmem_addr,
+    output logic [`XLEN-1:0] proc2Dmem_data,
+    output logic [1:0]       proc2Dmem_command,
+    output logic wait_one_step,
+    output logic next_wait_one_step,
+    output logic read_data
 );
 
     //////////////////////////////////////////////////
@@ -718,15 +726,15 @@ module pipeline (
     //////////////////////////////////////////////////
     //           EX/CP Pipeline Register            //
     //////////////////////////////////////////////////
-    always_ff @(posedge clock or posedge reset) begin
-        if (reset || clear_lsq || halt_rt_hack) begin
-            ex_cp_reg <= '0;
-        end else begin
-            if (!cdb_busy) begin
-                ex_cp_reg <= ex_packet;
-            end
-        end
-    end
+    // always_ff @(posedge clock or posedge reset) begin
+    //     if (reset || clear_lsq || halt_rt_hack) begin
+    //         ex_cp_reg <= '0;
+    //     end else begin
+    //         if (!cdb_busy) begin
+    //             ex_cp_reg <= ex_packet;
+    //         end
+    //     end
+    // end
 
     //////////////////////////////////////////////////
     //               Complete Stage                 //
@@ -856,17 +864,19 @@ module pipeline (
     //////////////////////////////////////////////////
     //              Memory Access Logic             //
     //////////////////////////////////////////////////
-    logic [1:0] owner_q, owner_d; // this will keep track of who sent the memory request at the last time step
-    logic stall_data; // are we stalling if a load is ahppening?
-    logic [`XLEN-1:0] proc2Dmem_addr;
-    logic [`XLEN-1:0] proc2Dmem_data;
-    logic [1:0]       proc2Dmem_command;
-    logic read_data;
+    // logic [1:0] owner_q, owner_d; // this will keep track of who sent the memory request at the last time step
+    // logic [`XLEN-1:0] proc2Dmem_addr;
+    // logic [`XLEN-1:0] proc2Dmem_data;
+    // logic [1:0]       proc2Dmem_command;
+    // logic wait_one_step;
+    // logic next_wait_one_step;
+    // logic read_data;
 `ifndef CACHE_MODE
     MEM_SIZE          proc2Dmem_size;
 `endif
 
     always_comb begin
+        next_wait_one_step = wait_one_step == 0 ? 0 : wait_one_step - 1;
 
         owner_d = owner_q;
         if (dcache2mem_command != BUS_NONE) begin
@@ -879,6 +889,9 @@ module pipeline (
 `endif
             //if data mmodule sent the request
             owner_d = `OWN_D;
+            if (owner_d != owner_q) begin
+                next_wait_one_step = 1;
+            end
         end else begin
             proc2mem_command = BUS_LOAD;
             proc2mem_addr    = proc2Imem_addr;
@@ -887,6 +900,9 @@ module pipeline (
 `endif
             // then if instruction module sent the request
             owner_d = `OWN_I;
+            if (owner_d != owner_q) begin
+                next_wait_one_step = 1;
+            end
         end
     end
 
@@ -907,9 +923,11 @@ module pipeline (
     always_ff @(negedge clock or posedge reset) begin
         if (reset) begin
             owner_q <= `OWN_NONE;
+            wait_one_step <= 1;
         // for now, we have to wait for data to respond, so not just tag
         end
         else begin
+            wait_one_step <= next_wait_one_step;
             if (owner_q != owner_d && (read_data || owner_q == `OWN_NONE))begin
                 owner_q <= owner_d;
             end
@@ -933,18 +951,23 @@ module pipeline (
         case (owner_q)
             `OWN_D: begin
                 if_stall = 1'b1;
-                mem2dcache_response = mem2proc_response;
+                if (wait_one_step == 0) begin
+                    mem2dcache_response = mem2proc_response;
 
-                if (mem2proc_response != 0) begin
-                    read_data = 1'b1;
+                    if (mem2proc_response != 0) begin
+                        read_data = 1'b1;
+                    end
                 end
             end
             `OWN_I: begin
                 if (owner_d != `OWN_D) begin
-                    Imem2proc_response = mem2proc_response;
-                    if (mem2proc_response != 0) begin
-                        read_data = 1'b1;
+                    if (wait_one_step == 0) begin
+                        Imem2proc_response = mem2proc_response;
+                        if (mem2proc_response != 0) begin
+                            read_data = 1'b1;
+                        end
                     end
+                
                 end
                 else begin
                     read_data = 1'b1;
@@ -954,15 +977,6 @@ module pipeline (
             default: begin
             end
         endcase
-    end
-
-    always_comb begin
-        stall_data = 1'b0;
-        //basically, if there's no new request, and we have an inflight request, we will make stall high
-        if ( (dcache_command != BUS_NONE)
-            || (owner_q == `OWN_D && mem2proc_data == 64'b0) ) begin
-            stall_data = 1'b1;
-        end
     end
 
     //////////////////////////////////////////////////

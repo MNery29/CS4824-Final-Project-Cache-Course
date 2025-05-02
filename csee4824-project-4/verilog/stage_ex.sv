@@ -292,33 +292,36 @@ module stage_ex (
     logic [31:0] next_val;
     logic take_branch;
     logic is_branch;
+    logic hold_valid;
+
     // logic take_conditional;
    
 
 
     assign is_mem_op = is_ex_reg.rd_mem || is_ex_reg.wr_mem;
-    // assign ex_packet.dest_reg_idx = id_ex_reg.dest_reg_idx;
 
-    // assign ex_packet.halt         = id_ex_reg.halt;
-    // assign ex_packet.illegal      = id_ex_reg.illegal;
-    // assign ex_packet.csr_op       = id_ex_reg.csr_op;
-    // assign ex_cp_packet.valid        = is_ex_reg.issue_valid;
+    assign alu_busy  = hold_valid; 
 
-    // Break out the signed/unsigned bit and memory read/write size
-    // assign ex_cp_packet.rd_unsigned  = is_ex_reg.inst.r.funct3[2]; // 1 if unsigned, 0 if signed
-    // assign ex_cp_packet.mem_size     = MEM_SIZE'(is_ex_reg.inst.r.funct3[1:0]);
+    assign priv_addr_out.valid = is_ex_reg.issue_valid && is_mem_op;
+    assign priv_addr_out.tag = is_ex_reg.rob_tag;
+    assign priv_addr_out.addr = ex_cp_packet.value;
 
-    assign alu_busy = cdb_packet_busy;
+    assign take_branch = is_ex_reg.uncond_branch || (is_ex_reg.cond_branch & take_conditional);
+    assign is_branch = is_ex_reg.cond_branch || is_ex_reg.uncond_branch;
 
-    EX_CP_PACKET last_packet;
-
-
-    // ultimate "take branch" signal:
-    // unconditional, or conditional and the condition is true
-
-    // no branch 
-    // assign ex_packet.take_branch = id_ex_reg.uncond_branch || (id_ex_reg.cond_branch && take_conditional);
-
+    EX_CP_PACKET hold_pkt;
+    EX_CP_PACKET new_pkt;
+    assign new_pkt.valid      = is_ex_reg.issue_valid && !is_mem_op;
+    assign new_pkt.rob_tag    = is_ex_reg.rob_tag;
+    assign new_pkt.value      = is_branch
+                                ? (is_ex_reg.uncond_branch ? next_val
+                                                        : (take_branch ? next_val
+                                                                        : is_ex_reg.NPC))
+                                : next_val;
+    assign new_pkt.done       = new_pkt.valid;
+    assign new_pkt.take_branch= take_branch;
+    assign ex_cp_packet = hold_valid ? hold_pkt : new_pkt;
+                      
     // ALU opA mux
     // assign opa_mux_out = is_ex_reg.OPA;
     always_comb begin
@@ -368,37 +371,20 @@ module stage_ex (
         .take(take_conditional)
     );
 
-    assign priv_addr_out.valid = is_ex_reg.issue_valid && is_mem_op;
-    assign priv_addr_out.tag = is_ex_reg.rob_tag;
-    assign priv_addr_out.addr = ex_cp_packet.value;
-
-    assign take_branch = is_ex_reg.uncond_branch || (is_ex_reg.cond_branch & take_conditional);
-    assign is_branch = is_ex_reg.cond_branch || is_ex_reg.uncond_branch;
-
-    assign ex_cp_packet.valid = cdb_packet_busy ? last_packet.valid : is_ex_reg.issue_valid && !is_mem_op;
-    assign ex_cp_packet.rob_tag = cdb_packet_busy ? last_packet.rob_tag : is_ex_reg.rob_tag;
-    assign ex_cp_packet.value   = cdb_packet_busy ? is_branch ? last_packet.value :
-                              is_ex_reg.uncond_branch            ? next_val :
-                              is_ex_reg.cond_branch              ? (take_branch ? next_val : is_ex_reg.NPC) :
-                                                           is_ex_reg.NPC : next_val;
-    assign ex_cp_packet.done = cdb_packet_busy ? last_packet.done : is_ex_reg.issue_valid && !is_mem_op;
-
-    assign ex_cp_packet.take_branch = cdb_packet_busy ? last_packet.take_branch : take_branch;
-
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
-            last_packet.valid <= 0;
-            last_packet.rob_tag <= 0;
-            last_packet.value <= 0;
-            last_packet.done <= 0;
-            last_packet.take_branch <= 0;
+            hold_valid <= 1'b0;
+            hold_pkt   <= '{default:0};
         end else begin
-            last_packet.valid <= ex_cp_packet.valid;
-            last_packet.rob_tag <= ex_cp_packet.rob_tag;
-            last_packet.value <= ex_cp_packet.value;
-            last_packet.done <= ex_cp_packet.done;
-            last_packet.take_branch <= ex_cp_packet.take_branch;
+            hold_pkt   <= new_pkt;
+            if (cdb_packet_busy) begin
+                hold_valid <= 1'b1;
+            end
+            else begin
+                hold_valid <= 1'b0;
+            end
+            
         end
-    end
+end
 
 endmodule // stage_ex

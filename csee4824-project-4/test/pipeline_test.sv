@@ -208,6 +208,8 @@ module testbench;
     logic lsq_op_in_progress;
 
     logic [31:0] dcache_cur_addr;
+    logic [1:0] dcache_cur_command;
+    logic [63:0] dcache_cur_data;
     logic [4:0] cache_tag_in_flight [15:0]; //indexed by dcache_tag (3 bits)
     logic cache_in_flight_valid [15:0]; //indexed by dcache_tag (3 bits)
     logic cache_offset_in_flight [15:0]; //indexed by dcache_tag (3 bits) gets us whether it is top half of cache line or bottom half    
@@ -215,6 +217,13 @@ module testbench;
     MEM_SIZE cache_in_flight_mem_size [15:0]; //indexed by dcache_tag (3 bits) gets us whether it is 8, 16, or 32 bit
 
 
+    logic [1:0] owner_q, owner_d; // this will keep track of who sent the memory request at the last time step
+    logic [`XLEN-1:0] proc2Dmem_addr;
+    logic [`XLEN-1:0] proc2Dmem_data;
+    logic [1:0]       proc2Dmem_command;
+    logic wait_one_step;
+    logic next_wait_one_step;
+    logic read_data;
 
     // logic [`XLEN-1:0] if_NPC_dbg;
     // logic [31:0]      if_inst_dbg;
@@ -379,11 +388,22 @@ module testbench;
         .lsq_op_in_progress (lsq_op_in_progress),
 
         .dcache_cur_addr (dcache_cur_addr),
+        .dcache_cur_command (dcache_cur_command),
+        .dcache_cur_data (dcache_cur_data),
         .cache_in_flight(cache_in_flight),
         .cache_in_flight_valid(cache_in_flight_valid),
         .cache_in_flight_rd_unsigned(cache_in_flight_rd_unsigned),
         .cache_offset_in_flight(cache_offset_in_flight),
-        .cache_in_flight_mem_size(cache_in_flight_mem_size)
+        .cache_in_flight_mem_size(cache_in_flight_mem_size),
+
+        .owner_d          (owner_d),
+        .owner_q          (owner_q),
+        .proc2Dmem_addr    (proc2Dmem_addr),
+        .proc2Dmem_data    (proc2Dmem_data),
+        .proc2Dmem_command (proc2Dmem_command),
+        .wait_one_step     (wait_one_step),
+        .next_wait_one_step (next_wait_one_step),
+        .read_data         (read_data)
         
 
         // .if_NPC_dbg       (if_NPC_dbg),
@@ -895,11 +915,17 @@ module testbench;
             $display("dcache tag =%b", dcache_tag);
             $display("dcache response =%b", dcache_response);
             $display("Dcache cur addr = %h", dcache_cur_addr);
+            $display("Dcache cur command = %b", dcache_cur_command);
+            $display("Dcache cur data = %h", dcache_cur_data);
             $display("dcache hit =%b", dcache_hit);
             $display("dcache command =%b", dcache_command);
             $display("dcache data =%h", dcache_data);
             $display("dcache addr =%h", dcache_addr);
             $display("dcache size =%b", dcache_size);
+            $display("owner_d =%b", owner_d);
+            $display("owner_q =%b", owner_q);
+            $display("waiting for one step =%b", wait_one_step);
+            $display("next waiting for one step =%b", next_wait_one_step);
 
             $display("state =%b", state);
             $display("next state =%b", next_state);
@@ -1000,8 +1026,8 @@ module testbench;
         end else begin
             clock_count <= (clock_count + 1);
             instr_count <= (instr_count + pipeline_completed_insts);
-            // $display("______________POS EDGE CLOCK CYCLE!!!________________");
-            // display_all_signals();
+            $display("______________POS EDGE CLOCK CYCLE!!!________________");
+            display_all_signals();
         end
         
     end
@@ -1018,8 +1044,8 @@ module testbench;
             debug_counter <= 0;
         end else begin
             #2;
-            // $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");
-            // display_all_signals();
+            $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");
+            display_all_signals();
 
             // print the pipeline debug outputs via c code to the pipeline output file
             // print_cycles();

@@ -120,6 +120,9 @@ module lsq#(
     logic is_store_op;
     logic is_load_op;
 
+    logic wait_for_cycle;
+    logic next_wait_for_cycle;
+
     // for waiting one cycle
 
     // basically determines whether it is store or read
@@ -164,7 +167,7 @@ module lsq#(
                            && head_entry.address_valid
                            && head_entry.store_data_valid
                            && !cache_in_flight );
-    assign store_ready_tag = head_entry.rob_tag;
+    assign store_ready_tag = head_entry.valid ? head_entry.rob_tag : 0;
 
     logic [1:0]  dcache_cmd_next;
     logic [31:0] dcache_addr_next;
