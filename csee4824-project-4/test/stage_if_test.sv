@@ -35,7 +35,7 @@ module tb_stage_if();
         .Icache_valid_out(Icache_valid_out),
         .if_packet(if_packet),
         .proc2Icache_addr(proc2Icache_addr),
-        .stall_if(stall_if)
+        .stall_if_icache(stall_if)
     );
 
     // Clock generator
@@ -43,20 +43,17 @@ module tb_stage_if();
 
    // Observation + Assertions
     always @(posedge clock) begin
-        expected_valid = Icache_valid_out && if_valid;
-
         if (reset) begin
-            expected_PC = 0;
-            expected_NPC = 4;
+            expected_PC <= 0;
         end else if (take_branch) begin
-            expected_PC = branch_target;
-            expected_NPC = branch_target + 4;
+            expected_PC <= branch_target;
         end else if (if_valid && Icache_valid_out) begin
-            expected_PC = expected_PC + 4;
-            expected_NPC = expected_PC + 4;
+            expected_PC <= expected_PC + 4;
         end
 
+        expected_NPC = expected_PC + 4;
         expected_inst = (expected_PC[2]) ? Icache_data_out[63:32] : Icache_data_out[31:0];
+        expected_valid = Icache_valid_out && if_valid;
 
         if (if_packet.valid !== expected_valid) begin
             $fatal("Mismatch @%0t: valid = %b, expected = %b", $time, if_packet.valid, expected_valid);
