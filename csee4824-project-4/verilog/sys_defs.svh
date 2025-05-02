@@ -25,7 +25,6 @@
 
 // sizes
 `define ROB_SZ 32
-`define RS_SZ 1 //TEMPORARY: WILL SCALE LATER
 `define ROB_TAG_BITS 5 // log2(`ROB_SZ)
 `define PHYS_REG_SZ (32 + `ROB_SZ)
 
@@ -40,11 +39,11 @@
 `define NUM_FU_STORE xx
 
 // number of mult stages (2, 4, or 8)
-`define MULT_STAGES 8
+`define MULT_STAGES 4
 
 // number of reservation stations: 
 
-`define RS_SIZE 1
+`define RS_SIZE 3
 
 ///////////////////////////////
 // ---- Basic Constants ---- //
@@ -75,7 +74,7 @@
 // a double word. The original processor won't work with this defined. Your new
 // processor will have to account for this effect on mem.
 // Notably, you can no longer write data without first reading.
-`define CACHE_MODE
+// `define CACHE_MODE
 
 // you are not allowed to change this definition for your final processor
 // the project 3 processor has a massive boost in performance just from having no mem latency
@@ -374,8 +373,12 @@ typedef struct packed {
 typedef struct packed {
     logic [4:0] dest_reg; // Destination register for the instruction
     logic [6:0] opcode;     // Opcode for the instruction
+    logic [31:0] npc;
     logic       valid;    // Whether the instruction is valid
     logic       is_branch; // Whether the instruction is a branch
+    logic illegal;
+    logic halt;          // Is this a halt?
+    logic csr_op;        // Is this a CSR operation? (we only used this as a cheap way to get return code)
 } DISPATCH_ROB_PACKET;
 
 
@@ -383,15 +386,19 @@ typedef struct packed {
 typedef struct packed {
     logic [31:0] OPA;         // Operand A
     logic [31:0] OPB;         // Operand B
+    ALU_OPA_SELECT opa_select; // ALU opa mux select (ALU_OPA_xxx *)
+    ALU_OPB_SELECT opb_select; // ALU opb mux select (ALU_OPB_xxx *)
     logic [4:0]  rob_tag;     // ROB tag for destination
     logic [5:0]  RS_tag;      // Optional: ID of issuing RS
     ALU_FUNC alu_func;    // ALU operation selector
     logic [31:0] NPC;         // Next PC (for branch evaluation)
+    logic [31:0] PC;         // Current PC
     INST              inst;        // Raw instruction bits
     logic        issue_valid; // This packet is valid to execute
     logic rd_mem;
     logic wr_mem;
-    logic is_branch;
+    logic cond_branch;
+    logic uncond_branch;
 } IS_EX_PACKET;
 
 
@@ -402,6 +409,7 @@ typedef struct packed {
     logic [31:0] value;     // Result to commit
     logic        done;      // Result is ready
     logic valid; //whether this packet is valid yet
+    logic take_branch;
 } EX_CP_PACKET;
 
 typedef struct packed{
@@ -442,10 +450,15 @@ typedef struct packed {
     logic [5:0] tag;     // ROB tag for the newly allocated entry
     logic [4:0]   dest_reg; // Destination register for the instruction
     logic [31:0]  value;  // Value to write back to the register file
+    logic [31:0] npc;
     logic        reg_valid; // Whether the output is valid (i.e., we dispatched)
-    logic        mem_valid; 
+    logic        mem_valid;    
     logic [31:0] mem_addr; // Memory address to write back to the register file
     logic is_branch; // Whether the instruction is a branch, if it is, a positive VALUE would mean that the branch was taken
+    logic take_branch;
+    logic       halt;          // Is this a halt?
+    logic       illegal;       // Is this instruction illegal?
+    logic       csr_op;        // Is this a CSR operation? (we only used this as a cheap way to get return code)
 } ROB_RETIRE_PACKET;
 
 
@@ -456,6 +469,7 @@ typedef struct packed {
     logic [4:0]  tag;     // ROB tag
     logic [31:0] value;   // Result value
     logic        valid;   // Valid signal
+    logic take_branch;
 } CDB_PACKET;
 
 //CDB_ROB_PACKET: to be sent from CDB to ROB
@@ -463,6 +477,7 @@ typedef struct packed {
     logic [`ROB_TAG_BITS-1:0] tag;     // ROB tag for the entry being updated
     logic [31:0] value;   // Value to write back to the register file
     logic       valid;   // Whether the output is valid
+    logic take_branch;
 } CDB_ROB_PACKET;
 
 
