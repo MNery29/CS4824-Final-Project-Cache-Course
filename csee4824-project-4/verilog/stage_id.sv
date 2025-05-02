@@ -240,7 +240,7 @@ module stage_id (
 
 
     //RS outputs
-    output logic [`RS_SIZE-1:0] rs_ready_out;
+    output logic [`RS_SIZE-1:0] rs_ready_out,
     output logic [31:0] rs_opa_out [`RS_SIZE],
     output logic [31:0] rs_opb_out [`RS_SIZE],
     output ALU_OPA_SELECT rs_opa_select_out [`RS_SIZE],
@@ -294,7 +294,7 @@ module stage_id (
 
     //FU select output 
 
-    output logic [1:0] fu_select,
+    output logic [1:0] fu_select
 );
     logic rd_mem, wr_mem, is_branch;
     logic halt, illegal, csr_op;
