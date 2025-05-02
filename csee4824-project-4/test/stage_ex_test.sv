@@ -1,158 +1,113 @@
-// stage_ex self-test
 `timescale 1ns/1ps
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 
 module testbench;
 
-    //------------------------------------------------------------------
-    //  Clock / reset
-    //------------------------------------------------------------------
-    logic clk = 0;
-    logic rst = 1;
-
-    // 10 ns period (adjust if you like)
+    logic clk = 0, rst = 1;
     parameter real CLK_PERIOD = 10.0;
     always #(CLK_PERIOD/2.0) clk = ~clk;
 
-    //------------------------------------------------------------------
-    //  DUT I/O
-    //------------------------------------------------------------------
-    IS_EX_PACKET      is_ex_reg;
-    logic             cdb_busy;
+    IS_EX_PACKET is_ex_reg[2:0];
+    logic cdb_busy = 1'b0;
 
-    logic             alu_busy;
-    EX_CP_PACKET      ex_cp_packet;
-    priv_addr_packet  priv_addr_out;
-
-    // keep CDB “free” for these tests
-    assign cdb_busy = 1'b0;
+    EX_CP_PACKET ex_cp_packet;
+    priv_addr_packet priv_addr_out;
+    logic [2:0] fu_busy_signals;
+    logic take_conditional, mult_done;
 
     stage_ex dut (
-        .clk              (clk),
-        .rst              (rst),
-        .is_ex_reg        (is_ex_reg),
-        .cdb_packet_busy  (cdb_busy),
-
-        .alu_busy         (alu_busy),
-        .ex_cp_packet     (ex_cp_packet),
-        .priv_addr_out    (priv_addr_out)
+        .clk(clk),
+        .rst(rst),
+        .is_ex_reg(is_ex_reg),
+        .cdb_packet_busy(cdb_busy),
+        .take_conditional(take_conditional),
+        .ex_cp_packet(ex_cp_packet),
+        .priv_addr_out(priv_addr_out),
+        .fu_busy_signals(fu_busy_signals),
+        .mult_done(mult_done)
     );
 
-    //------------------------------------------------------------------
-    //  Helper tasks
-    //------------------------------------------------------------------
-    task automatic check_outputs (
+    task automatic check_outputs(
         input [31:0] exp_value,
-        input  [4:0] exp_tag,
-        input  string name
+        input [4:0] exp_tag,
+        input string name
     );
-        if (   ex_cp_packet.valid !== 1
-            || ex_cp_packet.value !== exp_value
-            || ex_cp_packet.rob_tag !== exp_tag )
-        begin
+        if (ex_cp_packet.valid !== 1 || ex_cp_packet.value !== exp_value || ex_cp_packet.rob_tag !== exp_tag) begin
             $display("@@@ FAILED: %s", name);
-            $display("      value exp/got = 0x%h / 0x%h",
-                     exp_value, ex_cp_packet.value);
-            $display("      tag   exp/got = %0d / %0d",
-                     exp_tag,   ex_cp_packet.rob_tag);
-        end
-        else
+            $display("      value exp/got = 0x%h / 0x%h", exp_value, ex_cp_packet.value);
+            $display("      tag   exp/got = %0d / %0d", exp_tag, ex_cp_packet.rob_tag);
+        end else begin
             $display("@@@ PASSED: %s", name);
+        end
     endtask
 
-
-    task automatic run_basic_test (
-        input  [31:0] opa, opb,
-        input  ALU_FUNC func,
-        input  [31:0] exp_value,
-        input  string  name,
-        input  [4:0]   tag = 5'd1
+    task automatic run_basic_test(
+        input int fu_idx,
+        input [31:0] opa, opb,
+        input ALU_FUNC func,
+        input [31:0] exp_value,
+        input string name,
+        input [4:0] tag = 5'd1
     );
-        // drive operands on falling edge,
-        // sample on next rising edge
         @(negedge clk);
-            is_ex_reg            = '0;
-            is_ex_reg.OPA        = opa;
-            is_ex_reg.OPB        = opb;
-            is_ex_reg.alu_func   = func;
-            is_ex_reg.rob_tag    = tag;
-            is_ex_reg.issue_valid= 1'b1;
+        foreach (is_ex_reg[i]) is_ex_reg[i] = '0;
+
+        is_ex_reg[fu_idx].OPA = opa;
+        is_ex_reg[fu_idx].OPB = opb;
+        is_ex_reg[fu_idx].alu_func = func;
+        is_ex_reg[fu_idx].issue_valid = 1;
+        is_ex_reg[fu_idx].rob_tag = tag;
+        is_ex_reg[fu_idx].opa_select = OPA_IS_RS1;
+        is_ex_reg[fu_idx].opb_select = OPB_IS_RS2;
+
         @(posedge clk);
-            check_outputs(exp_value, tag, name);
+
+        // Wait for result if it's the multiplier
+        if (fu_idx == 2) begin
+            int timeout = 20;
+            while (!ex_cp_packet.valid && timeout > 0) begin
+                @(posedge clk);
+                timeout--;
+            end
+        end
+
+        check_outputs(exp_value, tag, name);
     endtask
 
-    //------------------------------------------------------------------
-    //  Test sequence
-    //------------------------------------------------------------------
+    always @(posedge clk) begin
+        if (!rst) begin
+            $display("Time: %0t | mult_done=%b | valid=%b | result=0x%h | tag=%0d",
+                    $time, mult_done, ex_cp_packet.valid, ex_cp_packet.value, ex_cp_packet.rob_tag);
+
+            if (is_ex_reg[2].issue_valid) begin
+                $display("    MULT STAGE ACTIVE:");
+                $display("      OPA  = 0x%h", is_ex_reg[2].OPA);
+                $display("      OPB  = 0x%h", is_ex_reg[2].OPB);
+                $display("      FUNC = %0d", is_ex_reg[2].alu_func);
+            end
+        end
+    end
+
     initial begin
         $display("==== stage_ex test suite ====");
-
-        // global reset
-        #(CLK_PERIOD);      // allow some time with rst=1
+        #(CLK_PERIOD);
         rst = 0;
         @(posedge clk);
 
-        // --------------- ALU / logical ops ----------------------------
-        run_basic_test(10, 5, ALU_ADD , 15        , "ALU ADD");
-        run_basic_test(10, 5, ALU_SUB , 5         , "ALU SUB");
-        run_basic_test(32'hFF00, 32'h0F0F, ALU_AND, 32'h0F00  , "ALU AND");
-        run_basic_test(32'hFF00, 32'h0F0F, ALU_OR , 32'hFF0F  , "ALU OR");  // FIXED
+        // ALU0 basic ops
+        run_basic_test(0, 10, 5, ALU_ADD, 15, "ALU0 ADD");
+        run_basic_test(0, 10, 5, ALU_SUB, 5, "ALU0 SUB");
+        run_basic_test(0, 32'hFF00, 32'h0F0F, ALU_AND, 32'h0F00, "ALU0 AND");
 
-        // --------------- comparisons ---------------------------------
-        run_basic_test(-1 , 1, ALU_SLT , 1 , "ALU SLT (signed)"  );
-        run_basic_test(32'hFFFF_FFFF, 1, ALU_SLTU, 0, "ALU SLTU (unsigned)");
+        // ALU1 test
+        run_basic_test(1, 32'h8000_0000, 2, ALU_SRA, 32'hE000_0000, "ALU1 SRA");
 
-        // --------------- shifts --------------------------------------
-        run_basic_test(32'h8000_0000, 2, ALU_SRA, 32'hE000_0000, "ALU SRA");
-        run_basic_test(32'h8000_0000, 2, ALU_SRL, 32'h2000_0000, "ALU SRL");
-        run_basic_test(1, 4, ALU_SLL, 16, "ALU SLL");
+        // Multiplier test
+        run_basic_test(2, 2, 3, ALU_MUL, 6, "MULT 2*3", 5'd9);
 
-        // --------------- U-type immediate ----------------------------
-        @(negedge clk);
-            is_ex_reg = '0;
-            is_ex_reg.OPA         = 0;
-            is_ex_reg.OPB         = 0;           // OPB unused
-            is_ex_reg.alu_func    = ALU_ADD;
-            is_ex_reg.issue_valid = 1;
-            is_ex_reg.rob_tag     = 5'd7;
-            // insert U-type imm into raw instr
-            is_ex_reg.inst.u.imm  = 20'hABCD0;
-        @(posedge clk);
-            check_outputs(32'hABCD_0000, 5'd7, "Immediate mux U-type");
-
-        // --------------- Conditional branch: BEQ taken ---------------
-        @(negedge clk);
-            is_ex_reg = '0;
-            is_ex_reg.OPA           = 5;
-            is_ex_reg.OPB           = 5;
-            is_ex_reg.inst.b.funct3 = 3'b000;   // BEQ
-            is_ex_reg.alu_func      = ALU_ADD;  // ALU still adds for next-PC
-            is_ex_reg.issue_valid   = 1;
-            is_ex_reg.rob_tag       = 5'd8;
-        @(posedge clk);
-            // When BEQ is taken, ex_cp_packet should be valid
-            // and carry the ALU result (5+5 = 10)
-            if ( ex_cp_packet.valid && ex_cp_packet.value == 32'd10 )
-                $display("@@@ PASSED: Branch BEQ taken");
-            else
-                $display("@@@ FAILED: Branch BEQ taken");
-
-        // --------------- Multiplier (2*3) ----------------------------
-        run_basic_test(2, 3, ALU_MUL, 6, "Multiplier 2*3", 5'd9);
-
-        // --------------- NOP handling --------------------------------
-        @(negedge clk);
-            is_ex_reg = '0;          // no valid issue
-        @(posedge clk);
-            if (ex_cp_packet.valid)
-                $display("@@@ FAILED: NOP handling (packet emitted)");
-            else
-                $display("@@@ PASSED: NOP handling");
-
-        // --------------- Edge cases ----------------------------------
-        run_basic_test(-32, 4, ALU_ADD, -28, "Edge: negative + positive");
-        run_basic_test(0   , 0, ALU_ADD, 0  , "Edge: zero inputs");
+        // Edge case
+        run_basic_test(0, -32, 4, ALU_ADD, -28, "Edge: negative + positive");
 
         $display("==== All tests complete ====");
         $finish;

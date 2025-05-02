@@ -430,6 +430,13 @@ module stage_id (
         //     rs1_opa_valid = 1;
     end
 
+    // always_ff @(posedge clock) begin
+    // if (if_id_reg.valid) begin
+    //     $display("[ID] PC: %h, INST: %h", if_id_reg.PC, if_id_reg.inst);
+    //     $display("[ID] RD field (bits 11:7): %b", if_id_reg.inst[11:7]);
+    // end
+    // end
+
     //operand select (OPB)
     always_comb begin
         rs1_opb_in = 32'b0;
@@ -624,7 +631,15 @@ module stage_id (
     assign lsq_packet.store_data_valid = rs1_opb_valid;
     assign lsq_packet.store_data_tag = rs1_opb_valid ? 5'b0 : rs1_opb_in[4:0]; //omit MSB
     assign lsq_packet.rob_tag = rob_tag_out;
-    assign lsq_packet.rd_unsigned = if_id_reg.inst.r.funct3[2];
-    assign lsq_packet.mem_size = MEM_SIZE'(if_id_reg.inst.r.funct3[1:0]);
+    assign lsq_packet.rd_unsigned = if_id_reg.inst[14];
+    assign lsq_packet.mem_size = MEM_SIZE'(if_id_reg.inst[13:12]);
+    // Assign decoder outputs to top-level outputs
+    assign rd_mem_out        = rd_mem;
+    assign wr_mem_out        = wr_mem;
+    assign cond_branch_out   = cond_branch;
+    assign uncond_branch_out = uncond_branch;
+    assign alu_func_out      = alu_func;
+    //assign opa_select        = opa_select;
+    //assign opb_select        = opb_select;
 
 endmodule 

@@ -15,186 +15,6 @@
 `include "verilog/mult.sv"
 `include "verilog/mult_stage.sv"
 
-// ALU function code input
-// probably want to leave these alone
-// typedef enum logic [4:0] {
-//     ALU_ADD     = 5'h00,
-//     ALU_SUB     = 5'h01,
-//     ALU_SLT     = 5'h02,
-//     ALU_SLTU    = 5'h03,
-//     ALU_AND     = 5'h04,
-//     ALU_OR      = 5'h05,
-//     ALU_XOR     = 5'h06,
-//     ALU_SLL     = 5'h07,
-//     ALU_SRL     = 5'h08,
-//     ALU_SRA     = 5'h09,
-//     ALU_MUL     = 5'h0a, // Mult FU
-//     ALU_MULH    = 5'h0b, // Mult FU
-//     ALU_MULHSU  = 5'h0c, // Mult FU
-//     ALU_MULHU   = 5'h0d, // Mult FU
-//     ALU_DIV     = 5'h0e, // unused
-//     ALU_DIVU    = 5'h0f, // unused
-//     ALU_REM     = 5'h10, // unused
-//     ALU_REMU    = 5'h11  // unused
-// } ALU_FUNC;
-
-
-// this mul_unit uses booth's algorithm to multiply two 64-bit integers
-// module mul_unit (
-//     input  logic         clk,
-//     input  logic         rst,
-//     // Issue side
-//     input IS_EX_PACKET req,
-
-//     output logic         busy,
-//     output EX_CP_PACKET out_packet
-// );
-//     // Right now, we are not using the op_codes, we are just doing
-//     // regular o' signed multiplication
-
-//     //------------------------------------------------------
-//     //  Simple state machine: IDLE → BUSY → DONE
-//     //------------------------------------------------------
-//     typedef enum logic [1:0] {M_IDLE, M_RUN, M_DONE} mstate_e;
-//     mstate_e state, nstate;
-
-//     // Hold operands & tag while the underlying `mult` runs
-//     logic [63:0] opa_q, opb_q;
-//     logic  [5:0] tag_q;
-
-//     // Outputs from the Booth pipeline
-//     logic mul_done;
-//     logic [63:0] mul_lo;
-
-//     // Underlying pipelined multiplier (produces low 64 bits, assert when done)
-//     booth_mult mul_pipe (
-//         .clock  (clk),
-//         .reset  (rst),
-//         .mcand  (opa_q),
-//         .mplier (opb_q),
-//         .start  (state == M_IDLE && req.issue_valid),
-//         .product(mul_lo),
-//         .done   (mul_done)
-//     );
-
-//     // State transition
-//     always_comb begin
-//         case (state)
-//             M_IDLE: nstate = (req.issue_valid) ? M_RUN : M_IDLE; //was set as just 'valid' changed to req.issue_valid
-//             M_RUN : nstate = (mul_done) ? M_DONE : M_RUN;
-//             M_DONE: nstate = M_IDLE;
-//             default: nstate = M_IDLE;
-//         endcase
-//     end
-
-//     // Registers
-//     always_ff @(posedge clk or posedge rst) begin
-//         if (rst) begin
-//             state <= M_IDLE;
-//         end else begin
-//             state <= nstate;
-//             if (req.issue_valid && state == M_IDLE) begin
-//                 opa_q <= req.OPA;
-//                 opb_q <= req.OPB;
-//                 tag_q <= req.rob_tag;
-//             end
-//         end
-//     end
-
-//     //--------------------------------------------------
-//     //  Busy / response signals
-//     //--------------------------------------------------
-//     assign busy         = (state != M_IDLE);
-//     assign out_packet.valid    = (state == M_DONE);
-//     assign out_packet.rob_tag     = tag_q[4:0];
-//     assign out_packet.value   = mul_lo; // return lower 64 bits?
-// endmodule
-
-//funcitonal unit cluster
-// module fu_cluster #(
-//     parameter int NUM_MULS = 2
-// )(
-//     input  logic        clk,
-//     input  logic        rst,
-//     input  IS_EX_PACKET in_pkt,
-
-//     output logic        issue_ready,
-//     output EX_CP_PACKET out_pkt
-// );
-
-//     // ---------- Simple combinational ALU ----------
-//     logic [63:0] simple_res;
-//     logic signed [`XLEN-1:0] A, B;
-
-//     always_comb begin //from just begin statement to always_comb
-//         A = in_pkt.OPA; // what is p... changed to in_pkt
-//         B = in_pkt.OPB;
-//         unique case(in_pkt.alu_func)
-//             ALU_ADD : simple_res = A + B;
-//             ALU_SUB : simple_res = A - B;
-//             ALU_AND : simple_res = A & B;
-//             ALU_OR  : simple_res = A | B;
-//             ALU_XOR : simple_res = A ^ B;
-//             ALU_SLT : simple_res = (A < B);
-//             ALU_SLTU: simple_res = (in_pkt.OPA < in_pkt.OPB);
-//             ALU_SLL : simple_res = in_pkt.OPA << in_pkt.OPB[4:0];
-//             ALU_SRL : simple_res = in_pkt.OPA >> in_pkt.OPB[4:0];
-//             ALU_SRA : simple_res = A >>> in_pkt.OPB[4:0];
-//             default : simple_res = `XLEN'hDEAD_BEEF;
-//         endcase
-//     end
-
-//     logic is_mul = (in_pkt.alu_func == ALU_MUL || 
-//                     in_pkt.alu_func == ALU_MULH ||
-//                     in_pkt.alu_func == ALU_MULHSU ||
-//                     in_pkt.alu_func == ALU_MULHU);
-
-//     logic                mul_busy [NUM_MULS];
-//     EX_CP_PACKET         mul_out  [NUM_MULS];
-//     IS_EX_PACKET         mul_req;
-
-//     assign mul_req = (in_pkt.issue_valid && is_mul) ? in_pkt : '0;
-
-//     genvar i;
-//     generate
-//         for(i=0;i<NUM_MULS;i++) begin : G_MUL
-//             mul_unit MU(
-//                 .clk        (clk),
-//                 .rst        (rst),
-//                 .req        (mul_req),
-//                 .busy       (mul_busy[i]),
-//                 .out_packet (mul_out[i])
-//             );
-//         end
-//     endgenerate
-
-//     //logic any_mul_free = |~mul_busy; syntax errors
-
-//     logic any_mul_free;
-
-//     always_comb begin
-//         any_mul_free = 0;
-//         for (int i = 0; i < NUM_MULS; i++) begin
-//             if (!mul_busy[i]) begin
-//                 any_mul_free = 1;
-//             end
-//         end
-//     end
-
-//     // ---------- Ready / result select ----------
-//     assign issue_ready = in_pkt.issue_valid && (is_mul ? any_mul_free : 1'b1);
-
-//     always_comb begin
-//         if (!is_mul) begin
-//             out_pkt.valid   = in_pkt.issue_valid;
-//             out_pkt.rob_tag = in_pkt.rob_tag;
-//             out_pkt.value   = simple_res;
-//         end else begin
-//             out_pkt = mul_out[0];                 // first MUL only
-//         end
-//     end
-// endmodule
-
 // ALU: computes the result of FUNC applied with operands A and B
 // This module is purely combinational
 module alu (
@@ -299,7 +119,7 @@ module stage_ex (
     logic take_branch;
     logic is_branch;
     // logic take_conditional;
-    logic is_mem_op
+    logic is_mem_op;
 
     //MULT logic inputs 
     logic [63:0] mult_result;
@@ -307,6 +127,9 @@ module stage_ex (
     logic is_mult_inst;   
 
 
+    //ALU Result Signals
+    logic [`XLEN-1:0] alu0_result;
+    logic [`XLEN-1:0] alu1_result;
     
     //Logic for which FU to select from: 
     logic [1:0] fu_index;
@@ -337,9 +160,24 @@ module stage_ex (
 
     //check if issue is a valid op and the function is a mult instruction
     //if so start mult. 
-    assign mult_start = is_ex_reg[2].issue_valid && (is_ex_reg[2].alu_func inside{MUL_ALU_MUL, MUL_ALU_MULH, MUL_ALU_MULHSU, MUL_ALU_MULHU});
+    
+    logic mult_started;
 
-    assign is_mult_inst = (is_ex_reg[2].alu_func inside{MUL_ALU_MUL, MUL_ALU_MULH, MUL_ALU_MULHSU, MUL_ALU_MULHU});
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst)
+            mult_started <= 0;
+        else if (mult_start && !mult_done)
+            mult_started <= 1;
+        else if (mult_done)
+            mult_started <= 0;
+    end
+
+    assign mult_start = (is_ex_reg[2].issue_valid && is_mult_inst) && !mult_started;
+
+
+
+
+    assign is_mult_inst = (is_ex_reg[2].alu_func inside{ALU_MUL, ALU_MULH, ALU_MULHSU, ALU_MULHU});
 
     assign fu_busy_signals[0] = is_ex_reg[0].issue_valid;                  // ALU0 is busy if it's issued
     assign fu_busy_signals[1] = is_ex_reg[1].issue_valid;                  // ALU1 busy
@@ -468,9 +306,9 @@ module stage_ex (
         //inputs
         .clock(clk),
         .reset(rst),
-        .mcand(opa_mux_out2),
-        .mplier(opb_mux_out2),
-        .mult_type(is_ex_reg[2].alu_func),
+        .mcand({32'b0, opa_mux_out2}),
+        .mplier({32'b0, opb_mux_out2}),
+        .mult_func(is_ex_reg[2].alu_func),
         .start(mult_start),
         .product(mult_result),
         .done(mult_done)
@@ -526,6 +364,7 @@ module stage_ex (
     assign ex_cp_packet.take_branch = cdb_packet_busy ? 
                                     last_packet.take_branch : 
                                     take_branch;
+
 
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin

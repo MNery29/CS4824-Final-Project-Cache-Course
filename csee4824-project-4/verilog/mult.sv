@@ -23,14 +23,10 @@
 //Used to determine which type of multiplication to perform 
 
 
-`include "verilog/sys_defs.svh"
-
-`include "verilog/sys_defs.svh"
-
 module mult (
     input logic clock, reset,
     input logic [63:0] mcand, mplier,
-    input mult_type_t mult_type,
+    input ALU_FUNC mult_func,
     input logic start,
 
     output logic [63:0] product,
@@ -51,25 +47,26 @@ module mult (
 
     //combinational block with handling signed/unsigned extension. 
     always_comb begin
-        case (mult_type)
-            MUL_ALU_MUL, MUL_ALU_MULH: begin
-                extended_mcand = {{64{mcand[63]}}, mcand};      // signed extension
-                extended_mplier = {{64{mplier[63]}}, mplier};   // signed extension
+        case (mult_func)
+            ALU_MUL, ALU_MULH: begin
+                extended_mcand  = {{64{mcand[63]}}, mcand};
+                extended_mplier = {{64{mplier[63]}}, mplier};
             end
-            MUL_ALU_MULHSU: begin
-                extended_mcand = {{64{mcand[63]}}, mcand};      // signed mcand
-                extended_mplier = {64'b0, mplier};              // unsigned mplier
+            ALU_MULHSU: begin
+                extended_mcand  = {{64{mcand[63]}}, mcand};
+                extended_mplier = {64'b0, mplier};
             end
-            MUL_ALU_MULHU: begin
-                extended_mcand = {64'b0, mcand};                // unsigned
-                extended_mplier = {64'b0, mplier};              // unsigned
+            ALU_MULHU: begin
+                extended_mcand  = {64'b0, mcand};
+                extended_mplier = {64'b0, mplier};
             end
             default: begin
-                extended_mcand = {64'b0, mcand};
+                extended_mcand  = {64'b0, mcand};
                 extended_mplier = {64'b0, mplier};
             end
         endcase
     end
+
 
     // Instantiate the pipeline stages
     mult_stage mstage [`MULT_STAGES-1:0] (
@@ -87,11 +84,11 @@ module mult (
 
     // Select output portion
     always_comb begin
-        case (mult_type)
-            MUL_ALU_MUL:    product = full_product_sum[63:0];    // low 64 bits
-            MUL_ALU_MULH,
-            MUL_ALU_MULHSU,
-            MUL_ALU_MULHU:  product = full_product_sum[127:64];  // high 64 bits
+        case (mult_func)
+            ALU_MUL:    product = full_product_sum[63:0];    // low 64 bits
+            ALU_MULH,
+            ALU_MULHSU,
+            ALU_MULHU:  product = full_product_sum[127:64];  // high 64 bits
             default:        product = 64'b0;
         endcase
     end

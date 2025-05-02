@@ -155,7 +155,8 @@ module testbench;
     lsq_free = 1;
     if_stall = 0;
 
-    @(negedge clock);
+    @(posedge clock);
+    #1;
     reset = 0;
 
     // ------------------------
@@ -165,12 +166,14 @@ module testbench;
     //   --> binary: 0000000 00010 00001 000 00101 0110011
     //   --> hex:    0x002081B3
     // ------------------------
-    if_id_reg.inst = 32'h002081B3;
+    if_id_reg.inst = 32'h002082B3;
+    //if_id_reg.inst = 32'h0020A1B3;
     if_id_reg.valid = 1;
     if_id_reg.PC = 32'h100;
     if_id_reg.NPC = 32'h104;
 
-    @(negedge clock);
+    @(posedge clock);
+    #1;
     $display("[ADD] rs1 = x1, rs2 = x2 -> rd = x5");
     $display("Dest reg: %d, Has dest: %b", dest_reg_idx, has_dest_reg);
 
@@ -181,12 +184,13 @@ module testbench;
     //   --> binary: 000000001000 00011 010 00110 0000011
     //   --> hex:    0x00831283
     // ------------------------
-    if_id_reg.inst = 32'h00831283;
+    if_id_reg.inst = 32'h00831303; // Correctly encodes LW x6, 8(x3)
     if_id_reg.valid = 1;
     if_id_reg.PC = 32'h104;
     if_id_reg.NPC = 32'h108;
 
-    @(negedge clock);
+    @(posedge clock);
+    #1;
     $display("[LW] rs1 = x3, offset = 8 -> rd = x6");
     $display("Dest reg: %d, Has dest: %b, rd_mem: %b", dest_reg_idx, has_dest_reg, rd_mem_out);
 
@@ -204,14 +208,15 @@ module testbench;
     if_id_reg.PC = 32'h108;
     if_id_reg.NPC = 32'h10C;
 
-    @(negedge clock);
+    @(posedge clock);
+    #1;
     $display("[BEQ] rs1 = x1, rs2 = x2 -> branch if equal");
     $display("Cond branch: %b, Uncond branch: %b", cond_branch_out, uncond_branch_out);
 
     // ------------------------
     // Wrap up
     // ------------------------
-    repeat (2) @(negedge clock);
+    repeat (2) @(posedge clock);
     $display("stage_id test complete.");
     $finish;
 end

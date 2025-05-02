@@ -78,15 +78,13 @@ module pipeline (
     output logic dispatch_ok,
 
     // Decoder Control
-    output ALU_OPA_SELECT opa_select_out,
-    output ALU_OPB_SELECT opb_select_out,
     output logic rob_full,
 
     // Outputs to IS
     output logic [31:0] npc_out, pc_out,
     output logic [4:0] id_tag,
     output ALU_FUNC id_alu_func,
-    output logic id_rd_mem, id_wr_mem,
+    //output logic id_rd_mem, id_wr_mem,
     output logic id_cond_branch, id_uncond_branch,
     output INST id_inst_out,
     output logic id_has_dest_reg,
@@ -127,9 +125,9 @@ module pipeline (
     output logic dcache_hit,
 
     // LSQ debug/control
-    output LSQ_PACKET lsq_packet,
+    //output LSQ_PACKET lsq_packet,
     output logic store_ready,
-    output logic [4:0] store_tag,
+    //output logic [4:0] store_tag,
     output lsq_entry_t lsq_out [7:0],
     output logic cache_in_flight,
     output logic head_ready_for_mem,
@@ -142,7 +140,7 @@ module pipeline (
     output logic retire_valid_out,
     output logic [31:0] retire_value_out,
     output logic [4:0] retire_dest_out,
-    output logic [4:0] retire_tag,
+    //output logic [4:0] retire_tag,
 
     output logic halt_rt,
     output logic illegal_rt,
@@ -163,8 +161,10 @@ module pipeline (
     // logic [`XLEN-1:0] proc2Icache_addr;
     // logic             Icache_valid_out;
     // logic [63:0] Icache_data_out;
+    logic stall_data;
     logic if_valid;
     logic pipeline_stall; //signal to pass for stalling throughout pipeline (TEMPORARY)
+    
     // IF_ID_PACKET      if_packet;
     
     //////////////////////////////////////////////////
@@ -178,15 +178,15 @@ module pipeline (
     //logic [74:0]      id_rs_debug;
     //logic [`RS_SIZE-1:0] rs_issue_enable;
     // logic [`ROB_TAG_BITS-1:0] id_tag;
-    logic [31:0] npc_out;
-    logic [31:0] pc_out;
+    //logic [31:0] npc_out;
+    //logic [31:0] pc_out;
     logic [31:0] npc_rt;
     // INST id_inst_out;
     // ALU_OPA_SELECT id_opa_select;
     // logic [`RS_SIZE-1:0][31:0] rs1_inst_out;
     // logic rs1_ready;
     // ALU_OPB_SELECT id_opb_select;
-    logic id_has_dest_reg;
+    //logic id_has_dest_reg;
     logic [4:0] id_dest_reg_idx;
     logic id_rd_mem, id_wr_mem, id_cond_branch, id_uncond_branch;
     ALU_FUNC id_alu_func;
@@ -219,6 +219,7 @@ module pipeline (
     assign fu_busy_signals[1] = is_packet[1].issue_valid;              // ALU1 is busy
     assign fu_busy_signals[2] = is_packet[2].issue_valid || !mult_done; // MULT is busy if valid or not done
 
+    logic mult_done;
 
     //////////////////////////////////////////////////
     //                CP Stage Wires                //
@@ -311,8 +312,8 @@ module pipeline (
     //////////////////////////////////////////////////
     //           Temporary Branch Logic             //
     //////////////////////////////////////////////////
-    assign pipeline_stall = stall_if_rt || stall_if_icache || stall_data
-    assign if_valid = dispatch_ok && ~pipeline_stall                // Always fetch for now
+    assign pipeline_stall = stall_if_rt || stall_if_icache || stall_data;
+    assign if_valid = dispatch_ok && ~pipeline_stall;             // Always fetch for now
     assign branch_target = 32'b0;          // Default branch target
 
     //////////////////////////////////////////////////
@@ -517,20 +518,6 @@ module pipeline (
         // FU selection output (for RS insertion)
         .fu_select(fu_select)
     );
-
-
-    //////////////////////////////////////////////////
-    //         ID/IS Pipeline Register              //
-    //////////////////////////////////////////////////
-    //always_ff @(posedge clock or posedge reset) begin
-    //    if (reset) begin
-    //        id_is_reg <= '0; // IS ID Packet not defined yet FIX
-    //    end else begin
-    //        id_is_reg <= id_is_packet; // IS ID Packet not defined yet FIX
-    //    end
-    //end
-
-
 
     //////////////////////////////////////////////////
     //                Issue Stage                   //

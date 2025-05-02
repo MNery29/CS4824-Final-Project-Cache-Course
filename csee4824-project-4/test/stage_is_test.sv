@@ -64,6 +64,12 @@ module tb_stage_is();
         end
     endtask
 
+    // Helper: clear all rs_ready signals
+    task clear_rs_ready();
+        foreach (rs_ready_out[i])
+            rs_ready_out[i] = 0;
+    endtask
+
     // Test
     initial begin
         $display("Starting stage_is test...");
@@ -92,6 +98,7 @@ module tb_stage_is();
         #10 reset = 0;
 
         // Cycle 1: ALU0 ready, issue from slot 0
+        clear_rs_ready();
         rs_ready_out[0] = 1;
         rs_opa_out[0] = 32'h1111;
         rs_opb_out[0] = 32'h2222;
@@ -103,6 +110,7 @@ module tb_stage_is();
         #10 display_issued();
 
         // Cycle 2: ALU1 ready, issue from slot 1
+        clear_rs_ready();
         rs_ready_out[1] = 1;
         rs_opa_out[1] = 32'h3333;
         rs_opb_out[1] = 32'h4444;
@@ -115,11 +123,12 @@ module tb_stage_is();
         #10 display_issued();
 
         // Cycle 3: Mult ready, issue from slot 2
+        clear_rs_ready();
         rs_ready_out[2] = 1;
         rs_opa_out[2] = 32'h5555;
         rs_opb_out[2] = 32'h6666;
         rs_tag_out[2] = 6'd3;
-        rs_alu_func_out[2] = ALU_FUNC'(MUL_ALU_MUL);
+        rs_alu_func_out[2] = ALU_MUL;
         rs_npc_out[2] = 32'h3000;
         rs_inst_out[2] = 32'hDEADBEEF;
         fu_ready_alu1 = 0;
