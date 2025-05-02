@@ -1,26 +1,24 @@
 #!/bin/bash
 
-# all modules to test:
-# "pipeline.sv"
+# this sh script is used to run the synthesis tests for the modules in the project
+# it will run the make commands for each module and check if they pass or fail
+# it creates the synthesized module for each module and checks if the synthesized module passes the testbench
+# it will also check if the slack violations are within the limits
 
-# missing test benches:
-# "booth_mult_stage" "decoder" "h3hash" "lsq" "mult_stage" "psel_gen" "regfile" 
-# "zcache" 
-# "stage_mem" "stage_rt"
+# list of all modules to be tested:
+# stages: stage_id, stage_if, stage_is, stage_cp, stage_ex, stage_mem, stage_rt
+# internal modules: 
 
-# ========= Results Post-test! =====================================================
+# ========= Results Post-test! ===================================================================
 
-# UNITS WITH PROBLEMS: "stage_ex" (failing some tests and slack violations)
+# UNITS WITH SYNTAX ERRORS: "stage_id" "stage_rt"
 
-# UNITS PASSING ALL TESTS! <3 YAYY: "reorder_buffer" "cdb" "dcache" "map_table" "reservation_station" "icache"
-# STAGES PASSING ALL TEST!!! YAYYY: "stage_id" "stage_if" "stage_is" "stage_cp"
-#("reorder_buffer" "cdb" "dcache" "map_table" "reservation_station" "icache" "stage_id" "stage_if" "stage_is")
+# STAGES PASSING (I think, some are not passing testbenches but I think it is because we haven't updated the testbenches yet): 
+# "stage_if" "stage_is" "stage_cp" "stage_ex"
 
-# ONES WHERE I NEED SOME CLARIFICATION: 
-# --> mult, whats going on? what modules are actually used
-# --> zcache, genvar issues i think im really confused lowkey 
+# STAGES WITH NO TESTBENCHES: "stage_mem"
 
-TESTED_MODULES=("stage_ex")
+TESTED_MODULES=("pipeline")
 
 # Loop through each module and run the make commands
 for module in "${TESTED_MODULES[@]}"

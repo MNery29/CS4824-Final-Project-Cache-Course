@@ -11,6 +11,18 @@
 `timescale 1ns/1ps
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
+// `include "verilog/stage_cp.sv"
+// `include "verilog/stage_ex.sv"
+// `include "verilog/stage_if.sv"
+// `include "verilog/stage_id.sv"
+// `include "verilog/stage_is.sv"
+// `include "verilog/stage_mem.sv"
+// `include "verilog/stage_rt.sv"
+// `include "verilog/lsq.sv"
+// `include "verilog/icache.sv"
+// `include "verilog/dcache.sv"
+// `include "verilog/map_table.sv"
+// `include "test/mem.sv"
 
 module pipeline (
     input        clock,             // System clock
