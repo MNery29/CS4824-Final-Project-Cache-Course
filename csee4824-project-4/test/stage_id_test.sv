@@ -4,364 +4,216 @@
 `timescale 1ns/1ps
 
 module testbench;
-    
-    logic clock;
-    logic reset;
 
-    //IF packet
-    IF_ID_PACKET if_id_packet;
-    
-    //CDB inputs
-    logic cdb_valid;
-    logic [4:0] cdb_tag;
-    logic [31:0] cdb_value;
+  logic clock, reset;
 
-    //Control inputs
-    logic mt_retire_entry;
-    logic rs1_clear;
-    logic rs1_issue;
-    logic rs1_ready;
-    logic [31:0] rs1_npc_out;
-    logic rob_retire_entry;
-    logic [4:0] rob_dest_reg;
-    logic [31:0] rob_to_regfile_value;
-    logic rob_regfile_valid;
+  IF_ID_PACKET if_id_reg;
+  logic cdb_valid;
+  logic [`ROB_TAG_BITS-1:0] cdb_tag;
+  logic [31:0] cdb_value;
+  logic cdb_take_branch;
 
-    logic lsq_free;
+  logic [2:0] fu_busy;
+  logic [`RS_SIZE-1:0] rs_clear_vec;
 
-    logic fu_busy;
-    logic store_retire;
-    logic [4:0] store_tag;
-    logic maptable_clear;
-    logic rs_clear;
-    logic rob_clear;
+  logic store_retire;
+  logic [4:0] store_tag;
+  logic [4:0] rob_dest_reg;
+  logic [31:0] rob_to_regfile_value;
+  logic retire_entry;
+  logic [4:0] retire_tag;
+  logic lsq_free;
+  logic if_stall;
 
+  logic [`RS_SIZE-1:0] rs_ready_out;
+  logic [31:0] rs_opa_out [`RS_SIZE];
+  logic [31:0] rs_opb_out [`RS_SIZE];
+  ALU_OPA_SELECT rs_opa_select_out [`RS_SIZE];
+  ALU_OPB_SELECT rs_opb_select_out [`RS_SIZE];
+  INST rs_inst_out [`RS_SIZE];
+  logic [4:0] rs_tag_out [`RS_SIZE];
+  logic [31:0] rs_npc_out [`RS_SIZE];
+  logic [31:0] rs_pc_out [`RS_SIZE];
+  ALU_FUNC rs_alu_func_out [`RS_SIZE];
+  logic rs_rd_mem_out [`RS_SIZE];
+  logic rs_wr_mem_out [`RS_SIZE];
+  logic rs_cond_branch_out [`RS_SIZE];
+  logic rs_uncond_branch_out [`RS_SIZE];
+  logic rs_avail_out [`RS_SIZE];
 
+  logic [45:0] rob_debug [`ROB_SZ-1:0];
+  logic [11:0] rob_pointers_debug;
+  logic [73:0] rs_debug [`RS_SIZE];
 
-    //Ouputs
-    logic [31:0] opA;
-    logic [31:0] opB;
-    logic [4:0] output_tag;
+  ALU_OPA_SELECT opa_select;
+  ALU_OPB_SELECT opb_select;
+  logic has_dest_reg;
+  logic [4:0] dest_reg_idx;
+  ALU_FUNC alu_func_out;
+  ROB_RETIRE_PACKET rob_retire_out;
+  logic rd_mem_out, wr_mem_out, cond_branch_out, uncond_branch_out;
+  logic rob_valid, rob_ready;
+  LSQ_PACKET lsq_packet;
+  logic rob_full, rs1_available, dispatch_ok;
+  logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2;
+  logic [31:0] rs1_value, rs2_value;
+  logic [31:0] rob_to_rs_value1, rob_to_rs_value2;
+  logic [31:1][`XLEN-1:0] debug_reg;
+  logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2;
+  logic [31:0] rs1_opa_in, rs1_opb_in;
+  logic [1:0] fu_select;
 
-    ALU_OPA_SELECT opa_select;
-    ALU_OPB_SELECT opb_select;
-    logic has_dest_reg;
-    logic [4:0] dest_reg_idx;
+  stage_id dut (
+    .clock(clock),
+    .reset(reset),
+    .if_id_reg(if_id_reg),
+    .if_stall(if_stall),
+    .cdb_valid(cdb_valid),
+    .cdb_tag(cdb_tag),
+    .cdb_value(cdb_value),
+    .cdb_take_branch(cdb_take_branch),
+    .fu_busy(fu_busy),
+    .rs_clear_vec(rs_clear_vec),
+    .store_retire(store_retire),
+    .store_tag(store_tag),
+    .rob_dest_reg(rob_dest_reg),
+    .rob_to_regfile_value(rob_to_regfile_value),
+    .retire_entry(retire_entry),
+    .retire_tag(retire_tag),
+    .lsq_free(lsq_free),
+    .rs_ready_out(rs_ready_out),
+    .rs_opa_out(rs_opa_out),
+    .rs_opb_out(rs_opb_out),
+    .rs_opa_select_out(rs_opa_select_out),
+    .rs_opb_select_out(rs_opb_select_out),
+    .rs_inst_out(rs_inst_out),
+    .rs_tag_out(rs_tag_out),
+    .rs_npc_out(rs_npc_out),
+    .rs_pc_out(rs_pc_out),
+    .rs_alu_func_out(rs_alu_func_out),
+    .rs_rd_mem_out(rs_rd_mem_out),
+    .rs_wr_mem_out(rs_wr_mem_out),
+    .rs_cond_branch_out(rs_cond_branch_out),
+    .rs_uncond_branch_out(rs_uncond_branch_out),
+    .rs_avail_out(rs_avail_out),
+    .rob_debug(rob_debug),
+    .rob_pointers_debug(rob_pointers_debug),
+    .opa_select(opa_select),
+    .opb_select(opb_select),
+    .has_dest_reg(has_dest_reg),
+    .dest_reg_idx(dest_reg_idx),
+    .alu_func_out(alu_func_out),
+    .rob_retire_out(rob_retire_out),
+    .rd_mem_out(rd_mem_out),
+    .wr_mem_out(wr_mem_out),
+    .cond_branch_out(cond_branch_out),
+    .uncond_branch_out(uncond_branch_out),
+    .rob_valid(rob_valid),
+    .rob_ready(rob_ready),
+    .lsq_packet(lsq_packet),
+    .rob_full(rob_full),
+    .rs1_available(rs1_available),
+    .dispatch_ok(dispatch_ok),
+    .rs_debug(rs_debug),
+    .mt_to_rs_tag1(mt_to_rs_tag1),
+    .mt_to_rs_tag2(mt_to_rs_tag2),
+    .rs1_value(rs1_value),
+    .rs2_value(rs2_value),
+    .rob_to_rs_value1(rob_to_rs_value1),
+    .rob_to_rs_value2(rob_to_rs_value2),
+    .debug_reg(debug_reg),
+    .mt_to_regfile_rs1(mt_to_regfile_rs1),
+    .mt_to_regfile_rs2(mt_to_regfile_rs2),
+    .rs1_opa_in(rs1_opa_in),
+    .rs1_opb_in(rs1_opb_in),
+    .fu_select(fu_select)
+  );
 
-    //Debug inputs
-    logic [45:0] rob_debug [31:0];
-    logic [11:0] rob_pointers_debug;
-     LSQ_PACKET lsq_packet;
+  always begin
+    #(`CLOCK_PERIOD/2.0);
+    clock = ~clock;
+  end
 
-    ALU_FUNC alu_func_out;
-    ROB_RETIRE_PACKET rob_retire_out;
-    logic rd_mem_out;
-    logic wr_mem_out;
-    logic rob_valid;
-    logic rob_ready;
-    //logic [7:0] mt_tags_debug [31:0];
-    //logic [74:0] rs_debug;
+  initial begin
+    $display("Starting stage_id unit test...");
 
-    stage_id dispatch(
-        .clock(clock),
-        .reset(reset),
+    // Reset
+    clock = 0;
+    reset = 1;
+    cdb_valid = 0;
+    rs_clear_vec = 0;
+    cdb_tag = 0;
+    cdb_value = 0;
+    cdb_take_branch = 0;
+    fu_busy = 0;
+    store_retire = 0;
+    store_tag = 0;
+    rob_dest_reg = 0;
+    rob_to_regfile_value = 0;
+    retire_entry = 0;
+    retire_tag = 0;
+    lsq_free = 1;
+    if_stall = 0;
 
-        .if_id_reg(if_id_packet),
+    @(negedge clock);
+    reset = 0;
 
-        .cdb_valid(cdb_valid),
-        .cdb_tag(cdb_tag),
-        .cdb_value(cdb_value),
+    // ------------------------
+    // Test Case 1: ADD x5, x1, x2
+    //   --> opcode = 0110011
+    //   --> funct7 = 0000000, rs2 = 2, rs1 = 1, funct3 = 000, rd = 5
+    //   --> binary: 0000000 00010 00001 000 00101 0110011
+    //   --> hex:    0x002081B3
+    // ------------------------
+    if_id_reg.inst = 32'h002081B3;
+    if_id_reg.valid = 1;
+    if_id_reg.PC = 32'h100;
+    if_id_reg.NPC = 32'h104;
 
-        .rs1_clear(rs1_clear),
-        .rob_retire_entry(rob_retire_entry),
+    @(negedge clock);
+    $display("[ADD] rs1 = x1, rs2 = x2 -> rd = x5");
+    $display("Dest reg: %d, Has dest: %b", dest_reg_idx, has_dest_reg);
 
-        .fu_busy(fu_busy),
+    // ------------------------
+    // Test Case 2: LW x6, 8(x3)
+    //   --> opcode = 0000011
+    //   --> imm = 000000001000, rs1 = 3, funct3 = 010, rd = 6
+    //   --> binary: 000000001000 00011 010 00110 0000011
+    //   --> hex:    0x00831283
+    // ------------------------
+    if_id_reg.inst = 32'h00831283;
+    if_id_reg.valid = 1;
+    if_id_reg.PC = 32'h104;
+    if_id_reg.NPC = 32'h108;
 
-        .store_retire(store_retire),
-        .store_tag(store_tag),
+    @(negedge clock);
+    $display("[LW] rs1 = x3, offset = 8 -> rd = x6");
+    $display("Dest reg: %d, Has dest: %b, rd_mem: %b", dest_reg_idx, has_dest_reg, rd_mem_out);
 
-        .rob_dest_reg(rob_dest_reg),
-        .rob_to_regfile_value(rob_to_regfile_value),
-        .rob_regfile_valid(rob_regfile_valid),
+    // ------------------------
+    // Test Case 3: BEQ x1, x2, offset = 16
+    //   --> opcode = 1100011
+    //   --> imm[12|10:5] = 000001, rs2 = 2, rs1 = 1, funct3 = 000,
+    //       imm[4:1|11] = 0000|0 --> final imm = 16
+    //   --> binary: 0000000 00010 00001 000 00000 1100011
+    //   --> encoded: 000000000010 00001 000 00010 1100011 (beq x1,x2,16)
+    //   --> hex:     0x00208263
+    // ------------------------
+    if_id_reg.inst = 32'h00208263;
+    if_id_reg.valid = 1;
+    if_id_reg.PC = 32'h108;
+    if_id_reg.NPC = 32'h10C;
 
-        .lsq_free(lsq_free),
+    @(negedge clock);
+    $display("[BEQ] rs1 = x1, rs2 = x2 -> branch if equal");
+    $display("Cond branch: %b, Uncond branch: %b", cond_branch_out, uncond_branch_out);
 
-        .maptable_clear(maptable_clear),
-        .rob_clear(rob_clear),
-        .rs_clear(rs_clear),
-
-
-        .opA(opA),
-        .opB(opB),
-        .output_tag(output_tag),
-        .rs1_ready(rs1_ready),
-        .rs1_npc_out(rs1_npc_out),
-        
-        .rob_debug(rob_debug),
-        .rob_pointers_debug(rob_pointers_debug),
-        //.mt_tags_debug(mt_tags_debug),
-        //.rs_debug(rs_debug),
-        .opa_select(opa_select),
-        .opb_select(opb_select),
-        .has_dest_reg(has_dest_reg),
-        .dest_reg_idx(dest_reg_idx),
-        .alu_func_out(alu_func_out),
-
-        .rob_retire_out(rob_retire_out),
-        .rd_mem_out(rd_mem_out),
-        .wr_mem_out(wr_mem_out),
-        .rob_valid(rob_valid),
-        .rob_ready(rob_ready),
-
-        .lsq_packet(lsq_packet)
-    );
-
-    // CLOCK_PERIOD is defined on the commandline by the makefile
-    always begin
-        #(`CLOCK_PERIOD/2.0);
-        clock = ~clock;
-    end
-
-    task print_MT;
-        input [7:0] array [31:0];
-        integer i;
-        begin
-            $display("mt contents:");
-            for (i = 0; i < 32; i++) begin
-                $display("register:%b tag:%b ready_in_rob:%b has_tag:%h", i[4:0], array[i][7:2], array[i][1], array[i][0]);
-            end
-        end
-    endtask
-
-    task print_ROB;
-        input [45:0] array [31:0];
-        input [11:0] pointers;
-        integer i;
-        begin
-            $display("rob contents:");
-            for (i = 0; i < 32; i++) begin
-                $display("status:%b opcode:%b dest:%b value:%h", array[i][45:44], array[i][43:37], array[i][36:32], array[i][31:0]);
-            end
-            $display("h/t pointers:");
-            $display("head:%b tail:%b", pointers[11:6], pointers[5:0]);
-        end
-    endtask
-
-    task print_RS;
-        input [74:0] entry;
-        $display("rs contents:");
-        $display("opA:%h opA_valid:%b opB:%h opB_valid:%b dest_tag:%b in_use:%b ready:%b available:%b", entry[74:43], entry[42], entry[41:10], entry[9], entry[8:3], entry[2], entry[1], entry[0]);
-        $display("=======================================================================");
-    endtask
-
-    initial begin
-        $monitor("Time:%4.0f clock:%b |Inst| instruction:%h valid:%b |CDB| cdb_broadcast:%b cdb_tag:%b cdb_value:%h |Control| mt_retire:%b rob_retire:%b rob_clear:%b rs1_issue:%b rs1_clear:%b || Outputs: opA:%h opB:%h output_tag:%b", 
-                $time, clock, if_id_packet.inst, if_id_packet.valid, cdb_valid, cdb_tag, cdb_value, mt_retire_entry, rob_retire_entry, rob_clear, rs1_issue, rs1_clear, opA, opB, output_tag);
-        //Reset 
-        clock = 1;
-        reset = 1; //Pull reset high
-        //Test instruction: addi 
-        if_id_packet.inst.i.imm = 12'b0000_0000_1010;
-        if_id_packet.inst.i.rs1 = 5'b00001;
-        if_id_packet.inst.i.funct3 = 3'b000;
-        if_id_packet.inst.i.rd = 5'b00010;
-        if_id_packet.inst.i.opcode = `RV32_OP_IMM;
-        //Other packet parameters
-        if_id_packet.PC = 32'h0000_0000;
-        if_id_packet.NPC = 32'h0000_0004;
-        if_id_packet.valid = 1'b0;
-        //CDB
-        cdb_valid = 1'b0;
-        cdb_tag = 6'b0;
-        cdb_value = 32'h0;
-        //Control signals
-        mt_retire_entry = 1'b0;
-        rob_retire_entry = 1'b0;
-        rob_clear = 1'b0;
-        rs1_issue = 1'b0;
-        rs1_clear = 1'b0;
-
-        @(negedge clock)
-        //print_MT(mt_tags_debug);
-        //print_ROB(rob_debug, rob_pointers_debug);
-        //print_RS(rs_debug);
-        reset = 0; //Pull reset low
-        //Test instruction to load: addi r1 r0 123
-        if_id_packet.inst.i.imm = 12'h123;
-        if_id_packet.inst.i.rs1 = 5'b00000;
-        if_id_packet.inst.i.funct3 = 3'b000;
-        if_id_packet.inst.i.rd = 5'b00001;
-        if_id_packet.inst.i.opcode = `RV32_OP_IMM;
-        //Other packet parameters
-        if_id_packet.PC = 32'h0000_0000;
-        if_id_packet.NPC = 32'h0000_0004;
-        if_id_packet.valid = 1'b1;
-        //CDB
-        cdb_valid = 1'b0;
-        cdb_tag = 6'b0;
-        cdb_value = 32'h0;
-        //Control signals
-        mt_retire_entry = 1'b0;
-        rob_retire_entry = 1'b0;
-        rob_clear = 1'b0;
-        rs1_issue = 1'b0;
-        rs1_clear = 1'b0;
-
-        @(negedge clock)
-        //print_MT(mt_tags_debug);
-        //print_ROB(rob_debug, rob_pointers_debug);
-        //print_RS(rs_debug);
-        if_id_packet.valid = 1'b0; //Stall dispatch
-
-        cdb_valid = 1'b1; //Simulate CDB broadcast
-        cdb_tag = 6'b000001;
-        cdb_value = 32'h0000_0123;
-
-        mt_retire_entry = 1'b0;
-        rob_retire_entry = 1'b0;
-        rob_clear = 1'b0;
-        rs1_issue = 1'b0;
-        rs1_clear = 1'b0;
-
-        @(negedge clock)
-        //print_MT(mt_tags_debug);
-        //print_ROB(rob_debug, rob_pointers_debug);
-        //print_RS(rs_debug);
-        if_id_packet.valid = 1'b0; //Stall dispatch
-
-        cdb_valid = 1'b0; //Stop CDB broadcast
-        cdb_tag = 6'b000000;
-        cdb_value = 32'h0000_0000;
-
-        mt_retire_entry = 1'b1; //Retire instruction
-        rob_retire_entry = 1'b1;
-        rob_clear = 1'b0;
-        rs1_issue = 1'b0;
-        rs1_clear = 1'b1; //Clear RS for next inst - In reality, this would happen when inst has proceeded to execute
-
-        @(negedge clock)
-        //print_MT(mt_tags_debug);
-        //print_ROB(rob_debug, rob_pointers_debug);
-        //print_RS(rs_debug);
-        //Test instruction to load: addi r2 r0 ABC
-        if_id_packet.inst.i.imm = 12'hABC;
-        if_id_packet.inst.i.rs1 = 5'b00000;
-        if_id_packet.inst.i.funct3 = 3'b000;
-        if_id_packet.inst.i.rd = 5'b00010;
-        if_id_packet.inst.i.opcode = `RV32_OP_IMM;
-        //Other packet parameters
-        if_id_packet.PC = 32'h0000_0000;
-        if_id_packet.NPC = 32'h0000_0004;
-        if_id_packet.valid = 1'b1;
-        //CDB
-        cdb_valid = 1'b0;
-        cdb_tag = 6'b00000;
-        cdb_value = 32'h0000_0000;
-        //Control signals
-        mt_retire_entry = 1'b0;
-        rob_retire_entry = 1'b0;
-        rob_clear = 1'b0;
-        rs1_issue = 1'b0;
-        rs1_clear = 1'b0;
-
-        @(negedge clock)
-        //print_MT(mt_tags_debug);
-        //print_ROB(rob_debug, rob_pointers_debug);
-        //print_RS(rs_debug);
-        if_id_packet.valid = 1'b0; //Stall dispatch
-
-        cdb_valid = 1'b1; //Simulate CDB broadcast
-        cdb_tag = 6'b000010;
-        cdb_value = 32'hFFFF_FABC;
-
-        mt_retire_entry = 1'b0;
-        rob_retire_entry = 1'b0;
-        rob_clear = 1'b0;
-        rs1_issue = 1'b0;
-        rs1_clear = 1'b0;
-
-        @(negedge clock)
-        //print_MT(mt_tags_debug);
-        //print_ROB(rob_debug, rob_pointers_debug);
-        //print_RS(rs_debug);
-        if_id_packet.valid = 1'b0; //Stall dispatch
-
-        cdb_valid = 1'b0; //Stop CDB broadcast
-        cdb_tag = 6'b000000;
-        cdb_value = 32'h0000_0000;
-
-        mt_retire_entry = 1'b1; //Retire instruction 
-        rob_retire_entry = 1'b1;
-        rob_clear = 1'b0;
-        rs1_issue = 1'b0;
-        rs1_clear = 1'b1; //Clear RS for next inst - In reality, this would happen when inst has proceeded to execute
-
-        @(negedge clock)
-        //print_MT(mt_tags_debug);
-        //print_ROB(rob_debug, rob_pointers_debug);
-        //print_RS(rs_debug);
-        //Test instruction to load: add r3 r1 r2 <- previously retired values for r1 and r2 should show up in RS operands!
-        if_id_packet.inst.r.funct7 = 7'b0;
-        if_id_packet.inst.r.rs1 = 5'b00001;
-        if_id_packet.inst.r.rs2 = 5'b00010;
-        if_id_packet.inst.r.funct3 = 3'b000;
-        if_id_packet.inst.r.rd = 5'b00011;
-        if_id_packet.inst.r.opcode = `RV32_OP;
-        //Other packet parameters
-        if_id_packet.PC = 32'h0000_0000;
-        if_id_packet.NPC = 32'h0000_0004;
-        if_id_packet.valid = 1'b1;
-        //CDB
-        cdb_valid = 1'b0;
-        cdb_tag = 6'b00000;
-        cdb_value = 32'h0000_0000;
-        //Control signals
-        mt_retire_entry = 1'b0;
-        rob_retire_entry = 1'b0;
-        rob_clear = 1'b0;
-        rs1_issue = 1'b0;
-        rs1_clear = 1'b0;
-
-        @(negedge clock)
-        //print_MT(mt_tags_debug);
-        //print_ROB(rob_debug, rob_pointers_debug);
-        //print_RS(rs_debug);
-        if_id_packet.valid = 1'b0;
-        rs1_clear = 1'b1; //clear RS for next test
-
-        @(negedge clock)
-        //print_MT(mt_tags_debug);
-        //print_ROB(rob_debug, rob_pointers_debug);
-        //print_RS(rs_debug);
-        //Test instruction to load: add r4 r2 r3 <- previously retired values for r2 should show up in RS operand, r3 should be a tag!
-        if_id_packet.inst.r.funct7 = 7'b0;
-        if_id_packet.inst.r.rs1 = 5'b00010;
-        if_id_packet.inst.r.rs2 = 5'b00011;
-        if_id_packet.inst.r.funct3 = 3'b000;
-        if_id_packet.inst.r.rd = 5'b00100;
-        if_id_packet.inst.r.opcode = `RV32_OP;
-        //Other packet parameters
-        if_id_packet.PC = 32'h0000_0000;
-        if_id_packet.NPC = 32'h0000_0004;
-        if_id_packet.valid = 1'b1;
-        //CDB
-        cdb_valid = 1'b0;
-        cdb_tag = 6'b00000;
-        cdb_value = 32'h0000_0000;
-        //Control signals
-        mt_retire_entry = 1'b0;
-        rob_retire_entry = 1'b0;
-        rob_clear = 1'b0;
-        rs1_issue = 1'b0;
-        rs1_clear = 1'b0;
-
-        @(negedge clock)
-        //print_MT(mt_tags_debug);
-        //print_ROB(rob_debug, rob_pointers_debug);
-        //print_RS(rs_debug);
-
-        $finish;
-
-    end
+    // ------------------------
+    // Wrap up
+    // ------------------------
+    repeat (2) @(negedge clock);
+    $display("stage_id test complete.");
+    $finish;
+end
 
 endmodule

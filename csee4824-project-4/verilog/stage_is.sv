@@ -8,8 +8,9 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`timescale 1ns/100ps
+`timescale 1ns/1ps
 `include "verilog/sys_defs.svh"
+`include "verilog/ISA.svh"
 
 module stage_is (
     //standard signals
@@ -41,18 +42,15 @@ module stage_is (
 
 
     //OUTPUTS:
-
-
-
-
     output IS_EX_PACKET is_packets [2:0],      // packets for each FU
     output logic [`RS_SIZE-1:0] rs_issue_enable // one-hot enabling. 
     
 );
 
+
 //function to determine if instruction is mult instruction
 function logic is_mult(ALU_FUNC funct);
-    return (funct inside {MUL_ALU_MUL, MUL_ALU_MULH, MUL_ALU_MULHSU, MUL_ALU_MULHU});
+    return (funct inside {ALU_MUL, ALU_MULH, ALU_MULHSU, ALU_MULHU});
 endfunction
 
 // function to build packet, for each IS_EX packet output 
@@ -86,16 +84,16 @@ always_comb begin
             ALU_FUNC funct = rs_alu_func_out[i];
             IS_EX_PACKET packet = build_packet(i);
 
-            if (is_mult(funct) && !issue_valids[2] && fu_ready_mult) begin
+            if (is_mult(funct) && !packet.issue_valid[2] && fu_ready_mult) begin
                 packet.fu_selection = 2'd2;
                 is_packets[2] = packet;
                 rs_issue_enable[i] = 1;
             end else if (!is_mult(funct)) begin
-                if (!issue_valids[0] && fu_ready_alu0) begin
+                if (!packet.issue_valid[0] && fu_ready_alu0) begin
                     packet.fu_selection = 2'd0;
                     is_packets[0] = packet;
                     rs_issue_enable[i] = 1;
-                end else if (!issue_valids[1] && fu_ready_alu1) begin
+                end else if (!packet.issue_valid[1] && fu_ready_alu1) begin
                     packet.fu_selection = 2'd1;
                     is_packets[1] = packet;
                     rs_issue_enable[i] = 1;

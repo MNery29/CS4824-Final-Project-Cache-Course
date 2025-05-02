@@ -399,6 +399,7 @@ typedef struct packed {
     logic wr_mem;
     logic cond_branch;
     logic uncond_branch;
+    logic fu_selection;
 } IS_EX_PACKET;
 
 

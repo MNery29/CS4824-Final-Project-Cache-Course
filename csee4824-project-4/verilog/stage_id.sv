@@ -10,9 +10,9 @@
 
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
-//`include "verilog/map_table.sv" //TEMPORARILY COMMENTED OUT FOR INTEGRATION TEST
+`include "verilog/map_table.sv" //TEMPORARILY COMMENTED OUT FOR INTEGRATION TEST
 `include "verilog/reservation_station.sv"
-//`include "verilog/reorder_buffer.sv" //TEMPORARILY COMMENTED OUT FOR INTEGRATION TEST
+`include "verilog/reorder_buffer.sv" //TEMPORARILY COMMENTED OUT FOR INTEGRATION TEST
 `include "verilog/regfile.sv"
 
 // Decode an instruction: generate useful datapath control signals by matching the RISC-V ISA
@@ -246,7 +246,7 @@ module stage_id (
     output ALU_OPA_SELECT rs_opa_select_out [`RS_SIZE],
     output ALU_OPB_SELECT rs_opb_select_out [`RS_SIZE],
     output INST rs_inst_out[`RS_SIZE],
-    output rs_tag_out [`RS_SIZE],
+    output [4:0] rs_tag_out [`RS_SIZE],
     output [31:0] rs_npc_out [`RS_SIZE],
     output [31:0] rs_pc_out [`RS_SIZE],
     output ALU_FUNC rs_alu_func_out [`RS_SIZE],
