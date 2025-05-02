@@ -11,6 +11,8 @@
 `timescale 1ns/1ps
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
+
+// needed when running for synthesis
 // `include "verilog/stage_cp.sv"
 // `include "verilog/stage_ex.sv"
 // `include "verilog/stage_if.sv"
