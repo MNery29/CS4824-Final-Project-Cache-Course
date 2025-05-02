@@ -197,7 +197,10 @@ module pipeline (
     output logic [1:0]       proc2Dmem_command,
     output logic wait_one_step,
     output logic next_wait_one_step,
-    output logic read_data
+    output logic read_data,
+
+    output logic icache_rejected,
+    output logic next_icache_rejected
 );
 
     //////////////////////////////////////////////////
@@ -875,108 +878,154 @@ module pipeline (
     MEM_SIZE          proc2Dmem_size;
 `endif
 
-    always_comb begin
-        next_wait_one_step = wait_one_step == 0 ? 0 : wait_one_step - 1;
+//     always_comb begin
+//         next_wait_one_step = wait_one_step == 0 ? 0 : wait_one_step - 1;
 
-        owner_d = owner_q;
-        if (dcache2mem_command != BUS_NONE) begin
+//         owner_d = owner_q;
+//         if (dcache2mem_command != BUS_NONE) begin
             
-            proc2mem_command = dcache2mem_command;
-            proc2mem_addr    = dcache2mem_addr;
-            proc2mem_data = dcache2mem_data;
-`ifndef CACHE_MODE
-            proc2mem_size    = dcache_size;
-`endif
-            //if data mmodule sent the request
-            owner_d = `OWN_D;
-            if (owner_d != owner_q) begin
-                next_wait_one_step = 1;
-            end
-        end else begin
-            proc2mem_command = BUS_LOAD;
-            proc2mem_addr    = proc2Imem_addr;
-`ifndef CACHE_MODE
-            proc2mem_size    = DOUBLE;
-`endif
-            // then if instruction module sent the request
-            owner_d = `OWN_I;
-            if (owner_d != owner_q) begin
-                next_wait_one_step = 1;
-            end
-        end
-    end
+//             proc2mem_command = dcache2mem_command;
+//             proc2mem_addr    = dcache2mem_addr;
+//             proc2mem_data = dcache2mem_data;
+// `ifndef CACHE_MODE
+//             proc2mem_size    = dcache_size;
+// `endif
+//             //if data mmodule sent the request
+//             owner_d = `OWN_D;
+//             if (owner_d != owner_q) begin
+//                 next_wait_one_step = 1;
+//             end
+//         end else begin
+//             proc2mem_command = BUS_LOAD;
+//             proc2mem_addr    = proc2Imem_addr;
+// `ifndef CACHE_MODE
+//             proc2mem_size    = DOUBLE;
+// `endif
+//             // then if instruction module sent the request
+//             owner_d = `OWN_I;
+//             if (owner_d != owner_q) begin
+//                 next_wait_one_step = 1;
+//             end
+//         end
+//     end
 
 
-    // mem mem_0 (
-    //     .clk(clock),
-    //     .proc2mem_addr(proc2mem_addr),
-    //     .proc2mem_data(proc2mem_data),
-    // `ifndef CACHE_MODE
-    //     .proc2mem_size(proc2mem_size),
-    // `endif
-    //     .proc2mem_command(proc2mem_command),
-    //     .mem2proc_response(mem2proc_response),
-    //     .mem2proc_data(mem2proc_data),
-    //     .mem2proc_tag(mem2proc_tag)
-    // );
-
-    always_ff @(negedge clock or posedge reset) begin
-        if (reset) begin
-            owner_q <= `OWN_NONE;
-            wait_one_step <= 1;
-        // for now, we have to wait for data to respond, so not just tag
-        end
-        else begin
-            wait_one_step <= next_wait_one_step;
-            if (owner_q != owner_d && (read_data || owner_q == `OWN_NONE))begin
-                owner_q <= owner_d;
-            end
-        end
-    end
+//     always_ff @(negedge clock or posedge reset) begin
+//         if (reset) begin
+//             owner_q <= `OWN_NONE;
+//             wait_one_step <= 1;
+//         // for now, we have to wait for data to respond, so not just tag
+//         end
+//         else begin
+//             wait_one_step <= next_wait_one_step;
+//             if (owner_q != owner_d && (read_data || owner_q == `OWN_NONE))begin
+//                 owner_q <= owner_d;
+//             end
+//         end
+//     end
     
+//     assign Imem2proc_data     = mem2proc_data;
+//     assign Imem2proc_tag      = mem2proc_tag;
+//     assign mem2dcache_data = mem2proc_data;
+//     assign mem2dcache_tag      = mem2proc_tag;
+//     always_comb begin
+//         // Default: de‑assert
+//         mem2dcache_response     = 0;
+
+//         Imem2proc_response  = 0;
+
+//         read_data=0;
+
+//         if_stall = 0;
+
+//         case (owner_q)
+//             `OWN_D: begin
+//                 if_stall = 1'b1;
+//                 if (wait_one_step == 0) begin
+//                     mem2dcache_response = mem2proc_response;
+
+//                     if (mem2proc_response != 0) begin
+//                         read_data = 1'b1;
+//                     end
+//                 end
+//             end
+//             `OWN_I: begin
+//                 if (owner_d != `OWN_D) begin
+//                     if (wait_one_step == 0) begin
+//                         Imem2proc_response = mem2proc_response;
+//                         if (mem2proc_response != 0) begin
+//                             read_data = 1'b1;
+//                         end
+//                     end
+                
+//                 end
+//                 else begin
+//                     read_data = 1'b1;
+//                 end
+                
+//             end
+//             default: begin
+//             end
+//         endcase
+//     end
+
+    assign next_icache_rejected = (dcache2mem_command == BUS_NONE) ? 1'b0 : 1'b1;
+    logic [1:0] cycle_wait;
+    logic [1:0] next_cycle_wait;
+
+    assign if_stall = icache_rejected;
     assign Imem2proc_data     = mem2proc_data;
     assign Imem2proc_tag      = mem2proc_tag;
     assign mem2dcache_data = mem2proc_data;
     assign mem2dcache_tag      = mem2proc_tag;
     always_comb begin
-        // Default: de‑assert
-        mem2dcache_response     = 0;
+        next_cycle_wait = cycle_wait == 0 ? 0 : cycle_wait - 1;
+        if (icache_rejected != next_icache_rejected) begin
+            next_cycle_wait = 2'b10;
+        end
 
+        if (next_icache_rejected) begin
+                proc2mem_command = dcache2mem_command;
+                proc2mem_addr    = dcache2mem_addr;
+                proc2mem_data = dcache2mem_data;
+`ifndef CACHE_MODE
+                proc2mem_size    = dcache_size;
+
+`endif
+            end
+            else begin
+                proc2mem_command = BUS_LOAD;
+                proc2mem_addr    = proc2Imem_addr;
+                proc2mem_data = 0;
+`ifndef CACHE_MODE
+                proc2mem_size    = DOUBLE;
+`endif
+            end
+    end
+
+    always_ff @(negedge clock or posedge reset) begin
+        if (reset) begin
+            icache_rejected <= 1'b0;   
+            cycle_wait <= 0;
+        end else begin
+            icache_rejected <= next_icache_rejected;
+            cycle_wait <= next_cycle_wait;
+        end
+    end
+
+    always_comb begin
+        mem2dcache_response   = 0;
         Imem2proc_response  = 0;
-
-        read_data=0;
-
-        if_stall = 0;
-
-        case (owner_q)
-            `OWN_D: begin
-                if_stall = 1'b1;
-                if (wait_one_step == 0) begin
-                    mem2dcache_response = mem2proc_response;
-
-                    if (mem2proc_response != 0) begin
-                        read_data = 1'b1;
-                    end
-                end
+        if (icache_rejected) begin
+            if (cycle_wait == 0) begin
+                mem2dcache_response = mem2proc_response;
             end
-            `OWN_I: begin
-                if (owner_d != `OWN_D) begin
-                    if (wait_one_step == 0) begin
-                        Imem2proc_response = mem2proc_response;
-                        if (mem2proc_response != 0) begin
-                            read_data = 1'b1;
-                        end
-                    end
-                
-                end
-                else begin
-                    read_data = 1'b1;
-                end
-                
+        end
+        else begin
+            if (cycle_wait ==0) begin
+                Imem2proc_response  = mem2proc_response;
             end
-            default: begin
-            end
-        endcase
+        end
     end
 
     //////////////////////////////////////////////////

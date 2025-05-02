@@ -225,6 +225,9 @@ module testbench;
     logic next_wait_one_step;
     logic read_data;
 
+    logic icache_rejected;
+    logic next_icache_rejected;
+
     // logic [`XLEN-1:0] if_NPC_dbg;
     // logic [31:0]      if_inst_dbg;
     // logic             if_valid_dbg;
@@ -403,7 +406,10 @@ module testbench;
         .proc2Dmem_command (proc2Dmem_command),
         .wait_one_step     (wait_one_step),
         .next_wait_one_step (next_wait_one_step),
-        .read_data         (read_data)
+        .read_data         (read_data),
+
+        .icache_rejected (icache_rejected),
+        .next_icache_rejected (next_icache_rejected)
         
 
         // .if_NPC_dbg       (if_NPC_dbg),
@@ -926,6 +932,8 @@ module testbench;
             $display("owner_q =%b", owner_q);
             $display("waiting for one step =%b", wait_one_step);
             $display("next waiting for one step =%b", next_wait_one_step);
+            $display("icache rejected =%b", icache_rejected);  
+            $display("next icache rejected =%b", next_icache_rejected);
 
             $display("state =%b", state);
             $display("next state =%b", next_state);
@@ -1026,8 +1034,8 @@ module testbench;
         end else begin
             clock_count <= (clock_count + 1);
             instr_count <= (instr_count + pipeline_completed_insts);
-            $display("______________POS EDGE CLOCK CYCLE!!!________________");
-            display_all_signals();
+            // $display("______________POS EDGE CLOCK CYCLE!!!________________");
+            // display_all_signals();
         end
         
     end
@@ -1045,7 +1053,33 @@ module testbench;
         end else begin
             #2;
             $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");
-            display_all_signals();
+
+            $display("icache rejected =%b", icache_rejected);  
+            $display("next icache rejected =%b", next_icache_rejected);
+
+            $display("proc2mem_command =%b", proc2mem_command);
+            $display("proc2mem_addr =%h", proc2mem_addr);
+            $display("proc2mem_data =%h", proc2mem_data);
+            // $display("proc2mem_size =%s", mem_size_str(proc2mem_size));
+            $display("mem2proc_response =%b", mem2proc_response);
+            $display("mem2proc_data =%h", mem2proc_data);
+            $display("mem2proc_tag =%b", mem2proc_tag);
+
+            $display("dcache data out =%h", dcache_data_out);
+            $display("dcache tag =%b", dcache_tag);
+            $display("dcache response =%b", dcache_response);
+            $display("Dcache cur addr = %h", dcache_cur_addr);
+            $display("Dcache cur command = %b", dcache_cur_command);
+            $display("Dcache cur data = %h", dcache_cur_data);
+            $display("dcache hit =%b", dcache_hit);
+            $display("dcache command =%b", dcache_command);
+            $display("dcache data =%h", dcache_data);
+            $display("dcache addr =%h", dcache_addr);
+            $display("dcache size =%b", dcache_size);
+
+            $display("Imem2proc response =%b", Imeme2proc_response);  
+            $display("CURRENT MEM TAG =%b", current_mem_tag);  
+            // display_all_signals();
 
             // print the pipeline debug outputs via c code to the pipeline output file
             // print_cycles();
