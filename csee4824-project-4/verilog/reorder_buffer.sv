@@ -7,8 +7,7 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-//Temp ROB for integration with dispatch stage
-
+//ROB INTEGRATED WITH STAGE 
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 
@@ -237,6 +236,10 @@ module reorder_buffer(
         end
     end
 endmodule
+
+
+//BELOW IS ALL OLD NOTES WHEN DEBUGGING 
+
 
 // valid bit needed for ROB
 

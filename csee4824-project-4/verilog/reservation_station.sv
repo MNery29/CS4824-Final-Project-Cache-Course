@@ -11,6 +11,10 @@
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 
+//NOTE: CURRENTLY IS A SINGULAR ENTRY. (Yes. I know. Sad.)
+//WE DID BUILD A MULTIPLE ENTRY VERSION BUT DIDN"T HAVE TIME TO INTEGRATE 
+//WOULD BE ABLE TO INTEGRATE WITHIN A WEEK EXTRA, MIGHT ADD IN FINAL REPORT 
+
 module reservation_station(
     input [31:0]   rs_npc_in,    // Next PC (from fetch/decode)
     input [31:0] rs_pc_in,

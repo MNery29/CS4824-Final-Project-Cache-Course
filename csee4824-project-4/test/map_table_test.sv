@@ -28,8 +28,6 @@ module testbench;
         .regfile_rs2_addr(regfile_rs2_addr)
         //.tags_debug(tags_debug) /DEBUGGING!
     );
-
-    // CLOCK_PERIOD is defined on the commandline by the makefile
     always begin
         #(`CLOCK_PERIOD/2.0);
         clock = ~clock;
@@ -49,7 +47,6 @@ module testbench;
     initial begin
         $monitor("Time:%4.0f clock:%b reset:%b read_cdb:%b load_entry:%b retire_entry:%b retire_addr:%b retire_tag:%b rs1_addr:%b rs2_addr:%b r_dest:%b tag_in:%b cdb_tag_in:%b rs1_tag:%b rs2_tag:%b",
                  $time, clock, reset, read_cdb, load_entry, retire_entry, retire_addr, retire_tag, rs1_addr, rs2_addr, r_dest, tag_in, cdb_tag_in, rs1_tag, rs2_tag);
-
         //Reset 
         clock = 1'b0;
         reset = 1'b1; //Pull reset high

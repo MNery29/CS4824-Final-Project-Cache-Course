@@ -2,6 +2,9 @@
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 
+
+//ALSO NOT SURE IF THIS IS WORKING UPON SUBMISSION - MATEO 
+//WE MADE A LOT OF TEST BENCHES AND DIDN"T CLEAN ALL OF THEM SORRY :(
 module testbench;
     // Clock and reset
     logic clock, reset;

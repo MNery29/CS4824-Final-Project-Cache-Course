@@ -15,7 +15,6 @@ module stage_is (
     //standard signals
     input logic clock,
     input logic reset,
-
     // Reservation Station signals
     
     input logic [`RS_SIZE-1:0]          rs_ready_out, // valid bits for reservation station

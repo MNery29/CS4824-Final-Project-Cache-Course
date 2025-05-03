@@ -8,11 +8,12 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
+
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
-//`include "verilog/map_table.sv" //TEMPORARILY COMMENTED OUT FOR INTEGRATION TEST
+
 `include "verilog/reservation_station.sv"
-//`include "verilog/reorder_buffer.sv" //TEMPORARILY COMMENTED OUT FOR INTEGRATION TEST
+
 `include "verilog/regfile.sv"
 
 // Decode an instruction: generate useful datapath control signals by matching the RISC-V ISA

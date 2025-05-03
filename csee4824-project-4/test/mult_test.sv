@@ -1,4 +1,6 @@
 
+
+
 `include "verilog/sys_defs.svh"
 
 module testbench;
@@ -16,7 +18,6 @@ module testbench;
         .product(result),
         .done(done)
     );
-
 
     // CLOCK_PERIOD is defined on the commandline by the makefile
     always begin

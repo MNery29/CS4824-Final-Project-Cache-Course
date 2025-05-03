@@ -2,15 +2,13 @@
 //                                                                     //
 //   Modulename :  stage_mem.sv                                        //
 //                                                                     //
-//  Description :  memory access (MEM) stage of the pipeline;          //
-//                 this stage accesses memory for stores and loads,    //
-//                 and selects the proper next PC value for branches   //
-//                 based on the branch condition computed in the       //
-//                 previous stage.                                     //
+//  Description :  //IGNORE, OLD FILE USED TO REFERENCE                  //
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
 `include "verilog/sys_defs.svh"
+
+
 
 // typedef struct packed {
 //     logic [`XLEN-1:0] alu_result;

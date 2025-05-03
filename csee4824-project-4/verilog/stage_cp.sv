@@ -11,6 +11,7 @@
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 `include "verilog/reorder_buffer.sv"
+//CP STAGE FUNCTIONAL
 
 module stage_cp (
 

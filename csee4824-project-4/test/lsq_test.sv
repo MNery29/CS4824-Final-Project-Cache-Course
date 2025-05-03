@@ -1,37 +1,15 @@
-// -----------------------------------------------------------------------------
-//  tb_lsq_happy_path.sv
-//  – “happy-path” smoke test for the LSQ: two back-to-back LOADs that both hit
-//    in the D-cache.  Each hit is held for *two* cycles so we can see that the
-//    LSQ broadcasts the first result, advances its head pointer, and then
-//    services the second request.
-// -----------------------------------------------------------------------------
-//  Assumptions about the rest of the design:
-//    *  verilog/sys_defs.svh defines XLEN, the BUS_* encodings, the MEM_SIZE
-//       enumeration, LSQ_PACKET, priv_addr_packet and EX_CP_PACKET.
-//    *  Your D-cache sets       BUS_LOAD  = 2’b01, BUS_STORE = 2’b10,
-//       and drives dcache_cur_command[1] = 0 for a load, 1 for a store.
-//
-//  If any of those symbols live elsewhere in your project, just adjust the
-//  `include below or add your own localparam definitions.
-// -----------------------------------------------------------------------------
+//WILLS LSQ TESTBENCh
 `timescale 1ns/1ps
 `include "verilog/sys_defs.svh"
 
 module testbench;
 
-   // ------------------------------------------------------------------
-   // 1. Clock & reset
-   // ------------------------------------------------------------------
    localparam int CLOCK_PERIOD = 10;   // 100 MHz
    logic clk = 0;
    always #(CLOCK_PERIOD/2) clk = ~clk;
 
    logic reset;
-
-   // ------------------------------------------------------------------
-   // 2. DUT I/O wires
-   // ------------------------------------------------------------------
-   // --------------- D-cache side -------------------------------------
+   // DUT I/O wires
    logic [63:0] dcache_data_out;
    logic [3:0]  dcache_tag;
    logic [3:0]  dcache_response;
@@ -40,7 +18,7 @@ module testbench;
    logic [1:0]  dcache_cur_command;
    logic [63:0] dcache_cur_data;
 
-   // --------------- issue/RT/CDB side --------------------------------
+   //issue/RT/CDB side 
    LSQ_PACKET        lsq_packet;
    priv_addr_packet  priv_addr_in;
    CDB_PACKET        cdb_in;
@@ -48,7 +26,7 @@ module testbench;
    logic       mem_valid;
    logic [4:0] mem_tag;
 
-   // --------------- LSQ → outside world ------------------------------
+   //  LSQ 
    EX_CP_PACKET cdb_out;
 
    logic [1:0]  dcache_command;
@@ -76,10 +54,6 @@ module testbench;
    logic        cache_in_flight_rd_unsigned[15:0];
    MEM_SIZE     cache_in_flight_mem_size  [15:0];
 
-   // ------------------------------------------------------------------
-   // 3. Instantiate the LSQ (NONBLOCKING = 0 so it waits for the hit or
-   //    miss to finish before issuing the next request).
-   // ------------------------------------------------------------------
    lsq #(
         .LSQ_SIZE    (8),
         .LSQ_SIZE_W  (3),   // log2(8)
@@ -87,7 +61,7 @@ module testbench;
    ) dut (
         .clk                    (clk),
         .reset                  (reset),
-        // ---- D-cache interface ----
+        // D-cache interface 
         .dcache_data_out        (dcache_data_out),
         .dcache_tag             (dcache_tag),
         .dcache_response        (dcache_response),
@@ -96,14 +70,14 @@ module testbench;
         .dcache_cur_command     (dcache_cur_command),
         .dcache_cur_data        (dcache_cur_data),
 
-        // ---- pipeline side ----
+        // pipeline side 
         .mem_tag                (mem_tag),
         .mem_valid              (mem_valid),
         .lsq_packet             (lsq_packet),
         .cdb_in                 (cdb_in),
         .priv_addr_in           (priv_addr_in),
 
-        // ---- outputs ----
+        //  outputs
         .cdb_out                (cdb_out),
         .dcache_command         (dcache_command),
         .dcache_addr            (dcache_addr),
@@ -125,18 +99,12 @@ module testbench;
         .cache_in_flight_mem_size(cache_in_flight_mem_size)
    );
 
-   // ------------------------------------------------------------------
-   // 4. Convenience localparams (in case the header didn’t define them)
-   // ------------------------------------------------------------------
    localparam logic [1:0] BUS_NONE  = 2'b00,
                           BUS_LOAD  = 2'b01,
                           BUS_STORE = 2'b10;
 
    localparam MEM_SIZE WORD = MEM_SIZE'(2'b10);
 
-   // ------------------------------------------------------------------
-   // 5. Debug helpers – prints every LSQ entry + pointer values
-   // ------------------------------------------------------------------
    task automatic dump_state();
       $display("\n[%0t] ------------------------------------------------", $time);
       $display(" head=%0d  tail=%0d  lsq_free=%b  op_in_prog=%b", 
@@ -158,11 +126,7 @@ module testbench;
 
    // Dump every posedge so we can watch the pointers advance.
    always_ff @(posedge clk) dump_state();
-
-
-   // ------------------------------------------------------------------
-   // 6. Stimulus helpers
-   // ------------------------------------------------------------------
+   // Stimulus helpers
    // “enqueue” a LOAD into the LSQ for ROB tag = <rob>, unsigned = 0.
    task automatic enqueue_load(input logic [4:0] rob);
       lsq_packet.valid            = 1;
@@ -178,7 +142,7 @@ module testbench;
       lsq_packet.valid = 0;                 // drop .valid afterwards
    endtask
 
-   // Send the address that EX computed (priv_addr_in handshake)
+   // Send the address that EX computed 
    task automatic send_priv_addr(input logic [4:0] tag,
                                  input logic [31:0] addr);
       priv_addr_in.valid = 1;
@@ -187,7 +151,6 @@ module testbench;
       @(negedge clk);
       priv_addr_in.valid = 0;
    endtask
-
    // Wait until the LSQ issues a LOAD, then provide two-cycle D-cache hit
    // with the chosen data word.
    task automatic simulate_two_cycle_hit(input logic [31:0] addr,
@@ -213,11 +176,7 @@ module testbench;
       dcache_data_out    = 64'h0;
    endtask
 
-   // ------------------------------------------------------------------
-   // 7. Test sequence
-   // ------------------------------------------------------------------
    initial begin
-      // --------------------- initialise all inputs -------------------
       reset               = 1;
       lsq_packet          = '0;
       priv_addr_in        = '0;
@@ -234,21 +193,12 @@ module testbench;
       // Hold reset for two cycles
       repeat (2) @(negedge clk);
       reset = 0;
-
-      // --------------------- enqueue LOAD #1 --------------------------
       enqueue_load(5'd1);
       send_priv_addr(5'd1, 32'h0000_0010);
-
-      // --------------------- enqueue LOAD #2 --------------------------
       enqueue_load(5'd2);
       send_priv_addr(5'd2, 32'h0000_0020);
-
-      // --------------------- satisfy LOAD #1 (two-cycle hit) ----------
       simulate_two_cycle_hit(32'h0000_0010, 64'h0123_4567_89AB_CDEF);
-
-      // --------------------- satisfy LOAD #2 (two-cycle hit) ----------
       simulate_two_cycle_hit(32'h0000_0020, 64'hFACE_B00C_DEAD_BEEF);
-
       // allow a few cycles for CDB broadcast, then quit
       repeat (4) @(posedge clk);
       $display("\n*** TEST COMPLETED – watch waveform or console output ***\n");

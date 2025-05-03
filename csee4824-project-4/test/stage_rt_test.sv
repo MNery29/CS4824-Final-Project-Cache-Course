@@ -98,7 +98,6 @@ module testbench();
         end  
     end
 
-    // Stimulus
     initial begin
         $display("Starting Retire Stage Test...");
 
@@ -115,41 +114,41 @@ module testbench();
         reset = 0;
         after_reset = 1;
 
-        // Cycle 1: No valid retire (empty ROB)
+        // No valid retire (empty ROB)
         rob_valid = 0;
         rob_ready = 0;
         rob_retire_packet = '{tag:6'd0, dest_reg:5'd0, value:64'h0, reg_valid:1'b0, mem_valid:1'b0, mem_addr:64'h0};
         #10;
 
-        // Cycle 2: Valid instruction but not ready yet
+        // Valid instruction but not ready yet
         rob_valid = 1;
         rob_ready = 0;
         rob_retire_packet = '{tag:6'd1, dest_reg:5'd5, value:64'h1111_1111_1111_1111, reg_valid:1'b1, mem_valid:1'b0, mem_addr:64'h0};
         #10;
 
-        // Cycle 3: Ready now — should retire
+        // Ready now — should retire
         rob_valid = 1;
         rob_ready = 1;
         rob_retire_packet = '{tag:6'd1, dest_reg:5'd5, value:64'h1111_1111_1111_1111, reg_valid:1'b1, mem_valid:1'b0, mem_addr:64'h0};
         #10;
 
-        // Cycle 4: Memory operation, valid and ready
+        // Memory operation, valid and ready
         rob_valid = 1;
         rob_ready = 1;
         rob_retire_packet = '{tag:6'd2, dest_reg:5'd8, value:64'h8000_0040, reg_valid:1'b1, mem_valid:1'b1, mem_addr:64'h8000_0040};
         #10;
 
-        // Cycle 5: No valid instruction (empty head)
+        // No valid instruction (empty head)
         rob_valid = 0;
         rob_ready = 0;
         rob_retire_packet = '{default:0};
         #10;
 
-        // Cycle 6: Simulate branch mispredict flush
+        // Simulate branch mispredict flush
         branch_mispredict = 1;
         #10;
 
-        // Cycle 7: Recovery after branch
+        // Recovery after branch
         branch_mispredict = 0;
         rob_valid = 1;
         rob_ready = 1;

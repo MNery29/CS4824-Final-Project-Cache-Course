@@ -2,6 +2,7 @@
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 
+//I BUILT THIS BUT NOT SURE IT STILL WORKS. DISREGARD. -MATEO 
 
 module testbench;
 
@@ -232,7 +233,7 @@ module testbench;
         reset = 0;
         after_reset = 1;
 
-        // Cycle 1: Dispatch to ROB
+        //  Dispatch to ROB
         @(posedge clock);
         rob_dispatch_in.valid = 1;
         rob_dispatch_in.dest_reg = 5'd1;
@@ -241,7 +242,7 @@ module testbench;
         @(posedge clock);
         rob_dispatch_in.valid = 0;
 
-        // Cycle 2: Load RS
+        // Load RS
         @(posedge clock);
         rs_npc_in = 32'h100;
         rs_inst_in = 32'hDEADBEEF;
@@ -259,7 +260,7 @@ module testbench;
         // Wait 1 cycle
         @(posedge clock);
 
-        // Cycle 4: Broadcast via CDB
+        // Broadcast via CDB
         rob_cdb_in.valid = 1;
         rob_cdb_in.tag = rob_dispatch_out.tag;
         rob_cdb_in.value = 32'h12345678;

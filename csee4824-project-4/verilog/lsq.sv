@@ -205,7 +205,6 @@ module lsq#(
     assign dcache_command = dcache_cmd_next;
     assign dcache_addr    = dcache_addr_next;
     assign dcache_data    = dcache_data_next;
-
     
     logic load_completed;
 

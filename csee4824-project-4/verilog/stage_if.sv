@@ -28,7 +28,6 @@ module stage_if (
     logic [`XLEN-1:0] prev_PC_reg;
 
     assign stall_if = ~Icache_valid_out;
-
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset) begin

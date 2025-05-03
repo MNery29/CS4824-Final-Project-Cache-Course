@@ -51,7 +51,7 @@ module stage_rt (
 
 );
 
-//internal signals
+//internal signals (Sorry for lack of comments it was a bit messy)
 logic [31:0] retire_value_reg;
 logic [4:0] retire_dest_reg;
 logic retire_valid_reg;

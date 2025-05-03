@@ -29,7 +29,6 @@ module testbench;
         .rs_opa_out(rs_opa_out),
         .rs_opb_out(rs_opb_out)
     );
-
     // CLOCK_PERIOD is defined on the commandline by the makefile
     always begin
         #(`CLOCK_PERIOD/2.0);

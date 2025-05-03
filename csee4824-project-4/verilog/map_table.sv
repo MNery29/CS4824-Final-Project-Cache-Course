@@ -40,7 +40,7 @@ module map_table (
         end 
     end
 
-    //Debug outputs
+    //Debug outputs NOW COMMENTED OUT POST CLEANUP
     //always_comb begin
     //    for (int i = 0; i < 32; i++) begin
     //        tags_debug[i] = {tags[i], ready_in_rob[i], has_tag[i]};

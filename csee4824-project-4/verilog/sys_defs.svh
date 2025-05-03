@@ -7,6 +7,10 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
+//NOTE: Apologies for the messy mixing of definitions. 
+//There's a lot of redundant declarations we haven't cleaned out from the 
+//P3 to P4 changes 
+
 `ifndef __SYS_DEFS_SVH__
 `define __SYS_DEFS_SVH__
 
@@ -318,52 +322,6 @@ typedef struct packed {
 
     logic       valid;
 } ID_EX_PACKET;
-
-/**
- * EX_MEM Packet:
- * Data exchanged from the EX to the MEM stage
- */
-typedef struct packed {
-    logic [`XLEN-1:0] alu_result;
-    // logic [`XLEN-1:0] NPC;
-
-    // logic             take_branch; // Is this a taken branch?
-    // Pass-through from decode stage
-    logic [`XLEN-1:0] rs2_value;
-    logic             rd_mem;
-    logic             wr_mem;
-    // logic [4:0]       dest_reg_idx;
-    // logic             halt;
-    // logic             illegal;
-    // logic             csr_op;
-    logic             rd_unsigned; // Whether proc2Dmem_data is signed or unsigned
-    MEM_SIZE          mem_size;
-    logic             valid;
-} EX_MEM_PACKET;
-
-/**
- * MEM_WB Packet:
- * Data exchanged from the MEM to the WB stage
- *
- * Does not include data sent from the MEM stage to memory
- */
-typedef struct packed {
-    logic [`XLEN-1:0] result;
-    logic [`XLEN-1:0] NPC;
-    logic [4:0]       dest_reg_idx; // writeback destination (ZERO_REG if no writeback)
-    logic             take_branch;
-    logic             halt;    // not used by wb stage
-    logic             illegal; // not used by wb stage
-    logic             valid;
-} MEM_WB_PACKET;
-
-/**
- * No WB output packet as it would be more cumbersome than useful
- */
-
-
- /// WORK IN PROGRESS PACKETS
-
 
 //PIPELINE PACKETS 
 

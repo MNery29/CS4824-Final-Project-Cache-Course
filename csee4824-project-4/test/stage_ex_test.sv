@@ -5,29 +5,21 @@
 
 module testbench;
 
-    //------------------------------------------------------------------
-    //  Clock / reset
-    //------------------------------------------------------------------
     logic clk = 0;
     logic rst = 1;
 
-    // 10 ns period (adjust if you like)
     parameter real CLK_PERIOD = 10.0;
     always #(CLK_PERIOD/2.0) clk = ~clk;
 
-    //------------------------------------------------------------------
-    //  DUT I/O
-    //------------------------------------------------------------------
     IS_EX_PACKET      is_ex_reg;
     logic             cdb_busy;
 
     logic             alu_busy;
     EX_CP_PACKET      ex_cp_packet;
     priv_addr_packet  priv_addr_out;
-
-    // keep CDB “free” for these tests
     assign cdb_busy = 1'b0;
 
+    //DUT
     stage_ex dut (
         .clk              (clk),
         .rst              (rst),
@@ -39,9 +31,7 @@ module testbench;
         .priv_addr_out    (priv_addr_out)
     );
 
-    //------------------------------------------------------------------
     //  Helper tasks
-    //------------------------------------------------------------------
     task automatic check_outputs (
         input [31:0] exp_value,
         input  [4:0] exp_tag,
@@ -82,9 +72,6 @@ module testbench;
             check_outputs(exp_value, tag, name);
     endtask
 
-    //------------------------------------------------------------------
-    //  Test sequence
-    //------------------------------------------------------------------
     initial begin
         $display("==== stage_ex test suite ====");
 
@@ -92,27 +79,22 @@ module testbench;
         #(CLK_PERIOD);      // allow some time with rst=1
         rst = 0;
         @(posedge clk);
-
-        // --------------- ALU / logical ops ----------------------------
+-
         run_basic_test(10, 5, ALU_ADD , 15        , "ALU ADD");
         run_basic_test(10, 5, ALU_SUB , 5         , "ALU SUB");
         run_basic_test(32'hFF00, 32'h0F0F, ALU_AND, 32'h0F00  , "ALU AND");
         run_basic_test(32'hFF00, 32'h0F0F, ALU_OR , 32'hFF0F  , "ALU OR");  // FIXED
 
-        // --------------- comparisons ---------------------------------
         run_basic_test(-1 , 1, ALU_SLT , 1 , "ALU SLT (signed)"  );
         run_basic_test(32'hFFFF_FFFF, 1, ALU_SLTU, 0, "ALU SLTU (unsigned)");
 
-        // --------------- shifts --------------------------------------
         run_basic_test(32'h8000_0000, 2, ALU_SRA, 32'hE000_0000, "ALU SRA");
         run_basic_test(32'h8000_0000, 2, ALU_SRL, 32'h2000_0000, "ALU SRL");
         run_basic_test(1, 4, ALU_SLL, 16, "ALU SLL");
-
-        // --------------- U-type immediate ----------------------------
         @(negedge clk);
             is_ex_reg = '0;
             is_ex_reg.OPA         = 0;
-            is_ex_reg.OPB         = 0;           // OPB unused
+            is_ex_reg.OPB         = 0;      
             is_ex_reg.alu_func    = ALU_ADD;
             is_ex_reg.issue_valid = 1;
             is_ex_reg.rob_tag     = 5'd7;
@@ -120,8 +102,6 @@ module testbench;
             is_ex_reg.inst.u.imm  = 20'hABCD0;
         @(posedge clk);
             check_outputs(32'hABCD_0000, 5'd7, "Immediate mux U-type");
-
-        // --------------- Conditional branch: BEQ taken ---------------
         @(negedge clk);
             is_ex_reg = '0;
             is_ex_reg.OPA           = 5;
@@ -137,11 +117,9 @@ module testbench;
                 $display("@@@ PASSED: Branch BEQ taken");
             else
                 $display("@@@ FAILED: Branch BEQ taken");
-
-        // --------------- Multiplier (2*3) ----------------------------
         run_basic_test(2, 3, ALU_MUL, 6, "Multiplier 2*3", 5'd9);
 
-        // --------------- NOP handling --------------------------------
+        // NOP handling 
         @(negedge clk);
             is_ex_reg = '0;          // no valid issue
         @(posedge clk);
@@ -150,7 +128,7 @@ module testbench;
             else
                 $display("@@@ PASSED: NOP handling");
 
-        // --------------- Edge cases ----------------------------------
+        // Edge cases 
         run_basic_test(-32, 4, ALU_ADD, -28, "Edge: negative + positive");
         run_basic_test(0   , 0, ALU_ADD, 0  , "Edge: zero inputs");
 

@@ -74,11 +74,9 @@ module testbench();
                  $time, if_packet.PC, if_packet.NPC, if_packet.inst, if_packet.valid, stall_if);
     end
 
-    // Stimulus
     initial begin
         $display("Starting IF stage test...");
 
-        // Initial state
         clock = 0;
         reset = 1;
         if_valid = 0;
@@ -91,38 +89,38 @@ module testbench();
         #10;
         reset = 0;
 
-        // Cycle 1: No valid fetch yet
+        //  No valid fetch yet
         #10;
         if_valid = 1;
         Icache_valid_out = 0;
 
-        // Cycle 2: Still stall, cache not ready
+        // Still stall, cache not ready
         #10;
         Icache_valid_out = 1;
         Icache_data_out = 64'hAABBCCDD_11223344;
 
-        // Cycle 3: Should accept instruction (lower half)
+        //  Should accept instruction (lower half)
         #10;
 
-        // Cycle 4: Next fetch, should go to PC+4
+        // Next fetch, should go to PC+4
         Icache_data_out = 64'hFFEEDDCC_BBAA9988;
         #10;
 
-        // Cycle 5: Simulate cache miss (stall)
+        // Simulate cache miss (stall)
         Icache_valid_out = 0;
         #10;
 
-        // Cycle 6: Deliver upper instruction
+        // Deliver upper instruction
         Icache_valid_out = 1;
         Icache_data_out = 64'h12345678_9ABCDEF0;
         #10;
 
-        // Cycle 7: Take a branch
+        // Take branch
         take_branch = 1;
         branch_target = 32'h100;
         #10;
 
-        // Cycle 8: Clear branch
+        // Clear branch
         take_branch = 0;
         #10;
 

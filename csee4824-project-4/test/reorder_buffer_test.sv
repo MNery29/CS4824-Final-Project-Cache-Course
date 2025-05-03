@@ -12,7 +12,6 @@ module testbench;
     logic rob_full;
     logic [31:0] rob_to_rs_value1, rob_to_rs_value2;
 
-    // DEBUG signals:
     logic [11:0] rob_pointers; 
     logic [45:0] rob_debug[31:0];
 
@@ -25,11 +24,9 @@ module testbench;
     logic [5:0]  cdb_tag;
     logic [31:0] cdb_value;
 
-    // DUT output
     ROB_DISPATCH_PACKET rob_dispatch_out;
     ROB_RETIRE_PACKET   rob_retire_out;
 
-    // DUT input
     DISPATCH_ROB_PACKET rob_dispatch_in_temp;
     CDB_ROB_PACKET      rob_cdb_in_temp;
     //lsq input
@@ -38,8 +35,6 @@ module testbench;
     logic rob_ready;
     logic rob_valid;
     
-
-    // Clock Generation
     always begin
         #(`CLOCK_PERIOD/2.0);
         clock = ~clock;
@@ -126,7 +121,7 @@ module testbench;
         reset = 0;
         $display("Starting testbench... RESET COMPLETE");
 
-        // Cycle 1: Instruction 1
+        // Instruction 1
         $display("Dispatching instruction 1");
         dispatch_valid = 1;
         dispatch_dest = 5'd1;
@@ -136,7 +131,7 @@ module testbench;
         @(negedge clock);
         //print_contents(rob_debug, rob_pointers);
 
-        // Cycle 2: Instruction 2 
+        // Instruction 2 
         $display("Dispatching instruction 2");
         dispatch_dest = 5'd2;
         print_contents(rob_debug, rob_pointers);
@@ -144,7 +139,7 @@ module testbench;
         @(negedge clock);
         //print_contents(rob_debug, rob_pointers);
 
-        // Cycle 3: Instruction 3
+        // Instruction 3
         $display("Dispatching instruction 3");
         dispatch_dest = 5'd8;
         dispatch_opcode = `RV32_SUB;
@@ -153,7 +148,7 @@ module testbench;
         @(negedge clock);
         //print_contents(rob_debug, rob_pointers);
 
-        // Cycle 4: Broadcast CDB tag 1
+        // Broadcast CDB tag 1
         $display("Broadcasting CDB tag 1");
         dispatch_valid = 0;
         cdb_valid = 1;
@@ -164,7 +159,7 @@ module testbench;
         @(negedge clock);
         //print_contents(rob_debug, rob_pointers);
 
-        // Cycle 5: Retire instruction 
+        // Retire instruction 
         $display("Retiring instruction 1");
         cdb_valid = 0;
         retire_entry = 1;
@@ -173,7 +168,7 @@ module testbench;
         @(negedge clock);
         //print_contents(rob_debug, rob_pointers);
 
-        // Cycle 6: Attempt another retire (may stall)
+        // Attempt another retire (may stall)
         $display("Attempting to retire instruction 2 (may stall)");
         retire_entry = 1;
         print_contents(rob_debug, rob_pointers);
@@ -181,7 +176,7 @@ module testbench;
         @(negedge clock);
         //print_contents(rob_debug, rob_pointers);
 
-        // Cycle 7: Instruction 4
+        // Instruction 4
         $display("Dispatching instruction 4");
         retire_entry = 0;
         dispatch_valid = 1;

@@ -12,20 +12,20 @@
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 
-// needed when running for synthesis
-`include "verilog/stage_cp.sv"
-`include "verilog/stage_ex.sv"
-`include "verilog/stage_if.sv"
-`include "verilog/stage_id.sv"
-`include "verilog/stage_is.sv"
-`include "verilog/stage_mem.sv"
-`include "verilog/stage_rt.sv"
-`include "verilog/lsq.sv"
-`ifndef SYNTHESIS
-  `include "verilog/icache.sv"
-`endif
-`include "verilog/dcache.sv"
-`include "verilog/map_table.sv"
+// needed when running for synthesis -- SYNTHESIS TESTING 
+// `include "verilog/stage_cp.sv"
+// `include "verilog/stage_ex.sv"
+// `include "verilog/stage_if.sv"
+// `include "verilog/stage_id.sv"
+// `include "verilog/stage_is.sv"
+// `include "verilog/stage_mem.sv"
+// `include "verilog/stage_rt.sv"
+// `include "verilog/lsq.sv"
+// `ifndef SYNTHESIS
+//   `include "verilog/icache.sv"
+// `endif
+// `include "verilog/dcache.sv"
+// `include "verilog/map_table.sv"
 
 module pipeline (
     input        clock,             // System clock

@@ -3,6 +3,8 @@
 
 `timescale 1ns/1ps
 
+//MAJOR UPDATES MEANT THAT MAJOR THINGS HAD TO BE CLEANED OUT
+
 module testbench;
     
     logic clock;
@@ -356,9 +358,6 @@ module testbench;
         rs1_clear = 1'b0;
 
         @(negedge clock)
-        //print_MT(mt_tags_debug);
-        //print_ROB(rob_debug, rob_pointers_debug);
-        //print_RS(rs_debug);
 
         $finish;
 

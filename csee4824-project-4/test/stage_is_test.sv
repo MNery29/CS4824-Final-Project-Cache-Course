@@ -67,10 +67,10 @@ module testbench();
         // Release reset
         #10 reset = 0;
 
-        // Cycle 1: Issue not ready
+        // Issue not ready
         #10;
 
-        // Cycle 2: FU ready, one RS entry ready
+        // FU ready, one RS entry ready
         rs_ready_out[2] = 1;
         rs_opa_out[2] = 32'hA;
         rs_opb_out[2] = 32'hB;
@@ -84,11 +84,11 @@ module testbench();
         $display("Time %0t | Issued? %b | OPA=0x%h OPB=0x%h tag=%0d ALU_FUNC=%0d NPC=0x%h INST=0x%h", 
                   $time, issue_valid, is_packet.OPA, is_packet.OPB, is_packet.rob_tag, is_packet.alu_func, is_packet.NPC, is_packet.inst);
 
-        // Cycle 3: No FU ready
+        // No FU ready
         fu_ready = 0;
         #10;
 
-        // Cycle 4: Another entry ready
+        // Another entry ready
         rs_ready_out[1] = 1;
         rs_opa_out[1] = 32'hC;
         rs_opb_out[1] = 32'hD;

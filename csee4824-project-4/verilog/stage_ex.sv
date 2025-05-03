@@ -13,7 +13,7 @@
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 `include "verilog/mult.sv"
-`include "verilog/booth_mult_stage.sv"
+`include "verilog/mult_stage.sv"
 
 // ALU function code input
 // probably want to leave these alone

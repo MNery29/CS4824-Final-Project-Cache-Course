@@ -27,7 +27,6 @@ module cdb (
     output logic cdb_valid // is the data valid?
 
 );
-
 always_ff @(posedge clock or posedge reset) begin
     if (reset) begin
         cdb_data <= 0;

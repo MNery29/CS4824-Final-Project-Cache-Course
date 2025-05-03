@@ -9,6 +9,8 @@ dcache specifications:
     h3 hash functions
 */
 
+//NOTE: This was a planned advanced feature that didn't have time to finish
+
 typedef union packed {
     logic [63:0] double;
     logic [1:0][31:0] words;
