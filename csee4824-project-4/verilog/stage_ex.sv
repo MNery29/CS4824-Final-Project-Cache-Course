@@ -128,6 +128,10 @@ module stage_ex (
     logic hold_valid; 
 
 
+    EX_CP_PACKET hold_pkt;
+    EX_CP_PACKET new_pkt;
+
+
     //ALU Result Signals
     logic [`XLEN-1:0] alu0_result;
     logic [`XLEN-1:0] alu1_result;
@@ -163,14 +167,45 @@ module stage_ex (
     //if so start mult. 
     
     logic mult_started;
+   
 
     always_ff @(posedge clk or posedge rst) begin
-        if (rst)
+        if (rst) begin
             mult_started <= 0;
-        else if (mult_start && !mult_done)
+            hold_valid <= 1'b0;
+            hold_pkt   <= '{default:0};
+        end
+        else if (mult_start && !mult_done) begin
             mult_started <= 1;
-        else if (mult_done)
+            hold_pkt   <= new_pkt;
+            if (cdb_packet_busy) begin
+                hold_valid <= 1'b1;
+            end
+            else begin
+                hold_valid <= 1'b0;
+            end
+        end
+            
+        else if (mult_done) begin
             mult_started <= 0;
+            hold_pkt   <= new_pkt;
+            if (cdb_packet_busy) begin
+                hold_valid <= 1'b1;
+            end
+            else begin
+                hold_valid <= 1'b0;
+            end
+        end
+        else begin
+            hold_pkt   <= new_pkt;
+            if (cdb_packet_busy) begin
+                hold_valid <= 1'b1;
+            end
+            else begin
+                hold_valid <= 1'b0;
+            end
+            
+        end
     end
 
     assign mult_start = (is_ex_reg[2].issue_valid && is_mult_inst) && !mult_started;
@@ -324,9 +359,6 @@ module stage_ex (
         .take(take_conditional)
     );
 
-    EX_CP_PACKET hold_pkt;
-    EX_CP_PACKET new_pkt;
-
 
 
     assign is_mem_op = is_ex_reg[fu_index].rd_mem || is_ex_reg[fu_index].wr_mem;
@@ -367,20 +399,6 @@ module stage_ex (
 
 
 
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst) begin
-            hold_valid <= 1'b0;
-            hold_pkt   <= '{default:0};
-        end else begin
-            hold_pkt   <= new_pkt;
-            if (cdb_packet_busy) begin
-                hold_valid <= 1'b1;
-            end
-            else begin
-                hold_valid <= 1'b0;
-            end
-            
-        end
-    end
+    
 
 endmodule // stage_ex

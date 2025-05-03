@@ -310,7 +310,10 @@ module stage_id (
     output logic [31:1] [`XLEN-1:0] debug_reg,
     output logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2,
 
-    output logic [31:0] rs1_opa_in, rs1_opb_in
+    output logic [31:0] rs1_opa_in, rs1_opb_in,
+
+    output logic rs_entry_found,
+    output logic [1:0] fu_select // Selects which RS entry to load into
 
 
 
@@ -322,8 +325,8 @@ module stage_id (
     logic [6:0] opcode;
 
     //FU select logic: 
-    logic rs_entry_found;
-    logic [1:0] fu_select;
+    // logic rs_entry_found;
+    // logic [1:0] fu_select;
     
     assign opcode = if_id_reg.inst[6:0];
 
@@ -335,7 +338,7 @@ module stage_id (
     // logic rs1_available;
     
 
-    assign dispatch_ok = (!rob_full) && (rs_avail_out[0] || rs_avail_out[1] || rs_avail_out[2])&& (lsq_free) && (!if_stall);
+    assign dispatch_ok = (!rob_full) && (rs_entry_found)&& (lsq_free) && (!if_stall);
 
     logic mt_load_entry, rob_load_entry, rs1_load_entry;
     assign mt_load_entry  = dispatch_ok && if_id_reg.valid;
@@ -396,7 +399,7 @@ module stage_id (
         fu_select = 2'b00;  // Default to entry 0
 
         for (int i = 0; i < `RS_SIZE; i++) begin
-            if (!rs_entry_found && rs_ready_out[i]) begin
+            if (!rs_entry_found && rs_avail_out[i]) begin
                 fu_select = i[1:0];  // Select first available RS entry
                 rs_entry_found = 1'b1;
             end

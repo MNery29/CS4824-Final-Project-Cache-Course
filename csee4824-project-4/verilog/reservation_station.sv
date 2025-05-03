@@ -213,6 +213,8 @@ generate
 
             .rs_inst(rs_inst),
             .rs_rob_tag(rs_rob_tag),
+
+            
             .rs_cdb_in(rs_cdb_in),
             .rs_cdb_tag(rs_cdb_tag),
             .rs_cdb_valid(rs_cdb_valid),

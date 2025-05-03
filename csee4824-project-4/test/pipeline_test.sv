@@ -89,7 +89,7 @@ module testbench;
 
 
     //IS stage debugging wires
-    IS_EX_PACKET is_packets [3:0];
+    IS_EX_PACKET is_packets [2:0];
     logic if_stall;
     IS_EX_PACKET is_ex_reg;
     logic issue_valid;
@@ -139,7 +139,7 @@ module testbench;
     logic rs1_available;
     logic dispatch_ok;
 
-    logic [73:0] rs_debug;
+    logic [73:0] rs_debug [`RS_SIZE];
 
     CDB_PACKET cdb_packet;
 
@@ -238,6 +238,9 @@ module testbench;
     logic wb_eviction; // this will be high if we need to evict a DIRTY line from the cache
     logic next_wb_eviction; // this will be high if we need to evict a DIRTY line from the cache
 
+    logic rs_entry_found;
+    logic [1:0] fu_select; // Selects which RS entry to load into
+
     // logic [`XLEN-1:0] if_NPC_dbg;
     // logic [31:0]      if_inst_dbg;
     // logic             if_valid_dbg;
@@ -300,7 +303,7 @@ module testbench;
         .rob_to_rs_value2     (rob_to_rs_value2),
 
         //IS stage debugging wires
-        // .is_packets            (is_packets),
+        .is_packets            (is_packets),
         .is_ex_reg            (is_ex_reg),
         .issue_valid          (issue_valid),
         .rs_issue_enable      (rs_issue_enable),
@@ -319,6 +322,8 @@ module testbench;
         .dispatch_ok          (dispatch_ok),
 
         // .id_rs_debug             (rs_debug),
+        .rs_debug            (rs_debug),
+
 
         .ex_packet            (ex_packet),
 
@@ -428,7 +433,10 @@ module testbench;
         .next_cycle_wait   (next_cycle_wait),
 
         .wb_eviction       (wb_eviction),
-        .next_wb_eviction  (next_wb_eviction)
+        .next_wb_eviction  (next_wb_eviction),
+
+        .rs_entry_found   (rs_entry_found),
+        .fu_select        (fu_select)
         
 
         // .if_NPC_dbg       (if_NPC_dbg),
@@ -739,6 +747,21 @@ module testbench;
                 opB, opB_v ? "V" : "X",
                 tag, in_use, ready, avail);
     endtask
+    task automatic dump_rs_debug_array
+        (input logic [73:0] rs_debug [`RS_SIZE]);
+
+        // header
+        $display("\n────────────────── Reservation-Station State @ %0t ──────────────────", $time);
+        $display("idx :      opA (V?)          opB (V?)   tag  in_use ready avail");
+        $display("--------------------------------------------------------------------");
+
+        for (int i = 0; i < `RS_SIZE; i++) begin
+            // show_rs_debug expects 75-bit input [74:0]; add a dummy MSB (0)
+            show_rs_debug({1'b0, rs_debug[i]}, $sformatf("RS[%002d]", i));
+        end
+
+        $display("──────────────────────────────────────────────────────────────────────\n");
+    endtask
       function automatic string opa_sel_str (input ALU_OPA_SELECT sel);
         case (sel)
             OPA_IS_RS1  : return "RS1";
@@ -775,9 +798,44 @@ module testbench;
         $display("            OPA=0x%08h  OPB=0x%08h  NPC=0x%08h  PC=0x%08h inst=0x%08h",
                 pkt.OPA, pkt.OPB, pkt.NPC, pkt.PC, pkt.inst);
         $display("            issue_valid=%b   rs_issue_enable=%b cond_branch=%b uncond_branch=%b",
-                issue_valid,  rs_issue_en, pkt.cond_branch, pkt.uncond_branch);
+                issue_valid,  rs_issue_enable, pkt.cond_branch, pkt.uncond_branch);
         $display(" opa_sel=%s  opb_sel=%s",
                 opa_sel_str(pkt.opa_select), opb_sel_str(pkt.opb_select));
+    endtask
+
+    task automatic display_is_packets
+        (input string          banner,
+        input IS_EX_PACKET    pkts [2:0]);
+        int i;
+
+        $display("\n%s", banner);
+        $display("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+        $display(" i | val | ROB | RS  | fu | ALU | opa  | opb  |        OPA        |        OPB        |        NPC        |         PC        |       INST       | r | w | cb | ub ");
+        $display("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+
+        for (i = 0; i < 3; i++) begin
+            $display(" %0d |  %1b  | %2d  | %2d | %2h | %s | %s | %s | %08h | %08h | %08h | %08h | %08h | %1b | %1b | %1b  | %1b",
+                    i,
+                    pkts[i].issue_valid,
+                    pkts[i].rob_tag,
+                    pkts[i].RS_tag,
+                    pkts[i].fu_selection,
+                    alu_func_str(pkts[i].alu_func),
+                    opa_sel_str(pkts[i].opa_select),
+                    opb_sel_str(pkts[i].opb_select),
+                    pkts[i].OPA,
+                    pkts[i].OPB,
+                    pkts[i].NPC,
+                    pkts[i].PC,
+                    pkts[i].inst,
+                    pkts[i].rd_mem,
+                    pkts[i].wr_mem,
+                    pkts[i].cond_branch,
+                    pkts[i].uncond_branch
+            );
+        end
+
+        $display("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
     endtask
 
     // ------------------------------------------------------------
@@ -888,6 +946,7 @@ module testbench;
             // show_id_stage   (id_tag);
             $display("IS PACKEt: ");
             // show_is_packet  (is_packet, issue_valid, rs_issue_enable);
+            display_is_packets("IS PACKET", is_packets);
             $display("EX take conditional ");
             $display("OPA MUX OUT=%h, OPB MUX OUT=%h", opa_mux_out, opb_mux_out);
             $display("take_conditional=%b", take_conditional);
@@ -896,7 +955,10 @@ module testbench;
 
             $display("ex reg");
             show_ex_packet  (ex_cp_reg, cdb_busy);
-            show_rs_debug(rs_debug, "RS[0]");
+            // show_rs_debug(rs_debug, "RS[0]");
+            $display("FU SELECT: %b and rs_Entry found: %b", fu_select, rs_entry_found);
+            $display("show rs_issue_enable : %b", rs_issue_enable);
+            dump_rs_debug_array(rs_debug);
             show_cdb_packet(cdb_packet, "CDB");
             $display("RETIRE STAGE INFORMATION: ");
             $display("LSQ IN PROGRESS : %b", lsq_op_in_progress);

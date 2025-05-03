@@ -130,7 +130,7 @@ module pipeline (
     output logic rob_full,
     output logic rs1_available,
     output logic dispatch_ok,
-    output logic [73:0] id_rs_debug [`RS_SIZE],
+    output logic [73:0] rs_debug [`RS_SIZE],
     output CDB_PACKET cdb_packet,
     output logic take_conditional,
     output logic [`XLEN-1:0] opa_mux_out,
@@ -228,7 +228,10 @@ module pipeline (
     output logic [1:0] next_cycle_wait, 
 
     output logic wb_eviction, // this will be high if we need to evict a DIRTY line from the cache
-    output logic next_wb_eviction // this will be high if we need to evict a DIRTY line from the cache
+    output logic next_wb_eviction, // this will be high if we need to evict a DIRTY line from the cache
+
+    output logic rs_entry_found,
+    output logic [1:0] fu_select // Selects which RS entry to load into
 );
 
     //////////////////////////////////////////////////
@@ -541,7 +544,7 @@ module pipeline (
         .cdb_take_branch(cdb_packet.take_branch),
 
         .fu_busy(fu_busy_signals),
-        .rs_clear_vec(rs_clear_vec), //this means its the first register
+        .rs_clear_vec(rs_issue_enable), //this means its the first register
 
         .rob_retire_entry(retire_valid_out), // TODO: connect properly
 
@@ -580,7 +583,7 @@ module pipeline (
 
         .rob_pointers_debug(id_rob_pointers),
         .rob_debug(id_rob_debug),
-        .rs_debug(id_rs_debug),
+        .rs_debug(rs_debug),
 
         .lsq_packet(lsq_packet),
         .rob_full(rob_full),
@@ -599,7 +602,10 @@ module pipeline (
         .mt_to_regfile_rs2(mt_to_regfile_rs2),
 
         .rs1_opa_in(rs1_opa_in),
-        .rs1_opb_in(rs1_opb_in)
+        .rs1_opb_in(rs1_opb_in),
+
+        .rs_entry_found(rs_entry_found),
+        .fu_select(fu_select) // Selects which RS entry to load into
 
     );
 
