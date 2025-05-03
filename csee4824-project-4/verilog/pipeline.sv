@@ -13,19 +13,19 @@
 `include "verilog/ISA.svh"
 
 // needed when running for synthesis
-`include "verilog/stage_cp.sv"
-`include "verilog/stage_ex.sv"
-`include "verilog/stage_if.sv"
-`include "verilog/stage_id.sv"
-`include "verilog/stage_is.sv"
-`include "verilog/stage_mem.sv"
-`include "verilog/stage_rt.sv"
-`include "verilog/lsq.sv"
-`ifndef SYNTHESIS
-  `include "verilog/icache.sv"
-`endif
-`include "verilog/dcache.sv"
-`include "verilog/map_table.sv"
+// `include "verilog/stage_cp.sv"
+// `include "verilog/stage_ex.sv"
+// `include "verilog/stage_if.sv"
+// `include "verilog/stage_id.sv"
+// `include "verilog/stage_is.sv"
+// `include "verilog/stage_mem.sv"
+// `include "verilog/stage_rt.sv"
+// `include "verilog/lsq.sv"
+// `ifndef SYNTHESIS
+//   `include "verilog/icache.sv"
+// `endif
+// `include "verilog/dcache.sv"
+// `include "verilog/map_table.sv"
 
 module pipeline (
     input        clock,             // System clock
@@ -1039,32 +1039,36 @@ module pipeline (
     always_ff @(posedge clock or posedge reset) begin
         if (reset) begin
             pos_icache_rejected <= 1'b0;
+            icache_rejected <= 1'b0; 
+            prev_icache_rejected <= 1'b0;  
         end
         else begin
+            prev_icache_rejected <= icache_rejected;
+            icache_rejected <= pos_icache_rejected;
             pos_icache_rejected <= next_icache_rejected;
         end
     end
     // stay on positive
-    always_ff @(negedge clock or posedge reset) begin
-        if (reset) begin
-            icache_rejected <= 1'b0; 
-            prev_icache_rejected <= 1'b0;  
-        end else begin
-            prev_icache_rejected <= icache_rejected;
-            icache_rejected <= pos_icache_rejected;
-        end
-    end
+    // always_ff @(negedge clock or posedge reset) begin
+    //     if (reset) begin
+    //         icache_rejected <= 1'b0; 
+    //         prev_icache_rejected <= 1'b0;  
+    //     end else begin
+    //         prev_icache_rejected <= icache_rejected;
+    //         icache_rejected <= pos_icache_rejected;
+    //     end
+    // end
 
     always_comb begin
         mem2dcache_response   = 0;
         Imem2proc_response  = 0;
         if (prev_icache_rejected ) begin
-            if (icache_rejected) begin
+            if (pos_icache_rejected) begin
                 mem2dcache_response = mem2proc_response;
             end
         end
         else begin
-            if (!icache_rejected) begin
+            if (!pos_icache_rejected) begin
                 Imem2proc_response  = mem2proc_response;
             end
         end
