@@ -25,7 +25,7 @@
 
 // sizes
 `define ROB_SZ 32
-`define RS_SZ 1 //TEMPORARY: WILL SCALE LATER
+// `define RS_SZ 3 //TEMPORARY: WILL SCALE LATER
 `define ROB_TAG_BITS 5 // log2(`ROB_SZ)
 `define PHYS_REG_SZ (32 + `ROB_SZ)
 
@@ -44,7 +44,7 @@
 
 // number of reservation stations: 
 
-`define RS_SIZE 1
+`define RS_SIZE 3
 
 ///////////////////////////////
 // ---- Basic Constants ---- //
@@ -400,6 +400,7 @@ typedef struct packed {
     logic wr_mem;
     logic cond_branch;
     logic uncond_branch;
+    logic [1:0] fu_selection;
 } IS_EX_PACKET;
 
 

@@ -294,6 +294,8 @@ module stage_id (
 
     // information to send to LSQ about current instruction
     output LSQ_PACKET lsq_packet,
+    output ALU_OPA_SELECT opa_select,
+    output ALU_OPB_SELECT opb_select,
     //debugging signals BELOW
     output logic rob_full, // ROB full signal debugging
     output logic rs1_available, // RS available signal debugging
@@ -318,6 +320,11 @@ module stage_id (
     logic cond_branch, uncond_branch;
     ALU_FUNC alu_func;
     logic [6:0] opcode;
+
+    //FU select logic: 
+    logic rs_entry_found;
+    logic [1:0] fu_select;
+    
     assign opcode = if_id_reg.inst[6:0];
 
     assign dest_reg_idx = (has_dest_reg) ? if_id_reg.inst.r.rd : `ZERO_REG;
@@ -326,8 +333,9 @@ module stage_id (
     // logic dispatch_ok;
     // logic rob_full;
     // logic rs1_available;
+    
 
-    assign dispatch_ok = (!rob_full) && (rs_entry_found) && (lsq_free) && (!if_stall);
+    assign dispatch_ok = (!rob_full) && (rs_avail_out[0] || rs_avail_out[1] || rs_avail_out[2])&& (lsq_free) && (!if_stall);
 
     logic mt_load_entry, rob_load_entry, rs1_load_entry;
     assign mt_load_entry  = dispatch_ok && if_id_reg.valid;
@@ -378,8 +386,8 @@ module stage_id (
     assign rob_dispatch_packet.csr_op = csr_op;
     assign rob_dispatch_packet.npc = if_id_reg.NPC;
 
-    //FU select logic: 
-    logic rs_entry_found;
+
+    // logic rs_entry_found;
 
 
     

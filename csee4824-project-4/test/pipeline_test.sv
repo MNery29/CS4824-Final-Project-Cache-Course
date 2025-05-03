@@ -78,18 +78,18 @@ module testbench;
     
 
     //id stage debugging
-    logic [`ROB_TAG_BITS-1:0] id_tag;
-    logic rs1_ready;
+    // logic [`ROB_TAG_BITS-1:0] id_tag;
+    logic [`RS_SIZE-1:0] rs_ready_out;
     logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2;
 
     logic [31:0] rs1_value, rs2_value;
     logic [31:0] rob_to_rs_value1, rob_to_rs_value2;
 
-    INST id_inst_out;
+    // INST id_inst_out;
 
 
     //IS stage debugging wires
-    IS_EX_PACKET is_packet;
+    IS_EX_PACKET is_packets [3:0];
     logic if_stall;
     IS_EX_PACKET is_ex_reg;
     logic issue_valid;
@@ -100,7 +100,7 @@ module testbench;
     logic [`ROB_TAG_BITS-1:0] cdb_tag;
     logic [31:0] cdb_value;
 
-    logic [`RS_SIZE-1:0] rs_clear_vec
+    logic [`RS_SIZE-1:0] rs_clear_vec;
 
     logic rob_retire_entry;
 
@@ -124,7 +124,8 @@ module testbench;
     //EX stage debugging wires
     EX_CP_PACKET ex_cp_reg;
     EX_CP_PACKET ex_packet;
-    logic fu_busy;
+    logic [2:0] fu_busy_signals;
+
     logic cdb_busy; //this will stall the RS issue if ex stage is busy / full
     logic [`XLEN-1:0] opa_mux_out;
     logic [`XLEN-1:0] opb_mux_out;
@@ -289,8 +290,8 @@ module testbench;
         .Icache_data_out       (Icache_data_out),
 
         //id stage debugging
-        .id_tag               (id_tag),
-        .rs1_ready            (rs1_ready),
+        // .id_tag               (id_tag),
+        .rs_ready_out (rs_ready_out),
         .mt_to_rs_tag1       (mt_to_rs_tag1),
         .mt_to_rs_tag2       (mt_to_rs_tag2),
         .rs1_value            (rs1_value),
@@ -299,13 +300,13 @@ module testbench;
         .rob_to_rs_value2     (rob_to_rs_value2),
 
         //IS stage debugging wires
-        .is_packet            (is_packet),
+        // .is_packets            (is_packets),
         .is_ex_reg            (is_ex_reg),
         .issue_valid          (issue_valid),
         .rs_issue_enable      (rs_issue_enable),
         //EX stage debugging wires
         .ex_cp_reg            (ex_cp_reg),
-        .fu_busy              (fu_busy),
+        .fu_busy_signals              (fu_busy_signals),
         .cdb_busy             (cdb_busy),
 
         .take_conditional       (take_conditional),
@@ -317,7 +318,7 @@ module testbench;
         .rs1_available        (rs1_available),
         .dispatch_ok          (dispatch_ok),
 
-        .id_rs_debug             (rs_debug),
+        // .id_rs_debug             (rs_debug),
 
         .ex_packet            (ex_packet),
 
@@ -326,7 +327,7 @@ module testbench;
         .opb_mux_out         (opb_mux_out),
 
 
-        .id_inst_out          (id_inst_out),
+        // .id_inst_out          (id_inst_out),
 
         .illegal_rt         (illegal_rt),
         .halt_rt            (halt_rt),
@@ -401,7 +402,6 @@ module testbench;
         .dcache_cur_addr (dcache_cur_addr),
         .dcache_cur_command (dcache_cur_command),
         .dcache_cur_data (dcache_cur_data),
-        .cache_in_flight(cache_in_flight),
         .cache_in_flight_valid(cache_in_flight_valid),
         .cache_in_flight_rd_unsigned(cache_in_flight_rd_unsigned),
         .cache_offset_in_flight(cache_offset_in_flight),
@@ -604,13 +604,12 @@ module testbench;
         $display("=======================================================================\n");
     endtask
 
-    task automatic show_id_stage (
-        input [`ROB_TAG_BITS-1:0] id_tag,
-        input logic               rs1_ready
-    );
-        $display("[%0t] ID   : tag=%0d  rs1_ready=%b",
-                $time, id_tag, rs1_ready);
-    endtask
+    // task automatic show_id_stage (
+    //     input [`ROB_TAG_BITS-1:0] id_tag
+    // );
+    //     $display("[%0t] ID   : tag=%0d ",
+    //             $time, id_tag);
+    // endtask
     function string alu_func_str (ALU_FUNC f);
         case (f)
             ALU_ADD   : return "ADD";
@@ -693,8 +692,6 @@ module testbench;
         input logic              cdb_valid,
         input [`ROB_TAG_BITS-1:0] cdb_tag,
         input logic [31:0]       cdb_value,
-        input logic              fu_busy,
-        input logic              rs1_clear,
         input logic              rob_retire_entry,
         input logic              store_retire,
         input logic [4:0]        store_tag,
@@ -702,8 +699,7 @@ module testbench;
         input logic [31:0]       rob_to_regfile_value,
         input logic              lsq_free,
         input logic              maptable_clear,
-        input logic              rob_clear,
-        input logic              rs_clear
+        input logic              rob_clear
     );
         $display("[%0t] DISPATCH INPUTS:", $time);
         $display("    clock=%b  reset=%b", clock, reset);
@@ -711,13 +707,12 @@ module testbench;
                 if_id_reg.PC, if_id_reg.NPC, if_id_reg.inst, if_id_reg.valid);
         $display("    CDB: valid=%b  tag=%0d  value=0x%08h", 
                 cdb_valid, cdb_tag, cdb_value);
-        $display("    fu_busy=%b  rs1_clear=%b", fu_busy, rs1_clear);
         $display("    rob_retire_entry=%b  rob_dest_reg=%0d  rob_to_regfile_value=0x%08h", 
                 rob_retire_entry, rob_dest_reg, rob_to_regfile_value);
         $display("    store_retire=%b  store_tag=%0d", store_retire, store_tag);
         $display("    lsq_free=%b", lsq_free);
-        $display("    clears: map_table=%b  rob=%b  rs=%b", 
-                maptable_clear, rob_clear, rs_clear);
+        $display("    clears: map_table=%b  rob=%b ", 
+                maptable_clear, rob_clear);
     endtask
 
 
@@ -790,12 +785,11 @@ module testbench;
     // ------------------------------------------------------------
     task automatic show_ex_packet (
         input EX_CP_PACKET pkt,
-        input logic        fu_busy,
         input logic        cdb_busy
     );
         $display("[%0t] EX   : val=%b  done=%b  tag=%0d  value=0x%08h take_branch=%b",
                 $time, pkt.valid, pkt.done, pkt.rob_tag, pkt.value , pkt.take_branch);
-        $display("            fu_busy=%b  cdb_busy=%b", fu_busy, cdb_busy);
+        $display("            cdb_busy=%b", cdb_busy);
     endtask
     task automatic show_regfile (
         input logic [31:1] [`XLEN-1:0] regs,   // <-- same layout as regfile
@@ -877,31 +871,31 @@ module testbench;
             $display("IF STAGE CONTENT: ");
             $display("IF STALL : (BC OF DATA ARBITRATION : %0b)", if_stall);
             $display("PC=%x, VALID=%b STALL_IF= %b ICACHEDATA=%h",proc2Icache_addr, Icache_valid_out, stall_if, Icache_data_out);
-            show_dispatch_inputs(clock, reset, if_id_reg, cdb_valid, cdb_tag, cdb_value, fu_busy, rs1_clear,
+            show_dispatch_inputs(clock, reset, if_id_reg, cdb_valid, cdb_tag, cdb_value,
                 rob_retire_entry, store_retire, store_tag, rob_dest_reg, rob_to_regfile_value,
-                lsq_free, maptable_clear, rob_clear, rs_clear);
+                lsq_free, maptable_clear, rob_clear);
             $display("ID STAGE CONTENT: ");
-            $display("ID INST OUT: %h", id_inst_out);
+            // $display("ID INST OUT: %h", id_inst_out);
             $display("OPA SELECT =%s, OPB SELECT=%s", opa_sel_str(id_opa_select), opb_sel_str(id_opb_select));
             $display("REG INDX 1 =%d, REG INDX 2=%d", mt_to_regfile_rs1, mt_to_regfile_rs2);
-            $display("ROB TAG=%d, RS1 READY=%b, mt_to_rs_tag1=%b, mt_to_rs_tag2=%b", id_tag, rs1_ready, mt_to_rs_tag1, mt_to_rs_tag2);
+            $display("mt_to_rs_tag1=%b, mt_to_rs_tag2=%b",   mt_to_rs_tag1, mt_to_rs_tag2);
             $display("RS1 VALUE=%h, RS2 VALUE=%h", rs1_value, rs2_value);
             $display("RS A IN (FROM ID STAGE ): %h", rs1_opa_in);
             $display("RS B IN (FROM ID STAGE ): %h", rs1_opb_in);
             $display("ROB TO RS VALUE1=%h, ROB TO RS VALUE2=%h", rob_to_rs_value1, rob_to_rs_value2);
             show_if_packet(if_packet);
             show_if_packet(if_id_reg);
-            show_id_stage   (id_tag, rs1_ready);
+            // show_id_stage   (id_tag);
             $display("IS PACKEt: ");
-            show_is_packet  (is_packet, issue_valid, rs_issue_enable);
+            // show_is_packet  (is_packet, issue_valid, rs_issue_enable);
             $display("EX take conditional ");
             $display("OPA MUX OUT=%h, OPB MUX OUT=%h", opa_mux_out, opb_mux_out);
             $display("take_conditional=%b", take_conditional);
             $display("First Ex packet");
-            show_ex_packet  (ex_packet, fu_busy, cdb_busy);
+            show_ex_packet  (ex_packet,  cdb_busy);
 
             $display("ex reg");
-            show_ex_packet  (ex_cp_reg, fu_busy, cdb_busy);
+            show_ex_packet  (ex_cp_reg, cdb_busy);
             show_rs_debug(rs_debug, "RS[0]");
             show_cdb_packet(cdb_packet, "CDB");
             $display("RETIRE STAGE INFORMATION: ");
@@ -963,7 +957,7 @@ module testbench;
             $display("mem tag =%d", mem_tag);
             $display("mem valid =%b", mem_valid);
             $display("CDB LSQ:");
-            show_ex_packet(cdb_lsq, fu_busy, cdb_busy);
+            show_ex_packet(cdb_lsq, cdb_busy);
 
             $display("real memory modules signasl:");
             $display("proc2mem_command =%b", proc2mem_command);
@@ -1053,7 +1047,7 @@ module testbench;
         end else begin
             clock_count <= (clock_count + 1);
             instr_count <= (instr_count + pipeline_completed_insts);
-            // $display("______________POS EDGE CLOCK CYCLE!!!________________");
+            $display("______________POS EDGE CLOCK CYCLE!!!________________");
             // $display("dcache2mem_addr =%h", dcache2mem_addr);
             // $display("dcache2mem_data =%h", dcache2mem_data);
             // $display("dcache2mem_command =%b", dcache2mem_command);
@@ -1081,7 +1075,7 @@ module testbench;
             // $display("mem2proc_data =%h", mem2proc_data);
             // $display("mem2proc_tag =%b", mem2proc_tag);
 
-            // display_all_signals();
+            display_all_signals();
         end
         
     end
@@ -1098,8 +1092,8 @@ module testbench;
             debug_counter <= 0;
         end else begin
             #2;
-            // $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");  
-            // display_all_signals();
+            $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");  
+            display_all_signals();
             // $display("dcache2mem_addr =%h", dcache2mem_addr);
             // $display("dcache2mem_data =%h", dcache2mem_data);
             // $display("dcache2mem_command =%b", dcache2mem_command);

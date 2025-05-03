@@ -116,7 +116,7 @@ module pipeline (
    
 
     //IS stage debugging wires
-    output IS_EX_PACKET is_packet,
+    output IS_EX_PACKET is_packets [2:0],
     output IS_EX_PACKET is_ex_reg,
     output logic issue_valid,
     output logic [`RS_SIZE-1:0] rs_issue_enable,
@@ -125,12 +125,12 @@ module pipeline (
     //EX stage debugging wires
     output EX_CP_PACKET ex_cp_reg,
     output EX_CP_PACKET ex_packet,
-    output logic [2:0] fu_busy,
+    output logic [2:0] fu_busy_signals,
     output logic cdb_busy, //this will stall the RS issue if ex stage is busy / full
     output logic rob_full,
     output logic rs1_available,
     output logic dispatch_ok,
-    output logic [73:0] id_rs_debug,
+    output logic [73:0] id_rs_debug [`RS_SIZE],
     output CDB_PACKET cdb_packet,
     output logic take_conditional,
     output logic [`XLEN-1:0] opa_mux_out,
@@ -620,26 +620,33 @@ module pipeline (
     //                Issue Stage                   //
     //////////////////////////////////////////////////
 
-    stage_is stage_is_0 (
+     stage_is stage_is_0 (
         .clock(clock),
         .reset(reset),
+
+        // Functional unit ready signals (invert of busy)
+        .fu_ready_alu0(!fu_busy_signals[0]),
+        .fu_ready_alu1(!fu_busy_signals[1]),
+        .fu_ready_mult(!fu_busy_signals[2]),
+
+        // Reservation Station inputs from stage_id
         .rs_ready_out(rs_ready_out),
-        .rs_opa_out(),
-        .rs_opb_out(id_opB),
-        .rs_opa_select_out(id_opa_select_out),
-        .rs_opb_select_out(id_opb_select_out),
-        .rs_tag_out(id_tag),
-        .rs_alu_func_out(id_alu_func),
-        .rs_npc_out(npc_out),
-        .rs_pc_out(pc_out),
-        .rs_inst_out(id_inst_out),
-        .rd_mem(id_rd_mem),
-        .wr_mem(id_wr_mem),
-        .cond_branch(id_cond_branch),
-        .uncond_branch(id_uncond_branch),
-        .fu_ready(fu_ready),
-        .issue_valid(issue_valid),
-        .is_packet(is_packet),
+        .rs_opa_out(rs_opa_out),
+        .rs_opb_out(rs_opb_out),
+        .rs_opa_select_out(rs_opa_select_out),
+        .rs_opb_select_out(rs_opb_select_out),
+        .rs_inst_out(rs_inst_out),
+        .rs_tag_out(rs_tag_out),
+        .rs_alu_func_out(rs_alu_func_out),
+        .rs_npc_out(rs_npc_out),
+        .rs_pc_out(rs_pc_out),
+        .rd_mem(rs_rd_mem_out),
+        .wr_mem(rs_wr_mem_out),
+        .cond_branch(rs_cond_branch_out),
+        .uncond_branch(rs_uncond_branch_out),
+
+        // Outputs
+        .is_packets(is_packets),
         .rs_issue_enable(rs_issue_enable)
     );
 
@@ -660,18 +667,17 @@ module pipeline (
     // EX_CP_PACKET ex_packet;
     logic ex_reset;
     assign ex_reset = reset || clear_is || halt_rt_hack;
-
+ 
     stage_ex stage_ex_0 (
-        .clk(clock),
+         .clk(clock),
         .rst(ex_reset),
         .cdb_packet_busy(cdb_busy),
-        .is_ex_reg(is_packet),
+        .is_ex_reg(is_packets),
         .ex_cp_packet(ex_packet),
-        .fu_busy_signals(fu_busy_signals),
         .take_conditional(take_conditional),
         .priv_addr_out(priv_addr_packet),
-        .opa_mux_out(opa_mux_out),
-        .opb_mux_out(opb_mux_out)
+        .fu_busy_signals(fu_busy_signals),
+        .mult_done(mult_done)
     );
 
      //////////////////////////////////////////////////
