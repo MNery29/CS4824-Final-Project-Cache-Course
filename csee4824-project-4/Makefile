@@ -259,7 +259,7 @@ synth/%.vg: verilog/%.sv | $(TCL_SCRIPT) $(HEADERS)
 	# pipefail causes the command to exit on failure even though it's piping to tee
 	set -o pipefail; cd synth && \
 	MODULE=$* SOURCES="$(filter-out $(TCL_SCRIPT) $(HEADERS),$^)" \
-	dc_shell-t -f $(notdir $(TCL_SCRIPT)) | tee $*_synth.out
+	dc_shell-t -f $(notdir $(TCL_SCRIPT)) +define+SYNTHESIS | tee pipeline_synth.out
 	@$(call PRINT_COLOR, 6, finished synthesizing $@)
 
 # the synthesis executable runs your testbench on the synthesized versions of your modules

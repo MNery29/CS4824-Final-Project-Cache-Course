@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 `include "verilog/sys_defs.svh"
 
-module stage_cp_test;
+module testbench;
 
   // Clock and reset
   logic clock = 0;

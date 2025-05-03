@@ -17,7 +17,7 @@
 `timescale 1ns/1ps
 `include "verilog/sys_defs.svh"
 
-module tb_lsq_happy_path;
+module testbench;
 
    // ------------------------------------------------------------------
    // 1. Clock & reset

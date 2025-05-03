@@ -21,7 +21,7 @@
 
 `define CLOCK_PERIOD 10
 
-module tb_dcache_hits_only;
+module testbench;
 
     //-----------------------------
     //  Clock / reset

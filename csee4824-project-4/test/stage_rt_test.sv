@@ -3,7 +3,7 @@
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 
-module tb_stage_rt();
+module testbench();
 
     // Inputs
     logic clock;

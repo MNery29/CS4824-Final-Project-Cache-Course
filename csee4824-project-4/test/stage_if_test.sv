@@ -2,7 +2,7 @@
 
 `include "verilog/sys_defs.svh"
 
-module tb_stage_if();
+module testbench();
 
 // Inputs
     logic clock;

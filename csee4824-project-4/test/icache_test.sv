@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 `include "verilog/sys_defs.svh"
 
-module tb_icache();
+module testbench();
 
   // Clock and reset
   logic clock, reset;

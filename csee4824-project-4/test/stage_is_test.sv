@@ -2,7 +2,7 @@
 
 `include "verilog/sys_defs.svh"
 
-module tb_stage_is();
+module testbench();
 
     // Clock and reset
     logic clock;

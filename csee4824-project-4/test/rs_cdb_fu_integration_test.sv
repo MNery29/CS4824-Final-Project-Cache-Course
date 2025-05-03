@@ -2,7 +2,7 @@
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 
-module rs_cdb_fu_integration_test;
+module testbench;
     // Clock and reset
     logic clock, reset;
 

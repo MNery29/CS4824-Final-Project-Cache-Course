@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 `include "verilog/sys_defs.svh"
 
-module zcache_test;
+module testbench;
 
   logic clk = 0;
   logic reset;

@@ -13,18 +13,19 @@
 `include "verilog/ISA.svh"
 
 // needed when running for synthesis
-// `include "verilog/stage_cp.sv"
-// `include "verilog/stage_ex.sv"
-// `include "verilog/stage_if.sv"
-// `include "verilog/stage_id.sv"
-// `include "verilog/stage_is.sv"
-// `include "verilog/stage_mem.sv"
-// `include "verilog/stage_rt.sv"
-// `include "verilog/lsq.sv"
-// `include "verilog/icache.sv"
-// `include "verilog/dcache.sv"
-// `include "verilog/map_table.sv"
-// `include "test/mem.sv"
+`include "verilog/stage_cp.sv"
+`include "verilog/stage_ex.sv"
+`include "verilog/stage_if.sv"
+`include "verilog/stage_id.sv"
+`include "verilog/stage_is.sv"
+`include "verilog/stage_mem.sv"
+`include "verilog/stage_rt.sv"
+`include "verilog/lsq.sv"
+`ifndef SYNTHESIS
+  `include "verilog/icache.sv"
+`endif
+`include "verilog/dcache.sv"
+`include "verilog/map_table.sv"
 
 module pipeline (
     input        clock,             // System clock
@@ -501,10 +502,12 @@ module pipeline (
     //////////////////////////////////////////////////
     // IF_ID_PACKET      if_id_reg;
     always_ff @(posedge clock or posedge reset) begin
-        if (reset || clear_is || halt_rt_hack) begin
+        if (reset) begin
             if_id_reg <= '0;
         end else begin
-            if (dispatch_ok) begin
+            if (clear_is || halt_rt_hack) begin
+                if_id_reg <= '0;
+            end else if (dispatch_ok) begin
                 if_id_reg <= if_packet;
             end
         end

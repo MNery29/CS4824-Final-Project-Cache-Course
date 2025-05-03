@@ -3,7 +3,7 @@
 `include "verilog/ISA.svh"
 
 
-module testbench_rob_rs;
+module testbench;
 
     logic clock;
     logic reset;
