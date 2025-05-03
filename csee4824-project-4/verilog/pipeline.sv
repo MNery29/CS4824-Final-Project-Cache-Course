@@ -1007,7 +1007,7 @@ module pipeline (
     assign next_icache_rejected = (dcache2mem_command == BUS_NONE) ? 1'b0 : 1'b1;
 
 
-    assign if_stall = icache_rejected;
+    assign if_stall = pos_icache_rejected;
     assign Imem2proc_data     = mem2proc_data;
     assign Imem2proc_tag      = mem2proc_tag;
     assign mem2dcache_data = mem2proc_data;
