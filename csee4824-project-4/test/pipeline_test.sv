@@ -93,7 +93,6 @@ module testbench;
     logic if_stall;
     IS_EX_PACKET is_ex_reg;
     logic issue_valid;
-    logic fu_ready;
     logic [`RS_SIZE-1:0] rs_issue_enable;
 
     //ID Debugging wires 
@@ -101,7 +100,7 @@ module testbench;
     logic [`ROB_TAG_BITS-1:0] cdb_tag;
     logic [31:0] cdb_value;
 
-    logic rs1_clear;
+    logic [`RS_SIZE-1:0] rs_clear_vec
 
     logic rob_retire_entry;
 
@@ -116,7 +115,6 @@ module testbench;
 
     logic maptable_clear;
     logic rob_clear;
-    logic rs_clear;
 
     logic [31:0] rs1_opa_in;
     logic [31:0] rs1_opb_in;
@@ -304,7 +302,6 @@ module testbench;
         .is_packet            (is_packet),
         .is_ex_reg            (is_ex_reg),
         .issue_valid          (issue_valid),
-        .fu_ready             (fu_ready),
         .rs_issue_enable      (rs_issue_enable),
         //EX stage debugging wires
         .ex_cp_reg            (ex_cp_reg),
@@ -774,7 +771,6 @@ module testbench;
     task automatic show_is_packet (
         input IS_EX_PACKET pkt,
         input logic        issue_valid,
-        input logic        fu_ready,
         input logic [`RS_SIZE-1:0] rs_issue_en
     );
         $display("[%0t] IS   : val=%b  tag=%0d  RS=%0d  func=%s  rd=%b wr=%b",
@@ -783,8 +779,8 @@ module testbench;
                 pkt.rd_mem, pkt.wr_mem);
         $display("            OPA=0x%08h  OPB=0x%08h  NPC=0x%08h  PC=0x%08h inst=0x%08h",
                 pkt.OPA, pkt.OPB, pkt.NPC, pkt.PC, pkt.inst);
-        $display("            issue_valid=%b  fu_ready=%b  rs_issue_enable=%b cond_branch=%b uncond_branch=%b",
-                issue_valid, fu_ready, rs_issue_en, pkt.cond_branch, pkt.uncond_branch);
+        $display("            issue_valid=%b   rs_issue_enable=%b cond_branch=%b uncond_branch=%b",
+                issue_valid,  rs_issue_en, pkt.cond_branch, pkt.uncond_branch);
         $display(" opa_sel=%s  opb_sel=%s",
                 opa_sel_str(pkt.opa_select), opb_sel_str(pkt.opb_select));
     endtask
@@ -897,9 +893,7 @@ module testbench;
             show_if_packet(if_id_reg);
             show_id_stage   (id_tag, rs1_ready);
             $display("IS PACKEt: ");
-            show_is_packet  (is_packet, issue_valid, fu_ready, rs_issue_enable);
-            // $display("IS REGISTER: ");
-            // show_is_packet  (is_ex_reg, issue_valid, fu_ready, rs_issue_enable);
+            show_is_packet  (is_packet, issue_valid, rs_issue_enable);
             $display("EX take conditional ");
             $display("OPA MUX OUT=%h, OPB MUX OUT=%h", opa_mux_out, opb_mux_out);
             $display("take_conditional=%b", take_conditional);

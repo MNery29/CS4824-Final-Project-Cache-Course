@@ -271,22 +271,29 @@ endmodule // conditional_branch
 
 module stage_ex (
     input logic clk, rst,
-    input IS_EX_PACKET is_ex_reg,
+    input IS_EX_PACKET is_ex_reg[2:0],
     input cdb_packet_busy,
 
     // input ID_EX_PACKET id_ex_reg,
 
     // output EX_MEM_PACKET ex_packet,
-    output logic alu_busy,
     output logic take_conditional,
     output EX_CP_PACKET ex_cp_packet,
     //broad cast value + tag to cbd, so reorder buffer can be updated
     output priv_addr_packet priv_addr_out,
-
-    output logic [`XLEN-1:0] opa_mux_out,
-    output logic [`XLEN-1:0] opb_mux_out
-
+    
+    output logic [2:0] fu_busy_signals,
+    output logic mult_done,
 );
+
+    //functional unit inputs
+    logic [`XLEN-1:0] opa_mux_out0, opb_mux_out0;
+    logic [`XLEN-1:0] opa_mux_out1, opb_mux_out1;
+    logic [`XLEN-1:0] opa_mux_out2, opb_mux_out2;
+
+
+
+
 
     // logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
     logic [31:0] next_val;
@@ -295,6 +302,7 @@ module stage_ex (
     logic hold_valid;
 
     // logic take_conditional;
+    logic is_mem_op;
    
 
 

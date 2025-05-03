@@ -216,8 +216,10 @@ module stage_id (
     input [31:0] cdb_value,
     input cdb_take_branch,
 
-    input fu_busy,
-    input rs1_clear,
+    // input fu_busy,
+    // input rs1_clear,
+    input [2:0] fu_busy, //Now represents all 3 units: 0 = ALU0, 1 = ALU1, 2 = MULT
+    input [`RS_SIZE-1:0] rs_clear_vec,
     input rob_retire_entry,
 
 
@@ -240,31 +242,55 @@ module stage_id (
 
 
 
-    
-    output [31:0] opA,
-    output [31:0] opB,
-    output INST inst_out,
-    output ALU_OPA_SELECT opa_select_out,
-    output ALU_OPB_SELECT opb_select_out,
-    output [`ROB_TAG_BITS-1:0] output_tag,
-    output rs1_ready,
-    output [31:0] rs1_npc_out,
-    output [31:0] rs1_pc_out,
+    //old preintegration signals
+        
+    // output [31:0] opA,
+    // output [31:0] opB,
+    // output INST inst_out,
+    // output ALU_OPA_SELECT opa_select_out,
+    // output ALU_OPB_SELECT opb_select_out,
+    // output [`ROB_TAG_BITS-1:0] output_tag,
+    // output rs1_ready,
+    // output [31:0] rs1_npc_out,
+    // output [31:0] rs1_pc_out,
+
+    // //output logic [7:0] mt_tags_debug [31:0],
+    // //output logic [74:0] rs_debug,
+    // //debugging 
+    // output ALU_OPA_SELECT opa_select,
+    // output ALU_OPB_SELECT opb_select,
+    // output ALU_FUNC alu_func_out,
+
+    // output logic rd_mem_out, wr_mem_out, cond_branch_out, uncond_branch_out,
+
+
+     //RS outputs
+    output logic [`RS_SIZE-1:0] rs_ready_out,
+    output logic [31:0] rs_opa_out [`RS_SIZE],
+    output logic [31:0] rs_opb_out [`RS_SIZE],
+    output ALU_OPA_SELECT rs_opa_select_out [`RS_SIZE],
+    output ALU_OPB_SELECT rs_opb_select_out [`RS_SIZE],
+    output INST rs_inst_out[`RS_SIZE],
+    output [4:0] rs_tag_out [`RS_SIZE],
+    output [31:0] rs_npc_out [`RS_SIZE],
+    output [31:0] rs_pc_out [`RS_SIZE],
+    output ALU_FUNC rs_alu_func_out [`RS_SIZE],
+    output logic rs_rd_mem_out [`RS_SIZE],
+    output logic rs_wr_mem_out [`RS_SIZE],
+    output logic rs_cond_branch_out [`RS_SIZE],
+    output logic rs_uncond_branch_out [`RS_SIZE],
+    output logic rs_avail_out [`RS_SIZE],
 
     output logic [45:0] rob_debug [`ROB_SZ-1:0],
     output [11:0] rob_pointers_debug,
-    //output logic [7:0] mt_tags_debug [31:0],
-    //output logic [74:0] rs_debug,
-    //debugging 
-    output ALU_OPA_SELECT opa_select,
-    output ALU_OPB_SELECT opb_select,
+
     output logic has_dest_reg,
     output logic [4:0] dest_reg_idx,
-    output ALU_FUNC alu_func_out,
+
     output ROB_RETIRE_PACKET rob_retire_out, // matches port type exactly
 
-    output logic rd_mem_out, wr_mem_out, cond_branch_out, uncond_branch_out,
     output logic rob_valid, rob_ready, // ready bit from ROB
+
 
     // information to send to LSQ about current instruction
     output LSQ_PACKET lsq_packet,
@@ -272,7 +298,7 @@ module stage_id (
     output logic rob_full, // ROB full signal debugging
     output logic rs1_available, // RS available signal debugging
     output logic dispatch_ok, // Dispatch OK signal debugging
-    output logic [73:0] rs_debug, // RS debug signal debugging
+    output logic [73:0] rs_debug [`RS_SIZE], // RS debug signal debugging
     
     output logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2,
 
@@ -301,7 +327,7 @@ module stage_id (
     // logic rob_full;
     // logic rs1_available;
 
-    assign dispatch_ok = (!rob_full) && (rs1_available) && (lsq_free) && (!if_stall);
+    assign dispatch_ok = (!rob_full) && (rs_entry_found) && (lsq_free) && (!if_stall);
 
     logic mt_load_entry, rob_load_entry, rs1_load_entry;
     assign mt_load_entry  = dispatch_ok && if_id_reg.valid;
@@ -352,6 +378,23 @@ module stage_id (
     assign rob_dispatch_packet.csr_op = csr_op;
     assign rob_dispatch_packet.npc = if_id_reg.NPC;
 
+    //FU select logic: 
+    logic rs_entry_found;
+
+
+    
+    always_comb begin
+        rs_entry_found = 1'b0;
+        fu_select = 2'b00;  // Default to entry 0
+
+        for (int i = 0; i < `RS_SIZE; i++) begin
+            if (!rs_entry_found && rs_ready_out[i]) begin
+                fu_select = i[1:0];  // Select first available RS entry
+                rs_entry_found = 1'b1;
+            end
+        end
+    end
+
     //operand select (OPA)
     
     always_comb begin
@@ -373,29 +416,6 @@ module stage_id (
         end
 
 
-
-        // case (opa_select)
-        //     OPA_IS_NPC  : rs1_opa_in = if_id_reg.NPC;
-        //     OPA_IS_PC   : rs1_opa_in = if_id_reg.PC;
-        //     OPA_IS_ZERO : rs1_opa_in = 32'b0;
-        //     OPA_IS_RS1  : begin
-        //          if (mt_to_rs_tag1[5:1] == 5'b0) begin
-        //             rs1_opa_in = rs1_value;
-        //             rs1_opa_valid = 1;
-        //         end else if (!mt_to_rs_tag1[0]) begin
-        //             rs1_opa_in = {28'b0, mt_to_rs_tag1[5:1]};
-        //             rs1_opa_valid = 0;
-        //         end else begin
-        //             rob_to_rs_read1 = 1;
-        //             rob_read_tag1 = mt_to_rs_tag1[5:1];
-        //             rs1_opa_in = rob_to_rs_value1;
-        //             rs1_opa_valid = 1;
-        //         end
-        //     end
-        // endcase
-
-        // if (opa_select != OPA_IS_RS1 && !cond_branch)
-        //     rs1_opa_valid = 1;
     end
 
     //operand select (OPB)
@@ -418,37 +438,12 @@ module stage_id (
             rs1_opb_valid = 1;
         end
 
-        // case (opb_select)
-        //     OPB_IS_I_IMM : rs1_opb_in = `RV32_signext_Iimm(if_id_reg.inst);
-        //     OPB_IS_S_IMM : rs1_opb_in = `RV32_signext_Simm(if_id_reg.inst);
-        //     OPB_IS_B_IMM : rs1_opb_in = `RV32_signext_Bimm(if_id_reg.inst);
-        //     OPB_IS_U_IMM : rs1_opb_in = `RV32_signext_Uimm(if_id_reg.inst);
-        //     OPB_IS_J_IMM : rs1_opb_in = `RV32_signext_Jimm(if_id_reg.inst);
-        //     OPB_IS_RS2   : begin
-        //             if (mt_to_rs_tag2[5:1] == 5'b0) begin
-        //                 rs1_opb_in = rs2_value;
-        //                 rs1_opb_valid = 1;
-        //             end else if (!mt_to_rs_tag2[0]) begin
-        //                 rs1_opb_in = {28'b0, mt_to_rs_tag2[5:1]};
-        //                 rs1_opb_valid = 0;
-        //             end else begin
-        //                 rob_to_rs_read2 = 1;
-        //                 rob_read_tag2 = mt_to_rs_tag2[5:1];
-        //                 rs1_opb_in = rob_to_rs_value2;
-        //                 rs1_opb_valid = 1;
-        //             end
-        //     end
-        // endcase
-
-        // if (opb_select != OPB_IS_RS2 && !cond_branch)
-        //     rs1_opb_valid = 1;
+      
     end
-    logic mt_reset;
-    assign mt_reset = reset;
     
     // Map Table
     map_table map_table_0 (
-        .reset(mt_reset),
+        .reset(reset),
         .clock(clock),
         .rs1_addr(if_id_reg.inst.r.rs1),
         .rs2_addr(if_id_reg.inst.r.rs2),
@@ -466,52 +461,59 @@ module stage_id (
         .regfile_rs2_addr(mt_to_regfile_rs2)
         //.tags_debug(mt_tags_debug)
     );
-    logic rs_reset;
-    assign rs_reset = reset;
+  
 
     // Reservation Station
-    reservation_station reservation_station_1 (
-        .reset(rs_reset),
+   reservation_station reservation_station_0 (
         .clock(clock),
+        .reset(reset),
+
+        // Control
+        .rs_fu_select_in(fu_select), // [1:0] Selects which RS entry to load into
+        .rs_load_in(rs1_load_entry), // Global "load" enable
+        .rs_free_in(rs_clear_vec),// [`RS_SIZE] Vector of frees from Complete stage
+        .fu_busy(fu_busy),// [`RS_SIZE] Busy flags from each FU
+
+        // Instruction
+        .rs_inst(if_id_reg.inst),
         .rs_npc_in(if_id_reg.NPC),
         .rs_pc_in(if_id_reg.PC),
-        .rs_inst(if_id_reg.inst),
-        .rs_rob_tag(rob_tag_out),
-        .rs_cdb_in(cdb_value),
-        .rs_cdb_tag(cdb_tag),
-
-        .rs_cdb_valid(cdb_valid),
-        .rs_opa_in(rs1_opa_in),
-        .rs_opb_in(rs1_opb_in),
-        .rs_opa_select(opa_select),
-        .rs_opb_select(opb_select),
-        .rs_opa_valid(rs1_opa_valid),
-        .rs_opb_valid(rs1_opb_valid),
         .rs_alu_func_in(alu_func),
-
-
         .rd_mem(rd_mem),
         .wr_mem(wr_mem),
         .cond_branch(cond_branch),
         .uncond_branch(uncond_branch),
-        .rs_load_in(rs1_load_entry),
-        .rs_inst_out(inst_out),
-        .fu_busy(fu_busy),
-        .rs_free_in(rs1_clear),
-        .rs_alu_func_out(alu_func_out),
-        .rs_npc_out(rs1_npc_out),
-        .rs_pc_out(rs1_pc_out),
-        .rs_rd_mem_out(rd_mem_out),
-        .rs_wr_mem_out(wr_mem_out),
-        .rs_cond_branch_out(cond_branch_out),
-        .rs_uncond_branch_out(uncond_branch_out),
-        .rs_ready_out(rs1_ready),
-        .rs_opa_out(opA),
-        .rs_opb_out(opB),
-        .rs_opa_select_out(opa_select_out),
-        .rs_opb_select_out(opb_select_out),
-        .rs_tag_out(output_tag),
-        .rs_avail_out(rs1_available),
+        .rs_rob_tag(rob_tag_out),
+
+        // Operand inputs
+        .rs_opa_in(rs1_opa_in),
+        .rs_opb_in(rs1_opb_in),
+        .rs_opa_valid(rs1_opa_valid),
+        .rs_opb_valid(rs1_opb_valid),
+        .rs_opa_select(opa_select),
+        .rs_opb_select(opb_select),
+
+        // CDB
+        .rs_cdb_in(cdb_value),
+        .rs_cdb_tag(cdb_tag),
+        .rs_cdb_valid(cdb_valid),
+
+        // Outputs (now all arrays of [`RS_SIZE])
+        .rs_ready_out(rs_ready_out),
+        .rs_opa_out(rs_opa_out),
+        .rs_opb_out(rs_opb_out),
+        .rs_inst_out(rs_inst_out),
+        .rs_opa_select_out(rs_opa_select_out),
+        .rs_opb_select_out(rs_opb_select_out),
+        .rs_tag_out(rs_tag_out),
+        .rs_alu_func_out(rs_alu_func_out),
+        .rs_npc_out(rs_npc_out),
+        .rs_pc_out(rs_pc_out),
+        .rs_rd_mem_out(rs_rd_mem_out),
+        .rs_wr_mem_out(rs_wr_mem_out),
+        .rs_cond_branch_out(rs_cond_branch_out),
+        .rs_uncond_branch_out(rs_uncond_branch_out),
+        .rs_avail_out(rs_avail_out),
         .rs_debug(rs_debug)
     );
 

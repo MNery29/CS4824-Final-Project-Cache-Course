@@ -46,7 +46,7 @@ module pipeline (
     output logic [`XLEN-1:0] pipeline_commit_wr_data,
     output logic             pipeline_commit_wr_en,
     output logic [`XLEN-1:0] pipeline_commit_NPC,
-    output logic [45:0]      id_rob_debug[31:0],
+    output logic [45:0]      id_rob_debug[`ROB_SZ-1:0],
     output logic stall_if,
     output logic [`XLEN-1:0] proc2Icache_addr,
     output logic             Icache_valid_out,
@@ -66,8 +66,9 @@ module pipeline (
     output logic [31:0] cdb_value,
 
 
-    output logic rs1_clear,
+    output logic [`RS_SIZE-1:0] rs_clear_vec,
     output logic rob_retire_entry,
+    output logic rs_avail_out [`RS_SIZE],
 
 
 
@@ -92,8 +93,9 @@ module pipeline (
 
 
     //id stage debugging wires
-    output logic [`ROB_TAG_BITS-1:0] id_tag,
-    output logic rs1_ready,
+    output [4:0] rs_tag_out [`RS_SIZE],
+    // output logic rs1_ready,
+    output logic [`RS_SIZE-1:0] rs_ready_out,
 
     output logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2,
     output logic [4:0] mt_to_regfile_rs1, mt_to_regfile_rs2,
@@ -108,7 +110,7 @@ module pipeline (
 
     //if stage
     output IF_ID_PACKET if_packet,
-    output INST id_inst_out,
+    output INST rs_inst_out[`RS_SIZE],
 
 
    
@@ -117,14 +119,13 @@ module pipeline (
     output IS_EX_PACKET is_packet,
     output IS_EX_PACKET is_ex_reg,
     output logic issue_valid,
-    output logic fu_ready,
     output logic [`RS_SIZE-1:0] rs_issue_enable,
    
 
     //EX stage debugging wires
     output EX_CP_PACKET ex_cp_reg,
     output EX_CP_PACKET ex_packet,
-    output logic fu_busy,
+    output logic [2:0] fu_busy,
     output logic cdb_busy, //this will stall the RS issue if ex stage is busy / full
     output logic rob_full,
     output logic rs1_available,
@@ -251,10 +252,12 @@ module pipeline (
     //logic [74:0]      id_rs_debug;
     //logic [`RS_SIZE-1:0] rs_issue_enable;
 
-    logic [31:0] id_opA, id_opB;
+    // logic [31:0] id_opA, id_opB;
+    logic [31:0] rs_opa_out [`RS_SIZE];
+    logic [31:0] rs_opb_out [`RS_SIZE];
     // logic [`ROB_TAG_BITS-1:0] id_tag;
-    logic [31:0] npc_out;
-    logic [31:0] pc_out;
+    logic [31:0] rs_npc_out [`RS_SIZE];
+    logic [31:0] rs_pc_out [`RS_SIZE];
     logic [31:0] npc_rt;
     // INST id_inst_out;
     // ALU_OPA_SELECT id_opa_select;
@@ -263,11 +266,15 @@ module pipeline (
     // ALU_OPB_SELECT id_opb_select;
     logic id_has_dest_reg;
     logic [4:0] id_dest_reg_idx;
-    logic id_rd_mem, id_wr_mem, id_cond_branch, id_uncond_branch;
-    ALU_FUNC id_alu_func;
+    // logic id_rd_mem, id_wr_mem, id_cond_branch, id_uncond_branch;
+    logic rs_rd_mem_out [`RS_SIZE];
+    logic rs_wr_mem_out [`RS_SIZE];
+    ALU_FUNC rs_alu_func_out [`RS_SIZE];
+    logic rs_cond_branch_out [`RS_SIZE];
+    logic rs_uncond_branch_out [`RS_SIZE];
 
-    ALU_OPA_SELECT id_opa_select_out;
-    ALU_OPB_SELECT id_opb_select_out;
+    ALU_OPA_SELECT rs_opa_select_out [`RS_SIZE];
+    ALU_OPB_SELECT rs_opb_select_out [`RS_SIZE];
     logic halt_rt_hack;
 
     always_ff @(posedge clock or posedge reset) begin
@@ -303,7 +310,9 @@ module pipeline (
     // CDB_PACKET cdb_packet_ex;
     // logic cdb_busy;
     // logic fu_busy; //this will stall the RS issue if ex stage is busy / full
-    assign fu_ready = !fu_busy;
+
+    // we dont need this no more
+    // assign fu_ready = !fu_busy;
 
 
     //////////////////////////////////////////////////
@@ -501,10 +510,12 @@ module pipeline (
     //////////////////////////////////////////////////
     // IF_ID_PACKET      if_id_reg;
     always_ff @(posedge clock or posedge reset) begin
-        if (reset || clear_is || halt_rt_hack) begin
+        if (reset) begin
             if_id_reg <= '0;
         end else begin
-            if (dispatch_ok) begin
+            if (clear_is || halt_rt_hack) begin
+                if_id_reg <= '0;
+            end else if (dispatch_ok) begin
                 if_id_reg <= if_packet;
             end
         end
@@ -514,25 +525,7 @@ module pipeline (
     //////////////////////////////////////////////////
     //               Decode Stage                   //
     //////////////////////////////////////////////////
-    //stage_id stage_id_0 (
-    //    .clock(clock),
-    //    .reset(reset),
-    //    .if_id_reg(if_id_reg),
-
-     //   .cdb_valid(cdb_packet.valid), // NEW
-    //    .cdb_tag(cdb_packet.tag),     // NEW
-    //    .cdb_value(cdb_packet.value), // (optional, if needed)
-
-    //    .id_is_packet(id_is_packet), // this packet goes TO issue stage
-
-    //    .rs1_issue(rs_issue_enable[0]),  // pass the rs_issue_enable signal
-    //    .rs1_clear(rs_issue_enable[0]),  // for now, clearing on issue 
-
-    //    .rob_debug(id_rob_debug),
-    //    .rob_pointers_debug(id_rob_pointers),
-    //    .mt_tags_debug(id_mt_tags),
-    //    .rs_debug(id_rs_debug)
-    //);
+   
     // stage reset 
     logic stage_id_reset;
     assign stage_id_reset = reset || clear_is || halt_rt_hack;
@@ -547,8 +540,8 @@ module pipeline (
         .cdb_value(cdb_packet.value),
         .cdb_take_branch(cdb_packet.take_branch),
 
-        .fu_busy(fu_busy),
-        .rs1_clear(rs_issue_enable[0]), //this means its the first register
+        .fu_busy(fu_busy_signals),
+        .rs_clear_vec(rs_clear_vec), //this means its the first register
 
         .rob_retire_entry(retire_valid_out), // TODO: connect properly
 
@@ -563,27 +556,26 @@ module pipeline (
 
         .lsq_free(lsq_free),
 
-        .opA(id_opA),
-        .opB(id_opB),
-        .inst_out(id_inst_out),
-        .opa_select_out(id_opa_select_out),
-        .opb_select_out(id_opb_select_out),
-        .output_tag(id_tag),
-        .rs1_npc_out(npc_out),
-        .rs1_pc_out(pc_out),
-        .rs1_ready(rs1_ready),
+        .rs_opa_out(rs_opa_out),
+        .rs_opb_out(rs_opb_out),
+        .rs_inst_out(rs_inst_out),
+        .rs_opa_select_out(rs_opa_select_out),
+        .rs_opb_select_out(rs_opb_select_out),
+        .rs_tag_out(rs_tag_out),
+        .rs_npc_out(rs_npc_out),
+        .rs_pc_out(rs_pc_out),
+        .rs_ready_out(rs_ready_out),
+        .rs_avail_out(rs_avail_out),
 
-        .opa_select(id_opa_select),
-        .opb_select(id_opb_select),
         .has_dest_reg(id_has_dest_reg),
         .dest_reg_idx(id_dest_reg_idx),
-        .rd_mem_out(id_rd_mem),
-        .wr_mem_out(id_wr_mem),
-        .cond_branch_out(id_cond_branch),
-        .uncond_branch_out(id_uncond_branch),
+        .rs_rd_mem_out(rs_rd_mem_out),
+        .rs_wr_mem_out(rs_wr_mem_out),
+        .rs_cond_branch_out(rs_cond_branch_out),
+        .rs_uncond_branch_out(rs_uncond_branch_out),
         .rob_ready(rob_ready),
         .rob_valid(rob_valid),
-        .alu_func_out(id_alu_func),
+        .rs_alu_func_out(rs_alu_func_out),
         .rob_retire_out(rob_retire_packet),
 
         .rob_pointers_debug(id_rob_pointers),
@@ -631,8 +623,8 @@ module pipeline (
     stage_is stage_is_0 (
         .clock(clock),
         .reset(reset),
-        .rs_ready_out(rs1_ready),
-        .rs_opa_out(id_opA),
+        .rs_ready_out(rs_ready_out),
+        .rs_opa_out(),
         .rs_opb_out(id_opB),
         .rs_opa_select_out(id_opa_select_out),
         .rs_opb_select_out(id_opb_select_out),
@@ -675,7 +667,7 @@ module pipeline (
         .cdb_packet_busy(cdb_busy),
         .is_ex_reg(is_packet),
         .ex_cp_packet(ex_packet),
-        .alu_busy(fu_busy),
+        .fu_busy_signals(fu_busy_signals),
         .take_conditional(take_conditional),
         .priv_addr_out(priv_addr_packet),
         .opa_mux_out(opa_mux_out),
