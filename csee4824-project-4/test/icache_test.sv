@@ -20,7 +20,7 @@ module testbench();
   logic [63:0] Icache_data_out;
   logic        Icache_valid_out;
 
-  // Instantiate DUT
+  // DUT
   icache dut (
     .clock(clock),
     .reset(reset),
@@ -52,7 +52,7 @@ module testbench();
   endtask
 
   initial begin
-    $display("===== ICACHE TEST START =====");
+    $display(" ICACHE TEST START ");
 
     clock = 0;
     reset = 1;
@@ -64,46 +64,40 @@ module testbench();
     @(posedge clock);
     reset = 0;
 
-    // ===== Test 1: Cold miss =====
-    $display("\nTest 1: Cold Miss");
+    // MISS 
+    $display("\n Test 1: Cold Miss");
     proc2Icache_addr = 32'h0000_1000;
     repeat (2) @(posedge clock);
     assert(Icache_valid_out == 0) else $fatal("FAIL: Expected cache miss");
-
-    // ===== Test 2: Memory fills cache =====
-    $display("\nTest 2: Memory Response");
+    // MEM Fills Cache
+    $display("\n Test 2: Memory Response");
     memory_respond(4'd1, 64'hDEADBEEFCAFEBABE); // respond with data
     repeat (2) @(posedge clock);
     assert(Icache_valid_out == 1 && Icache_data_out == 64'hDEADBEEFCAFEBABE)
       else $fatal("FAIL: Expected cache hit with correct data");
-
-    // ===== Test 3: Cache Hit =====
-    $display("\nTest 3: Cache Hit");
+    // Cache Hit
+    $display("\n Test 3: Cache Hit");
     repeat (2) @(posedge clock); // stay at same address
     assert(Icache_valid_out == 1) else $fatal("FAIL: Expected cache hit");
-
-    // ===== Test 4: Address Change -> Miss =====
-    $display("\nTest 4: Address Change Miss");
+    //Address Change -> Miss 
+    $display("\n Test 4: Address Change Miss");
     proc2Icache_addr = 32'h0000_2000; // different index
     repeat (2) @(posedge clock);
     assert(Icache_valid_out == 0) else $fatal("FAIL: Expected miss on new address");
-
     // Fill second line
     memory_respond(4'd2, 64'h1122334455667788);
     repeat (2) @(posedge clock);
     assert(Icache_valid_out == 1 && Icache_data_out == 64'h1122334455667788)
       else $fatal("FAIL: Expected cache hit with new data");
-
-    // ===== Test 5: Reset clears cache =====
-    $display("\nTest 5: Reset Invalidation");
+    // Reset clears cache
+    $display("\n Test 5: Reset Invalidation");
     reset = 1;
     @(posedge clock);
     reset = 0;
     proc2Icache_addr = 32'h0000_1000; // previous hit address
     repeat (2) @(posedge clock);
     assert(Icache_valid_out == 0) else $fatal("FAIL: Cache should be invalid after reset");
-
-    $display("\n===== ICACHE TEST PASSED =====");
+    $display("\n ICACHE TEST PASSED");
     $finish;
   end
 

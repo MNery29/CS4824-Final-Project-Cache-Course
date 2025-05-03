@@ -19,41 +19,78 @@
 // assign unsigned_mul = opa * opb;
 // assign mixed_mul    = signed_opa * opb;
 
-module booth_mult (
-    input clock, reset,
-    input [63:0] mcand, mplier,
-    input start,
 
-    output [63:0] product,
-    output done
+//Used to determine which type of multiplication to perform 
+
+
+module mult (
+    input logic clock, reset,
+    input logic [63:0] mcand, mplier,
+    input ALU_FUNC mult_func,
+    input logic start,
+
+    output logic [63:0] product,
+    output logic done
 );
 
-    logic [`MULT_STAGES-2:0] internal_dones, internal_phantoms;
-    logic [(64*(`MULT_STAGES-1))-1:0] internal_mcands;
     logic [(128*(`MULT_STAGES-1))-1:0] internal_product_sums;
-    logic [127:0] full_product;
-    logic [63:0] mcand_out, mplier_out; // unused, just for wiring
-    logic [127:0] initial_product_sum; // this is the initial product sum, {AC, QR} = {0, mplier}
-    logic initial_phantom_bit; // this is the initial phantom bit, starts off as 0
-    logic out_phantom_bit; // this is the output phantom bit, used for the next stage
+    logic [(128*(`MULT_STAGES-1))-1:0] internal_mpliers;
+    logic [(128*(`MULT_STAGES-1))-1:0] internal_mcands;
+    logic [`MULT_STAGES-2:0] internal_dones;
 
-    assign initial_product_sum = {64'h0, mplier};
-    assign initial_phantom_bit = 1'b0;
+    logic [127:0] full_product_sum;
+    logic [127:0] mplier_out, mcand_out;
 
-    // instantiate an array of mult_stage modules
-    // this uses concatenation syntax for internal wiring, see lab 2 slides
-    booth_mult_stage mstage [`MULT_STAGES-1:0] (
-        .clock (clock),
-        .reset (reset),
-        .start       ({internal_dones,        start}), // forward prev done as next start
-        .prev_sum    ({internal_product_sums, initial_product_sum}), // start the sum at 0
-        .mcand       ({internal_mcands,       mcand}),
-        .phantom_bit ({internal_phantoms,      initial_phantom_bit}), // start the phantom bit at 0
-        .product_sum ({full_product,    internal_product_sums}),
-        .out_phantom_bit ({out_phantom_bit, internal_phantoms}), // phantom bit for next stage
-        .next_mcand  ({mcand_out,  internal_mcands}),
-        .done        ({done,       internal_dones}) // done when the final stage is done
+    //Extend inputs based on mult_type, in order to accomodate signed operations
+    logic [127:0] extended_mcand, extended_mplier;
+
+
+    //combinational block with handling signed/unsigned extension. 
+    always_comb begin
+        case (mult_func)
+            ALU_MUL, ALU_MULH: begin
+                extended_mcand  = {{64{mcand[63]}}, mcand};
+                extended_mplier = {{64{mplier[63]}}, mplier};
+            end
+            ALU_MULHSU: begin
+                extended_mcand  = {{64{mcand[63]}}, mcand};
+                extended_mplier = {64'b0, mplier};
+            end
+            ALU_MULHU: begin
+                extended_mcand  = {64'b0, mcand};
+                extended_mplier = {64'b0, mplier};
+            end
+            default: begin
+                extended_mcand  = {64'b0, mcand};
+                extended_mplier = {64'b0, mplier};
+            end
+        endcase
+    end
+
+
+    // Instantiate the pipeline stages
+    mult_stage mstage [`MULT_STAGES-1:0] (
+        .clock(clock),
+        .reset(reset),
+        .start({internal_dones, start}),
+        .prev_sum({internal_product_sums, 128'h0}),
+        .mplier({internal_mpliers, extended_mplier}),
+        .mcand({internal_mcands, extended_mcand}),
+        .product_sum({full_product_sum, internal_product_sums}),
+        .next_mplier({mplier_out, internal_mpliers}),
+        .next_mcand({mcand_out, internal_mcands}),
+        .done({done, internal_dones})
     );
-    assign product = full_product[63:0]; // this is the final product
+
+    // Select output portion
+    always_comb begin
+        case (mult_func)
+            ALU_MUL:    product = full_product_sum[63:0];    // low 64 bits
+            ALU_MULH,
+            ALU_MULHSU,
+            ALU_MULHU:  product = full_product_sum[127:64];  // high 64 bits
+            default:        product = 64'b0;
+        endcase
+    end
 
 endmodule

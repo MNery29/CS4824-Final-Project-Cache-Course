@@ -13,7 +13,11 @@
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 `include "verilog/mult.sv"
-`include "verilog/booth_mult_stage.sv"
+`include "verilog/mult_stage.sv"
+
+//NOTE: WE WERE UNABLE TO INTEGRATE THE MULT WITH FUNCTIONALITY IN TIME, SOME COMMENTS ARE FROM AN OLDER VERSION
+//THE MULT STAGE AND MULT REPRESENT THE UPDATED VERSION THAT WAS TO BE INTEGRATED
+//THIS WILL BE DISCUSSED FURTHER IN THE REPORT 
 
 // ALU function code input
 // probably want to leave these alone

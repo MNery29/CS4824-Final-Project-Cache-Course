@@ -28,8 +28,6 @@ module testbench;
         .regfile_rs2_addr(regfile_rs2_addr)
         //.tags_debug(tags_debug) /DEBUGGING!
     );
-
-    // CLOCK_PERIOD is defined on the commandline by the makefile
     always begin
         #(`CLOCK_PERIOD/2.0);
         clock = ~clock;

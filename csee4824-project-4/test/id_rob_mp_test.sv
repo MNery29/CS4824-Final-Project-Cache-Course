@@ -2,6 +2,8 @@
 `include "verilog/sys_defs.svh"
 `include "verilog/ISA.svh"
 
+//NOT SURE IF WE EVER GOT THIS WORKING - MATEO 
+//DIWA COVERED MOST OF THIS SO I"M UNSURE HOW IT WENT 
 // to run:
 // vcs -sverilog -timescale=1ns/1ps -full64 -debug_access+all \
 //    verilog/stage_id.sv verilog/map_table.sv verilog/reorder_buffer.sv \
