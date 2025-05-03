@@ -7,7 +7,7 @@
 /////////////////////////////////////////////////////////////////////////
 
 `include "verilog/sys_defs.svh"
-`include "test/mem.sv"
+// `include "test/mem.sv"
 
 // P4 TODO: Add your own debugging framework. Basic printing of data structures
 //          is an absolute necessity for the project. You can use C functions
