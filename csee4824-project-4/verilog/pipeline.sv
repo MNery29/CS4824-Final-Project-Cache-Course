@@ -214,7 +214,20 @@ module pipeline (
     output logic read_data,
 
     output logic icache_rejected,
-    output logic next_icache_rejected
+    output logic next_icache_rejected,
+    output logic prev_icache_rejected,
+    output logic pos_icache_rejected,
+
+    output logic [`XLEN-1:0] dcache2mem_addr,
+    output logic [63:0]      dcache2mem_data, // address for current command
+    output logic [1:0]       dcache2mem_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
+    output MEM_SIZE    dcache2mem_size,
+
+    output logic [1:0] cycle_wait,
+    output logic [1:0] next_cycle_wait, 
+
+    output logic wb_eviction, // this will be high if we need to evict a DIRTY line from the cache
+    output logic next_wb_eviction // this will be high if we need to evict a DIRTY line from the cache
 );
 
     //////////////////////////////////////////////////
@@ -343,10 +356,10 @@ module pipeline (
     // logic [63:0] mem2dcache_data;    // data resulting from a load
     // logic [3:0]  mem2dcache_tag;       // 0 = no value, other=tag of transaction
 
-    logic [`XLEN-1:0] dcache2mem_addr;
-    logic [63:0]      dcache2mem_data; // address for current command
-    logic [1:0]       dcache2mem_command; // `BUS_NONE `BUS_LOAD or `BUS_STORE
-    MEM_SIZE    dcache2mem_size;
+    // logic [`XLEN-1:0] dcache2mem_addr;
+    // logic [63:0]      dcache2mem_data; // address for current command
+    // logic [1:0]       dcache2mem_command; // `BUS_NONE `BUS_LOAD or `BUS_STORE
+    // MEM_SIZE    dcache2mem_size;
 
     logic [63:0] hit_data; // data resulting from a load
     logic hit; // 1 if hit, 0 if miss
@@ -465,7 +478,10 @@ module pipeline (
         .cache_tag(cache_tag),
         .cache_valid(cache_valid),
         .cache_dirty(cache_dirty),
-        .halt_confirm(halt_confirm)
+        .halt_confirm(halt_confirm),
+
+        .wb_eviction(wb_eviction),
+        .next_wb_eviction(next_wb_eviction)
     );
 
     // for now lets just do passthroughs:
@@ -983,9 +999,10 @@ module pipeline (
 //         endcase
 //     end
 
+    // logic [1:0] cycle_wait;
+    // logic [1:0] next_cycle_wait;
     assign next_icache_rejected = (dcache2mem_command == BUS_NONE) ? 1'b0 : 1'b1;
-    logic [1:0] cycle_wait;
-    logic [1:0] next_cycle_wait;
+
 
     assign if_stall = icache_rejected;
     assign Imem2proc_data     = mem2proc_data;
@@ -994,11 +1011,11 @@ module pipeline (
     assign mem2dcache_tag      = mem2proc_tag;
     always_comb begin
         next_cycle_wait = cycle_wait == 0 ? 0 : cycle_wait - 1;
-        if (icache_rejected != next_icache_rejected) begin
-            next_cycle_wait = 2'b10;
-        end
+        // if (icache_rejected != next_icache_rejected) begin
+        //     next_cycle_wait = 2'b10;
+        // end
 
-        if (next_icache_rejected) begin
+        if (pos_icache_rejected) begin
                 proc2mem_command = dcache2mem_command;
                 proc2mem_addr    = dcache2mem_addr;
                 proc2mem_data = dcache2mem_data;
@@ -1016,27 +1033,35 @@ module pipeline (
 `endif
             end
     end
-
+    always_ff @(posedge clock or posedge reset) begin
+        if (reset) begin
+            pos_icache_rejected <= 1'b0;
+        end
+        else begin
+            pos_icache_rejected <= next_icache_rejected;
+        end
+    end
+    // stay on positive
     always_ff @(negedge clock or posedge reset) begin
         if (reset) begin
-            icache_rejected <= 1'b0;   
-            cycle_wait <= 0;
+            icache_rejected <= 1'b0; 
+            prev_icache_rejected <= 1'b0;  
         end else begin
-            icache_rejected <= next_icache_rejected;
-            cycle_wait <= next_cycle_wait;
+            prev_icache_rejected <= icache_rejected;
+            icache_rejected <= pos_icache_rejected;
         end
     end
 
     always_comb begin
         mem2dcache_response   = 0;
         Imem2proc_response  = 0;
-        if (icache_rejected) begin
-            if (cycle_wait == 0) begin
+        if (prev_icache_rejected ) begin
+            if (icache_rejected) begin
                 mem2dcache_response = mem2proc_response;
             end
         end
         else begin
-            if (cycle_wait ==0) begin
+            if (!icache_rejected) begin
                 Imem2proc_response  = mem2proc_response;
             end
         end

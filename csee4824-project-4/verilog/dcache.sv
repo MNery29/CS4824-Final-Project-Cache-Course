@@ -64,7 +64,10 @@ module dcache
     output logic [63:0] cache_data [0:63], // 64 lines of 8 bytes
     output logic [TAG_BITS-1:0] cache_tag [0:63], // 64 lines of tag bits
     output logic cache_valid [0:63], // 64 lines of valid bits
-    output logic cache_dirty [0:63] // 64 lines of dirty bits
+    output logic cache_dirty [0:63], // 64 lines of dirty bits
+
+    output logic wb_eviction, // this will be high if we need to evict a DIRTY line from the cache
+    output logic next_wb_eviction // this will be high if we need to evict a DIRTY line from the cache
     // output logic [3:0] number_of_waits, //for debugging
     // output logic [3:0] next_number_of_waits //for debugging
     /* 
@@ -140,8 +143,8 @@ module dcache
     // logic [1:0] next_state; // this will track whether we are in a MISS state or IDLE state
 
     //eviction stuff
-    logic wb_eviction; // this will be high if we need to evict a DIRTY line from the cache
-    logic next_wb_eviction; // this will be high if we need to evict a DIRTY line from the cache
+    // logic wb_eviction; // this will be high if we need to evict a DIRTY line from the cache
+    // logic next_wb_eviction; // this will be high if we need to evict a DIRTY line from the cache
     logic [`XLEN-1:0] evict_addr;
     logic [63:0] evict_data;
     logic [`XLEN-1:0] next_evict_addr;
@@ -149,16 +152,34 @@ module dcache
 
     //helpers
     logic [INDEX_BITS-1:0] current_tag_index;
+    logic new_eviction;
     assign current_tag_index = tag_to_addr[mem2dcache_tag][`XLEN-1-TAG_BITS:OFFSET_BITS]; // this means nothing if tag_to_addr_valid is low
-    
+    logic early_eviction;
     always_comb begin
 
-        next_wb_eviction = (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) &&
-                            (cache_dirty[current_tag_index] == 1) && 
-                            (cache_valid[current_tag_index] == 1);
+        // this eviction i can nly hold for ONE cycle, so i am introducing early eviction
+        // next_wb_eviction = ((mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) &&
+        //                     (cache_dirty[current_tag_index] == 1) && 
+        //                     (cache_valid[current_tag_index] == 1));
+        // next_evict_addr = {cache_tag[current_tag_index], current_tag_index, 3'b000};
+        // next_evict_data = cache_data[current_tag_index];
+        next_wb_eviction = 0;
 
-        next_evict_addr = {cache_tag[current_tag_index], current_tag_index, 3'b000};
-        next_evict_data = cache_data[current_tag_index];
+        next_evict_addr = 0;
+        next_evict_data = 0;
+       
+        in_flight = 0;
+        next_halt_confirm = 0;
+        for (int i = 0; i < 16; i++) begin
+            if (tag_to_addr_valid[i] && tag_to_addr[i][`XLEN-1:3] == proc2Dcache_addr[`XLEN-1:3]) begin
+                in_flight =1;
+            end
+        end
+        if (in_flight == 0 && cache_valid[addr_index] && (cache_tag[addr_index] != addr_tag) && cache_dirty[addr_index]) begin
+            next_evict_addr = {cache_tag[addr_index], addr_index, 3'b000};
+            next_evict_data = cache_data[addr_index];
+            next_wb_eviction = 1;
+        end
 
         next_cur_command = proc2Dcache_command;
         next_cur_data = proc2Dcache_data;
@@ -171,7 +192,8 @@ module dcache
         next_data = next_wb_eviction ? 0 :  (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1) ? 
                             mem2dcache_data
                             : cache_data[addr_index];
-        next_data_response = next_wb_eviction ? 0 : (proc2Dcache_command == BUS_STORE & next_hit) ? next_hit : mem2dcache_response;
+        next_data_response = next_wb_eviction ? 0 : (proc2Dcache_command == BUS_STORE & next_hit) ? next_hit : 
+                            (state == `MISS) ? mem2dcache_response : 0;
         next_data_tag = (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1 && tag_to_is_store[mem2dcache_tag]) ? 
                             mem2dcache_tag
                             : 0;
@@ -186,20 +208,7 @@ module dcache
        
         tag_in_flight = 0;
 
-        if (wb_eviction) begin
-            dcache2mem_addr = evict_addr;
-            dcache2mem_command = BUS_STORE;
-            dcache2mem_data = evict_data;
-        end
-        else begin
-        end
-        in_flight = 0;
-        next_halt_confirm = 0;
-        for (int i = 0; i < 16; i++) begin
-            if (tag_to_addr_valid[i] && tag_to_addr[i][`XLEN-1:3] == proc2Dcache_addr[`XLEN-1:3]) begin
-                in_flight =1;
-            end
-        end
+
         if (halt) begin
             next_halt_confirm =1;
             for (int i =0; i < 64; i++) begin
@@ -218,6 +227,15 @@ module dcache
                     next_halt_confirm = 0;
                     tag_in_flight = i[3:0];
                 end
+            end
+        end
+
+        if (wb_eviction) begin
+            dcache2mem_addr = evict_addr;
+            dcache2mem_command = BUS_STORE;
+            dcache2mem_data = evict_data;
+            if (mem2dcache_response != 0) begin
+                next_wb_eviction = 0;
             end
         end
 
@@ -282,7 +300,7 @@ module dcache
                 if (next_hit || proc2Dcache_command == BUS_NONE) begin
                     next_state = `IDLE;
                 end
-                else if (in_flight || wb_eviction) begin
+                else if (in_flight || wb_eviction || next_wb_eviction) begin
                     next_state = `IDLE;
                 end
                 else begin
@@ -290,7 +308,7 @@ module dcache
                 end
             end
             `MISS: begin
-                if (!wb_eviction) begin
+                if (!wb_eviction && !next_wb_eviction) begin
                     dcache2mem_addr = {addr_tag, addr_index, 3'b000};
                     dcache2mem_command = BUS_LOAD;
                     dcache2mem_data = 0;
@@ -335,7 +353,6 @@ module dcache
             data_response <= 0;
             wb_eviction <= 0;
             cur_addr <= 0;
-            waiting <= 5;
         end
         else begin
             state <= next_state;
@@ -343,12 +360,12 @@ module dcache
             hit_data <= next_data;
             data_tag <= next_data_tag;
             data_response <= next_data_response;
-            wb_eviction <= next_wb_eviction;
             cur_addr <= next_addr;
             cur_command <= next_cur_command;
             cur_data <= next_cur_data;
             evict_addr <= next_evict_addr;
             evict_data <= next_evict_data;
+            wb_eviction <= next_wb_eviction;
 
             halt_confirm <= next_halt_confirm;
 
@@ -371,22 +388,23 @@ module dcache
                 end
             end
 
-            if (halt && mem2dcache_response != 0) begin
-                if (waiting == 0) begin
-                    if (tag_in_flight != 0) begin
+            if (wb_eviction && mem2dcache_response != 0) begin
+                // if (waiting == 0) begin
+                    if (tag_in_flight != 0 && halt) begin
                         tag_to_addr_valid[tag_in_flight] <= 0;
                         tag_to_is_store[tag_in_flight] <= 0;
-                        waiting <= 1;
+                        // waiting <= 1;
                     end
                     else begin
                         cache_dirty[next_evict_addr[`XLEN - 1 - TAG_BITS:OFFSET_BITS]] <= 0;
-                        waiting <= 1;
+                        // waiting <= 1;
                     end
-                end
-                else begin
-                    waiting <= next_waiting;
-                end
+                // end
+                // else begin
+                //     waiting <= next_waiting;
+                // end
             end
+        
 
             if (mem2dcache_tag != 0 && tag_to_addr_valid[mem2dcache_tag] == 1 && !halt) begin
                 if (tag_to_is_store[mem2dcache_tag]==1)begin
