@@ -1006,7 +1006,6 @@ module pipeline (
     // logic [1:0] next_cycle_wait;
     assign next_icache_rejected = (dcache2mem_command == BUS_NONE) ? 1'b0 : 1'b1;
 
-
     assign if_stall = icache_rejected;
     assign Imem2proc_data     = mem2proc_data;
     assign Imem2proc_tag      = mem2proc_tag;
@@ -1017,7 +1016,6 @@ module pipeline (
         // if (icache_rejected != next_icache_rejected) begin
         //     next_cycle_wait = 2'b10;
         // end
-
         if (pos_icache_rejected) begin
                 proc2mem_command = dcache2mem_command;
                 proc2mem_addr    = dcache2mem_addr;
@@ -1039,32 +1037,36 @@ module pipeline (
     always_ff @(posedge clock or posedge reset) begin
         if (reset) begin
             pos_icache_rejected <= 1'b0;
+            icache_rejected <= 1'b0;
+            prev_icache_rejected <= 1'b0;
         end
         else begin
+            prev_icache_rejected <= icache_rejected;
+            icache_rejected <= pos_icache_rejected;
             pos_icache_rejected <= next_icache_rejected;
         end
     end
     // stay on positive
-    always_ff @(negedge clock or posedge reset) begin
-        if (reset) begin
-            icache_rejected <= 1'b0; 
-            prev_icache_rejected <= 1'b0;  
-        end else begin
-            prev_icache_rejected <= icache_rejected;
-            icache_rejected <= pos_icache_rejected;
-        end
-    end
+    // always_ff @(negedge clock or posedge reset) begin
+    //     if (reset) begin
+    //         icache_rejected <= 1'b0; 
+    //         prev_icache_rejected <= 1'b0;  
+    //     end else begin
+    //         prev_icache_rejected <= icache_rejected;
+    //         icache_rejected <= pos_icache_rejected;
+    //     end
+    // end
 
     always_comb begin
         mem2dcache_response   = 0;
         Imem2proc_response  = 0;
         if (prev_icache_rejected ) begin
-            if (icache_rejected) begin
+            if (pos_icache_rejected) begin
                 mem2dcache_response = mem2proc_response;
             end
         end
         else begin
-            if (!icache_rejected) begin
+            if (!pos_icache_rejected) begin
                 Imem2proc_response  = mem2proc_response;
             end
         end
