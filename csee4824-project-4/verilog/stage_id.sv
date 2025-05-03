@@ -351,6 +351,9 @@ module stage_id (
     assign rob_cdb_packet.valid = cdb_valid;
     assign rob_cdb_packet.take_branch = cdb_take_branch;
 
+    logic [2:0] rs_clear_vec_internal; // if we clear, and we have a new instruction coming in, we replace isntead of clear
+
+
 
     // Outputs from map table
     // logic [5:0] mt_to_rs_tag1, mt_to_rs_tag2;
@@ -391,7 +394,7 @@ module stage_id (
 
 
     // logic rs_entry_found;
-
+    // logic [1:0] next_fu_select;
 
     
     always_comb begin
@@ -405,6 +408,10 @@ module stage_id (
             end
         end
     end
+
+    assign rs_clear_vec_internal[0] = rs_clear_vec[0] && !(fu_select == 2'b00);
+    assign rs_clear_vec_internal[1] = rs_clear_vec[1] && !(fu_select == 2'b01);
+    assign rs_clear_vec_internal[2] = rs_clear_vec[2] && !(fu_select == 2'b10);
 
     //operand select (OPA)
     
@@ -451,6 +458,7 @@ module stage_id (
 
       
     end
+
     
     // Map Table
     map_table map_table_0 (
@@ -482,7 +490,7 @@ module stage_id (
         // Control
         .rs_fu_select_in(fu_select), // [1:0] Selects which RS entry to load into
         .rs_load_in(rs1_load_entry), // Global "load" enable
-        .rs_free_in(rs_clear_vec),// [`RS_SIZE] Vector of frees from Complete stage
+        .rs_free_in(rs_clear_vec_internal),// [`RS_SIZE] Vector of frees from Complete stage
         .fu_busy(fu_busy),// [`RS_SIZE] Busy flags from each FU
 
         // Instruction

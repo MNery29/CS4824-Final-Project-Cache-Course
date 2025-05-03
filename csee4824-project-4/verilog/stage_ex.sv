@@ -98,14 +98,19 @@ module stage_ex (
     input cdb_packet_busy,
 
     // output EX_MEM_PACKET ex_packet,
-    output logic take_conditional,
+    output logic take_conditional_alu0,
+    output logic take_conditional_alu1,
     output EX_CP_PACKET ex_cp_packet,
     //broad cast value + tag to cbd, so reorder buffer can be updated
     output priv_addr_packet priv_addr_out,
 
     //Output FU busy signals: 
     output logic [2:0] fu_busy_signals,
-    output logic mult_done
+    output logic mult_done,
+
+    output logic hold_mult_valid,
+    output logic hold_alu0_valid,
+    output logic hold_alu1_valid
 
 );
     //functional unit inputs
@@ -125,10 +130,21 @@ module stage_ex (
     logic [63:0] mult_result;
     logic mult_start;
     logic is_mult_inst;  
-    logic hold_valid; 
+
+    // logic hold_mult_valid; 
+    // logic hold_alu0_valid;
+    // logic hold_alu1_valid;
 
 
-    EX_CP_PACKET hold_pkt;
+    EX_CP_PACKET hold_alu0_pkt;
+    EX_CP_PACKET hold_alu1_pkt;
+    EX_CP_PACKET hold_mult_pkt;
+    EX_CP_PACKET tmp_alu0_pkt;
+    EX_CP_PACKET tmp_alu1_pkt;
+    EX_CP_PACKET tmp_mult_pkt;
+    logic hold_alu0_is_mem_op;
+    logic hold_alu1_is_mem_op;
+    logic hold_mult_is_mem_op;
     EX_CP_PACKET new_pkt;
 
 
@@ -139,14 +155,62 @@ module stage_ex (
     //Logic for which FU to select from: 
     logic [1:0] fu_index;
     always_comb begin
-        if (is_ex_reg[2].issue_valid) //MULT
+        ex_cp_packet = '{default: 0};
+        if (!cdb_packet_busy && (tmp_mult_pkt.valid || (hold_mult_valid && hold_mult_pkt.valid)) ) begin //MULT 
             fu_index = 2'd2;
-        else if (is_ex_reg[0].issue_valid) //ALU0
+            if (tmp_mult_pkt.valid) begin
+                ex_cp_packet = tmp_mult_pkt;
+            end
+            else begin
+                ex_cp_packet = hold_mult_pkt;
+            end
+        end
+        else if (!cdb_packet_busy && ((tmp_alu0_pkt.valid && !(is_ex_reg[0].rd_mem || is_ex_reg[0].wr_mem) )
+                            || (hold_alu0_valid && hold_alu0_pkt.valid && !hold_alu0_is_mem_op))) begin //ALU0
             fu_index = 2'd0;
-        else if (is_ex_reg[1].issue_valid) //ALU1
+            if (tmp_alu0_pkt.valid) begin
+                ex_cp_packet = tmp_alu0_pkt;
+            end
+            else begin
+                ex_cp_packet = hold_alu0_pkt;
+            end
+        end
+        else if (!cdb_packet_busy && ((tmp_alu1_pkt.valid && !(is_ex_reg[1].rd_mem || is_ex_reg[1].wr_mem))
+                            || (hold_alu1_valid && hold_alu1_pkt.valid && !hold_alu1_is_mem_op))) begin //ALU1
             fu_index = 2'd1;
-        else
-            fu_index = 2'd0; // default (NOP)
+            if (tmp_alu1_pkt.valid) begin
+                ex_cp_packet = tmp_alu1_pkt;
+            end
+            else begin
+                ex_cp_packet = hold_alu1_pkt;
+            end
+        end
+        else begin
+            fu_index = 2'b11; // default (NOP)
+        end
+    end
+
+    logic [1:0] fu_index_priv_addr;
+
+    always_comb begin
+        priv_addr_out = '{default: 0};
+        if (((tmp_alu0_pkt.valid && (is_ex_reg[0].rd_mem || is_ex_reg[0].wr_mem) )
+                            || (hold_alu0_valid && hold_alu0_pkt.valid && hold_alu0_is_mem_op))) begin//ALU0
+            fu_index_priv_addr = 2'd0;
+            priv_addr_out.valid = tmp_alu0_pkt.valid;
+            priv_addr_out.tag   = tmp_alu0_pkt.rob_tag;
+            priv_addr_out.addr  = tmp_alu0_pkt.value;
+        end
+        else if (((tmp_alu1_pkt.valid && (is_ex_reg[1].rd_mem || is_ex_reg[1].wr_mem))
+                            || (hold_alu1_valid && hold_alu1_pkt.valid && hold_alu1_is_mem_op))) begin //ALU1
+            fu_index_priv_addr = 2'd1;
+            priv_addr_out.valid = tmp_alu1_pkt.valid;
+            priv_addr_out.tag   = tmp_alu1_pkt.rob_tag;
+            priv_addr_out.addr  = tmp_alu1_pkt.value;
+        end
+        else begin
+            fu_index_priv_addr = 2'b11; // default (NOP)
+        end
     end
 
     // assign ex_packet.dest_reg_idx = id_ex_reg.dest_reg_idx;
@@ -167,44 +231,102 @@ module stage_ex (
     //if so start mult. 
     
     logic mult_started;
+    logic [4:0] mult_tag;
    
 
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             mult_started <= 0;
-            hold_valid <= 1'b0;
-            hold_pkt   <= '{default:0};
-        end
-        else if (mult_start && !mult_done) begin
-            mult_started <= 1;
-            hold_pkt   <= new_pkt;
-            if (cdb_packet_busy) begin
-                hold_valid <= 1'b1;
-            end
-            else begin
-                hold_valid <= 1'b0;
-            end
-        end
+            // hold_valid <= 1'b0;
+            // hold_pkt   <= '{default:0};
+            hold_alu0_valid <= 1'b0;
+            hold_alu1_valid <= 1'b0;
+            hold_mult_valid <= 1'b0;
+            hold_alu0_pkt <= '{default:0};
+            hold_alu1_pkt <= '{default:0};
+            hold_mult_pkt <= '{default:0};
+            hold_alu0_is_mem_op <= 1'b0;
+            hold_alu1_is_mem_op <= 1'b0;
+            hold_mult_is_mem_op <= 1'b0;
             
-        else if (mult_done) begin
-            mult_started <= 0;
-            hold_pkt   <= new_pkt;
-            if (cdb_packet_busy) begin
-                hold_valid <= 1'b1;
-            end
-            else begin
-                hold_valid <= 1'b0;
-            end
+            mult_tag <= 5'b0;
         end
         else begin
-            hold_pkt   <= new_pkt;
-            if (cdb_packet_busy) begin
-                hold_valid <= 1'b1;
+            if (mult_start && !mult_done) begin
+                mult_started <= 1;
+                mult_tag <= is_ex_reg[2].rob_tag;
+            end
+            else if (mult_done) begin
+                mult_started <= 0;
+            end
+
+            hold_alu0_is_mem_op <= hold_alu0_valid ? hold_alu0_is_mem_op : (is_ex_reg[0].rd_mem || is_ex_reg[0].wr_mem);
+            hold_alu1_is_mem_op <= hold_alu1_valid ? hold_alu1_is_mem_op : (is_ex_reg[1].rd_mem || is_ex_reg[1].wr_mem);
+            hold_mult_is_mem_op <= hold_mult_valid ? hold_mult_is_mem_op : (is_ex_reg[2].rd_mem || is_ex_reg[2].wr_mem);
+
+            if (hold_alu0_valid) begin
+                hold_alu0_pkt <= hold_alu0_pkt;
             end
             else begin
-                hold_valid <= 1'b0;
+                hold_alu0_pkt <= tmp_alu0_pkt;
             end
-            
+            if (hold_alu1_valid) begin
+                hold_alu1_pkt <= hold_alu1_pkt;
+            end
+            else begin
+                hold_alu1_pkt <= tmp_alu1_pkt;
+            end
+            if (hold_mult_valid) begin
+                hold_mult_pkt <= hold_mult_pkt;
+            end
+            else begin
+                hold_mult_pkt <= tmp_mult_pkt;
+            end
+
+            case (fu_index) 
+                2'b00: begin
+                    if (tmp_alu1_pkt.valid && fu_index_priv_addr != 2'b01) begin
+                        hold_alu1_valid <= 1;
+                    end
+
+                    if (tmp_mult_pkt.valid) begin
+                        hold_mult_valid <= 1;
+                    end
+
+                    hold_alu0_valid <= 0;
+                end
+                2'b01: begin
+                    if (tmp_alu0_pkt.valid && fu_index_priv_addr != 2'b00) begin
+                        hold_alu0_valid <= 1;
+                    end
+
+                    if (tmp_mult_pkt.valid) begin
+                        hold_mult_valid <= 1;
+                    end
+
+                    hold_alu1_valid <= 0;
+                end
+                2'b10: begin
+                    if (tmp_alu0_pkt.valid && fu_index_priv_addr != 2'b00) begin
+                        hold_alu0_valid <= 1;
+                    end
+                    if (tmp_alu1_pkt.valid && fu_index_priv_addr != 2'b01) begin
+                        hold_alu1_valid <= 1;
+                    end
+                    hold_mult_valid <= 0;
+                end
+                default: begin
+                    if (tmp_alu0_pkt.valid) begin
+                        hold_alu0_valid <= 1;
+                    end
+                    if (tmp_alu1_pkt.valid) begin
+                        hold_alu1_valid <= 1;
+                    end
+                    if (tmp_mult_pkt.valid) begin
+                        hold_mult_valid <= 1;
+                    end      
+                end
+            endcase
         end
     end
 
@@ -215,9 +337,9 @@ module stage_ex (
 
     assign is_mult_inst = (is_ex_reg[2].alu_func inside{ALU_MUL, ALU_MULH, ALU_MULHSU, ALU_MULHU});
 
-    assign fu_busy_signals[0] = is_ex_reg[0].issue_valid || hold_valid;                  // ALU0 is busy if it's issued
-    assign fu_busy_signals[1] = is_ex_reg[1].issue_valid || hold_valid;                  // ALU1 busy
-    assign fu_busy_signals[2] = is_ex_reg[2].issue_valid && !mult_done || hold_valid;    // MULT busy if issued and not done
+    assign fu_busy_signals[0] = is_ex_reg[0].issue_valid || hold_alu0_valid ;                  // ALU0 is busy if it's issued
+    assign fu_busy_signals[1] = is_ex_reg[1].issue_valid || hold_alu1_valid;                  // ALU1 busy
+    assign fu_busy_signals[2] = (mult_started || is_ex_reg[2].issue_valid) || hold_mult_valid;     // MULT busy if issued and not done
 
 
 
@@ -351,33 +473,77 @@ module stage_ex (
     // Instantiate the conditional branch module
     conditional_branch conditional_branch_0 (
         // Inputs
-        .func(is_ex_reg[fu_index].inst.b.funct3), // instruction bits for which condition to check
-        .rs1(is_ex_reg[fu_index].OPA),
-        .rs2(is_ex_reg[fu_index].OPB),
+        .func(is_ex_reg[0].inst.b.funct3), // instruction bits for which condition to check
+        .rs1(is_ex_reg[0].OPA),
+        .rs2(is_ex_reg[0].OPB),
 
         // Output
-        .take(take_conditional)
+        .take(take_conditional_alu0)
+    );
+    conditional_branch conditional_branch_1 (
+        // Inputs
+        .func(is_ex_reg[1].inst.b.funct3), // instruction bits for which condition to check
+        .rs1(is_ex_reg[1].OPA),
+        .rs2(is_ex_reg[1].OPB),
+
+        // Output
+        .take(take_conditional_alu1)
     );
 
+    assign tmp_alu0_pkt.valid        = is_ex_reg[0].issue_valid;
+    assign tmp_alu0_pkt.rob_tag      = is_ex_reg[0].rob_tag;
+    assign tmp_alu0_pkt.take_branch  = is_ex_reg[0].uncond_branch || 
+                                        (is_ex_reg[0].cond_branch && take_conditional_alu0);
+    assign tmp_alu0_pkt.value        = (is_ex_reg[0].cond_branch || is_ex_reg[0].uncond_branch) ? 
+                                        (is_ex_reg[0].uncond_branch ? alu0_result
+                                                        : (tmp_alu0_pkt.take_branch ? alu0_result
+                                                                        : is_ex_reg[0].NPC))
+                                                : alu0_result; 
+    assign tmp_alu0_pkt.done         = is_ex_reg[0].issue_valid;
 
 
-    assign is_mem_op = is_ex_reg[fu_index].rd_mem || is_ex_reg[fu_index].wr_mem;
 
-    assign priv_addr_out.valid = is_ex_reg[fu_index].issue_valid && is_mem_op;
-    assign priv_addr_out.tag   = is_ex_reg[fu_index].rob_tag;
-    assign priv_addr_out.addr  = ex_cp_packet.value;
+    
+    assign tmp_alu1_pkt.valid        = is_ex_reg[1].issue_valid;
+    assign tmp_alu1_pkt.rob_tag      = is_ex_reg[1].rob_tag;
+    assign tmp_alu1_pkt.take_branch  = is_ex_reg[1].uncond_branch || 
+                                        (is_ex_reg[1].cond_branch && take_conditional_alu1);
+    assign tmp_alu1_pkt.value        = (is_ex_reg[1].cond_branch || is_ex_reg[1].uncond_branch) ?
+                                        (is_ex_reg[1].uncond_branch ? alu1_result
+                                                        : (tmp_alu1_pkt.take_branch ? alu1_result
+                                                                        : is_ex_reg[1].NPC))
+                                                : alu1_result;
+    assign tmp_alu1_pkt.done         = is_ex_reg[1].issue_valid;
 
-    assign take_branch = is_ex_reg[fu_index].uncond_branch || 
-                        (is_ex_reg[fu_index].cond_branch && take_conditional);
 
-    assign is_branch = is_ex_reg[fu_index].cond_branch || 
-                    is_ex_reg[fu_index].uncond_branch;
+    assign tmp_mult_pkt.valid        = mult_done;
+    assign tmp_mult_pkt.rob_tag      = mult_tag;
+    assign tmp_mult_pkt.take_branch  = 0;
+    assign tmp_mult_pkt.value        = mult_result;
+    assign tmp_mult_pkt.done         = mult_done;
 
-    assign new_pkt.valid =  is_ex_reg[fu_index].issue_valid && 
-                                (!is_mem_op) && 
-                                (!is_mult_inst || mult_done);
+    // assign ex_cp_packet = hold_valid ? hold_pkt : new_pkt;
 
-    assign new_pkt.rob_tag = is_ex_reg[fu_index].rob_tag;
+
+    //priv addr out will only be fought between the alu0 vs alu1
+
+    // assign is_mem_op = is_ex_reg[fu_index].rd_mem || is_ex_reg[fu_index].wr_mem;
+
+    // assign priv_addr_out.valid = 
+    // assign priv_addr_out.tag   = is_ex_reg[fu_index].rob_tag;
+    // assign priv_addr_out.addr  = ex_cp_packet.value;
+
+    // assign take_branch = is_ex_reg[fu_index].uncond_branch || 
+    //                     (is_ex_reg[fu_index].cond_branch && take_conditional);
+
+    // assign is_branch = is_ex_reg[fu_index].cond_branch || 
+    //                 is_ex_reg[fu_index].uncond_branch;
+
+    // assign new_pkt.valid =  (is_ex_reg[fu_index].issue_valid && 
+    //                             (!is_mem_op) && 
+    //                             (!is_mult_inst)) || mult_done;
+
+    // assign new_pkt.rob_tag = mult_done ? mult_tag : (is_ex_reg[fu_index].rob_tag);
 
     // assign ex_cp_packet.value = cdb_packet_busy ? 
     //     (is_branch ? last_packet.value :
@@ -385,20 +551,15 @@ module stage_ex (
     //     is_ex_reg[fu_index].cond_branch   ? (take_branch ? next_val : is_ex_reg[fu_index].NPC) :
     //                                         is_ex_reg[fu_index].NPC)
     //     : (is_mult_inst ? mult_result : next_val);
-    assign new_pkt.value      = is_branch
-                                ? (is_ex_reg[fu_index].uncond_branch ? next_val
-                                                        : (take_branch ? next_val
-                                                                        : is_ex_reg[fu_index].NPC))
-                                : (is_mult_inst ? mult_result : next_val);
-    assign new_pkt.done = is_ex_reg[fu_index].issue_valid && 
-                            (!is_mem_op) && 
-                            (!is_mult_inst || mult_done);
+    // assign new_pkt.value      = is_branch
+    //                             ? (is_ex_reg[fu_index].uncond_branch ? next_val
+    //                                                     : (take_branch ? next_val
+    //                                                                     : is_ex_reg[fu_index].NPC))
+    //                             : (mult_done ? mult_result : next_val);
+    // assign new_pkt.done = (is_ex_reg[fu_index].issue_valid && 
+    //                         (!is_mem_op) && 
+    //                         (!is_mult_inst)) ||mult_done ;
 
-    assign new_pkt.take_branch = take_branch;
-    assign ex_cp_packet = hold_valid ? hold_pkt : new_pkt;
-
-
-
-    
+    // assign new_pkt.take_branch = take_branch;
 
 endmodule // stage_ex

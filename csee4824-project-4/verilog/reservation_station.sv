@@ -66,7 +66,7 @@ module reservation_station_entry(
     INST inst_internal;
 
     // Outputs
-    assign rs_ready_out          = InUse && OpaValid && OpbValid && !fu_busy;
+    assign rs_ready_out          = InUse && OpaValid && OpbValid;
     assign rs_avail_out          = ~InUse;
     assign rs_opa_out            = OPa;
     assign rs_opb_out            = OPb;

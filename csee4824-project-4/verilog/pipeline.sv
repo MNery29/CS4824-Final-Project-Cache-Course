@@ -132,7 +132,7 @@ module pipeline (
     output logic dispatch_ok,
     output logic [73:0] rs_debug [`RS_SIZE],
     output CDB_PACKET cdb_packet,
-    output logic take_conditional,
+    // output logic take_conditional,
     output logic [`XLEN-1:0] opa_mux_out,
     output logic [`XLEN-1:0] opb_mux_out,
 
@@ -231,7 +231,18 @@ module pipeline (
     output logic next_wb_eviction, // this will be high if we need to evict a DIRTY line from the cache
 
     output logic rs_entry_found,
-    output logic [1:0] fu_select // Selects which RS entry to load into
+    output logic [1:0] fu_select, // Selects which RS entry to load into
+
+    output logic [1:0] next_mult_indx,
+    output logic [1:0] next_alu1_indx,
+    output logic [1:0] next_alu0_indx,
+    output logic next_issued_alu0,
+    output logic next_issued_alu1,
+    output logic next_issued_mult,
+
+    output logic hold_mult_valid,
+    output logic hold_alu0_valid,
+    output logic hold_alu1_valid
 );
 
     //////////////////////////////////////////////////
@@ -653,7 +664,15 @@ module pipeline (
 
         // Outputs
         .is_packets(is_packets),
-        .rs_issue_enable(rs_issue_enable)
+        .rs_issue_enable(rs_issue_enable),
+
+        .next_alu0_indx(next_alu0_indx),
+        .next_alu1_indx(next_alu1_indx),
+        .next_mult_indx(next_mult_indx),
+
+        .next_issued_alu0(next_issued_alu0),
+        .next_issued_alu1(next_issued_alu1),
+        .next_issued_mult(next_issued_mult)
     );
 
     //////////////////////////////////////////////////
@@ -680,10 +699,14 @@ module pipeline (
         .cdb_packet_busy(cdb_busy),
         .is_ex_reg(is_packets),
         .ex_cp_packet(ex_packet),
-        .take_conditional(take_conditional),
+        // .take_conditional(take_conditional),
         .priv_addr_out(priv_addr_packet),
         .fu_busy_signals(fu_busy_signals),
-        .mult_done(mult_done)
+        .mult_done(mult_done),
+
+        .hold_alu0_valid(hold_alu0_valid),
+        .hold_alu1_valid(hold_alu1_valid),
+        .hold_mult_valid(hold_mult_valid)
     );
 
      //////////////////////////////////////////////////
@@ -985,7 +1008,6 @@ module pipeline (
 //             end
 //             `OWN_I: begin
 //                 if (owner_d != `OWN_D) begin
-//                     if (wait_one_step == 0) begin
 //                         Imem2proc_response = mem2proc_response;
 //                         if (mem2proc_response != 0) begin
 //                             read_data = 1'b1;

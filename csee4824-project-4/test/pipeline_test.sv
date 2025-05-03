@@ -241,6 +241,18 @@ module testbench;
     logic rs_entry_found;
     logic [1:0] fu_select; // Selects which RS entry to load into
 
+    logic [1:0] next_mult_indx;
+    logic [1:0] next_alu1_indx;
+    logic [1:0] next_alu0_indx;
+
+    logic next_issued_alu0;
+    logic next_issued_alu1;
+    logic next_issued_mult;
+
+    logic hold_mult_valid;
+    logic hold_alu0_valid;
+    logic hold_alu1_valid;
+
     // logic [`XLEN-1:0] if_NPC_dbg;
     // logic [31:0]      if_inst_dbg;
     // logic             if_valid_dbg;
@@ -312,7 +324,7 @@ module testbench;
         .fu_busy_signals              (fu_busy_signals),
         .cdb_busy             (cdb_busy),
 
-        .take_conditional       (take_conditional),
+        // .take_conditional       (take_conditional),
 
         .if_packet            (if_packet),
         .if_id_reg            (if_id_reg),
@@ -436,7 +448,19 @@ module testbench;
         .next_wb_eviction  (next_wb_eviction),
 
         .rs_entry_found   (rs_entry_found),
-        .fu_select        (fu_select)
+        .fu_select        (fu_select),
+
+        .next_alu0_indx(next_alu0_indx),
+        .next_alu1_indx(next_alu1_indx),
+        .next_mult_indx(next_mult_indx),
+
+         .next_issued_alu0(next_issued_alu0),
+        .next_issued_alu1(next_issued_alu1),
+        .next_issued_mult(next_issued_mult),
+
+        .hold_mult_valid(hold_mult_valid),
+        .hold_alu0_valid(hold_alu0_valid),
+        .hold_alu1_valid(hold_alu1_valid)
         
 
         // .if_NPC_dbg       (if_NPC_dbg),
@@ -957,7 +981,12 @@ module testbench;
             show_ex_packet  (ex_cp_reg, cdb_busy);
             // show_rs_debug(rs_debug, "RS[0]");
             $display("FU SELECT: %b and rs_Entry found: %b", fu_select, rs_entry_found);
+            $display("FU BUSY SIGNSL : %b", fu_busy_signals);
             $display("show rs_issue_enable : %b", rs_issue_enable);
+
+            $display("next mult indx = %d, next alu0 indx = %d, next alu1 indx = %d", next_mult_indx, next_alu0_indx, next_alu1_indx);
+            $display("next issued mult = %d, next issued alu0 = %d, next issued alu1 = %d", next_issued_mult, next_issued_alu0, next_issued_alu1);
+            $display("hold mult valid = %b, hold alu0 valid = %b, hold alu1 valid = %b", hold_mult_valid, hold_alu0_valid, hold_alu1_valid);
             dump_rs_debug_array(rs_debug);
             show_cdb_packet(cdb_packet, "CDB");
             $display("RETIRE STAGE INFORMATION: ");

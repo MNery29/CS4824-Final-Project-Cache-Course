@@ -40,10 +40,20 @@ module stage_is (
 
     // Outputs
     output IS_EX_PACKET is_packets [2:0],
-    output logic [`RS_SIZE-1:0] rs_issue_enable
+    output logic [`RS_SIZE-1:0] rs_issue_enable,
+
+    output logic [1:0] next_mult_indx,
+    output logic [1:0] next_alu1_indx,
+    output logic [1:0] next_alu0_indx,
+
+    output logic next_issued_alu0,
+    output logic next_issued_alu1,
+    output logic next_issued_mult
 );
 
 // Local flags to track FU usage
+
+
 logic issued_alu0;
 logic issued_alu1;
 logic issued_mult;
@@ -53,78 +63,24 @@ function logic is_mult(ALU_FUNC funct);
     return (funct inside {ALU_MUL, ALU_MULH, ALU_MULHSU, ALU_MULHU});
 endfunction
 
-// Issue logic moved into task to avoid hierarchical reference issues
-task automatic issue_instructions();
-    for (int i = 0; i < `RS_SIZE; i++) begin
-        if (rs_ready_out[i]) begin
-            // Copy values from indexed arrays into local temps
-            logic [31:0] opa      = rs_opa_out[i];
-            logic [31:0] opb      = rs_opb_out[i];
-            logic [4:0]  tag      = rs_tag_out[i];
-            ALU_FUNC     funct    = rs_alu_func_out[i];
-            INST         inst     = rs_inst_out[i];
-            ALU_OPA_SELECT opa_sel = rs_opa_select_out[i];
-            ALU_OPB_SELECT opb_sel = rs_opb_select_out[i];
-            logic [31:0] npc      = rs_npc_out[i];
-            logic [31:0] pc       = rs_pc_out[i];
-            logic        rd       = rd_mem[i];
-            logic        wr       = wr_mem[i];
-            logic        cb       = cond_branch[i];
-            logic        ucb      = uncond_branch[i];
 
-            // Build the issue packet
-            IS_EX_PACKET packet;
-            packet.OPA            = opa;
-            packet.OPB            = opb;
-            packet.opa_select     = opa_sel;
-            packet.opb_select     = opb_sel;
-            packet.rob_tag        = tag;
-            packet.issue_valid    = 1;
-            packet.alu_func       = funct;
-            packet.NPC            = npc;
-            packet.PC             = pc;
-            packet.inst           = inst;
-            packet.RS_tag         = i;
-            packet.rd_mem         = rd;
-            packet.wr_mem         = wr;
-            packet.cond_branch    = cb;
-            packet.uncond_branch  = ucb;
+IS_EX_PACKET next_is_packets [2:0];
 
-            // Dispatch to available FU
-            if (is_mult(funct) && fu_ready_mult && !issued_mult) begin
-                packet.fu_selection = 2;
-                is_packets[2] = packet;
-                rs_issue_enable[i] = 1;
-                issued_mult = 1;
-            end else if (!is_mult(funct)) begin
-                if (fu_ready_alu0 && !issued_alu0) begin
-                    packet.fu_selection = 0;
-                    is_packets[0] = packet;
-                    rs_issue_enable[i] = 1;
-                    issued_alu0 = 1;
-                end else if (fu_ready_alu1 && !issued_alu1) begin
-                    packet.fu_selection = 1;
-                    is_packets[1] = packet;
-                    rs_issue_enable[i] = 1;
-                    issued_alu1 = 1;
-                end
-            end
-        end
-    end
-endtask
 
 // Main comb logic
 always_comb begin
-    is_packets = '{default: '0};
-    rs_issue_enable = {`RS_SIZE{1'b0}};
-    issued_alu0 = 0;
-    issued_alu1 = 0;
-    issued_mult = 0;
+    next_is_packets = '{default: '0};
+    // rs_issue_enable = {`RS_SIZE{1'b0}};
+    next_issued_alu0 = 0;
+    next_issued_alu1 = 0;
+    next_issued_mult = 0;
+    next_mult_indx = 0;
+    next_alu1_indx = 0;
+    next_alu0_indx = 0;
 
     for (int i = 0; i < `RS_SIZE; i++) begin
         if (rs_ready_out[i]) begin
             IS_EX_PACKET packet;
-
             packet.OPA            = rs_opa_out[i];
             packet.OPB            = rs_opb_out[i];
             packet.opa_select     = rs_opa_select_out[i];
@@ -141,25 +97,65 @@ always_comb begin
             packet.cond_branch    = cond_branch[i];
             packet.uncond_branch  = uncond_branch[i];
 
-            if (is_mult(rs_alu_func_out[i]) && fu_ready_mult && !issued_mult) begin
+            if (is_mult(rs_alu_func_out[i]) && !next_issued_mult) begin
                 packet.fu_selection = 2;
-                is_packets[2] = packet;
-                rs_issue_enable[i] = 1;
-                issued_mult = 1;
+                next_is_packets[2] = packet;
+                // rs_issue_enable[i] = 1;
+                next_issued_mult = 1;
+                next_mult_indx = i[1:0];
             end else if (!is_mult(rs_alu_func_out[i])) begin
-                if (fu_ready_alu0 && !issued_alu0) begin
+                if (!next_issued_alu0) begin
                     packet.fu_selection = 0;
-                    is_packets[0] = packet;
-                    rs_issue_enable[i] = 1;
-                    issued_alu0 = 1;
-                end else if (fu_ready_alu1 && !issued_alu1) begin
+                    next_is_packets[0] = packet;
+                    // rs_issue_enable[i] = 1;
+                    next_issued_alu0 = 1;
+                    next_alu0_indx = i == 0? 0 : i[1:0];
+                end else if (!next_issued_alu1) begin
                     packet.fu_selection = 1;
-                    is_packets[1] = packet;
-                    rs_issue_enable[i] = 1;
-                    issued_alu1 = 1;
+                    next_is_packets[1] = packet;
+                    // rs_issue_enable[i] = 1;
+                    next_issued_alu1 = 1;
+                    next_alu1_indx = i[1:0];
                 end
             end
         end
+    end
+end
+
+always_ff @(posedge clock or posedge reset) begin
+    if (reset) begin
+        issued_alu0 <= 0;
+        issued_alu1 <= 0;
+        issued_mult <= 0;
+        rs_issue_enable <= {`RS_SIZE{1'b0}};
+        is_packets <= '{default: '0};
+    end else begin
+        issued_alu0 <= next_issued_alu0;
+        issued_alu1 <= next_issued_alu1;
+        issued_mult <= next_issued_mult;
+        rs_issue_enable <= {`RS_SIZE{1'b0}};
+        if (next_issued_alu0 && fu_ready_alu0) begin
+            rs_issue_enable[next_alu0_indx] <= 1;
+            is_packets[0] <= next_is_packets[0];
+        end
+        else begin
+            is_packets[0] <= '{default: '0};
+        end
+        if (next_issued_alu1 && fu_ready_alu1) begin
+            rs_issue_enable[next_alu1_indx] <= 1;
+            is_packets[1] <= next_is_packets[1];
+        end
+        else begin
+            is_packets[1] <= '{default: '0};
+        end
+        if (next_issued_mult && fu_ready_mult) begin
+            rs_issue_enable[next_mult_indx] <= 1;
+            is_packets[2] <= next_is_packets[2];
+        end
+        else begin
+            is_packets[2] <= '{default: '0};
+        end
+        // No need to reset flags here, they are reset in the always_comb block
     end
 end
 
