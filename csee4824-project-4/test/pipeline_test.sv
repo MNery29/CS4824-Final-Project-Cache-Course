@@ -260,6 +260,9 @@ module testbench;
     EX_CP_PACKET tmp_alu1_pkt;
     EX_CP_PACKET tmp_mult_pkt;
 
+    logic [31:0] mult_opa;
+    logic [31:0] mult_opb;
+
     // logic [`XLEN-1:0] if_NPC_dbg;
     // logic [31:0]      if_inst_dbg;
     // logic             if_valid_dbg;
@@ -474,7 +477,10 @@ module testbench;
         .hold_mult_pkt(hold_mult_pkt),
         .tmp_alu0_pkt(tmp_alu0_pkt),
         .tmp_alu1_pkt(tmp_alu1_pkt),
-        .tmp_mult_pkt(tmp_mult_pkt)
+        .tmp_mult_pkt(tmp_mult_pkt),
+
+        .mult_opa(mult_opa),
+        .mult_opb(mult_opb)
         
 
         // .if_NPC_dbg       (if_NPC_dbg),
@@ -1005,6 +1011,8 @@ module testbench;
             show_ex_packet  (tmp_alu1_pkt, cdb_busy);
             $display("tmp mult");
             show_ex_packet  (tmp_mult_pkt, cdb_busy);
+
+            $display("mult a in =%h, mult b in =%h", mult_opa, mult_opb);
             // show_rs_debug(rs_debug, "RS[0]");
             $display("FU SELECT: %b and rs_Entry found: %b", fu_select, rs_entry_found);
             $display("FU BUSY SIGNSL : %b", fu_busy_signals);

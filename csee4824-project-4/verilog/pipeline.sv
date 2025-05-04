@@ -249,7 +249,10 @@ module pipeline (
     output EX_CP_PACKET hold_mult_pkt,
     output EX_CP_PACKET tmp_alu0_pkt,
     output EX_CP_PACKET tmp_alu1_pkt,
-    output EX_CP_PACKET tmp_mult_pkt
+    output EX_CP_PACKET tmp_mult_pkt,
+
+    output logic [31:0] mult_opa,
+    output logic [31:0] mult_opb
 );
 
     //////////////////////////////////////////////////
@@ -720,7 +723,10 @@ module pipeline (
         .hold_mult_pkt(hold_mult_pkt),
         .tmp_alu0_pkt(tmp_alu0_pkt),
         .tmp_alu1_pkt(tmp_alu1_pkt),
-        .tmp_mult_pkt(tmp_mult_pkt)
+        .tmp_mult_pkt(tmp_mult_pkt),
+
+        .mult_opa(mult_opa),
+        .mult_opb(mult_opb)
     );
 
      //////////////////////////////////////////////////
