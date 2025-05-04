@@ -119,6 +119,7 @@ module stage_ex (
     output EX_CP_PACKET tmp_alu1_pkt,
     output EX_CP_PACKET tmp_mult_pkt,
 
+    // for DEBUGGING ONLY
     output logic [31:0] mult_opa,
     output logic [31:0] mult_opb
 
@@ -250,7 +251,6 @@ module stage_ex (
     // logic [31:0] mult_opb;
     ALU_FUNC mult_func;
    
-    logic mult_real_started;
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             mult_started <= 0;
@@ -273,7 +273,6 @@ module stage_ex (
             mult_func <= ALU_ADD;
             mult_opa <= 32'b0;
             mult_opb <= 32'b0;
-            mult_real_started <= 0;
         end
         else begin
             priv_addr_out <= next_priv_addr_out;
@@ -290,11 +289,6 @@ module stage_ex (
                 mult_opa <= 0;
                 mult_opb <= 0;
                 mult_func <= ALU_ADD;
-                mult_real_started <= 0;
-            end
-
-            if (mult_started && !mult_done) begin
-                mult_real_started <= 1;
             end
 
 
@@ -479,10 +473,10 @@ module stage_ex (
         //inputs
         .clock(clk),
         .reset(rst),
-        .mcand({32'b0, mult_opa}),
-        .mplier({32'b0, mult_opb}),
+        .mcand({32'b0, opa_mux_out2}),
+        .mplier({32'b0, opb_mux_out2}),
         .mult_func(mult_func),
-        .start(mult_real_started),
+        .start(mult_start),
         .product(mult_result),
         .done(mult_done)
     );
@@ -536,7 +530,7 @@ module stage_ex (
     assign tmp_mult_pkt.valid        = mult_done;
     assign tmp_mult_pkt.rob_tag      = mult_tag;
     assign tmp_mult_pkt.take_branch  = 0;
-    assign tmp_mult_pkt.value        = mult_result[63:32];
+    assign tmp_mult_pkt.value        = mult_done ? mult_result[31:0] : 32'hDEAD_BEEF;
     assign tmp_mult_pkt.done         = mult_done;
 
     // assign ex_cp_packet = hold_valid ? hold_pkt : new_pkt;

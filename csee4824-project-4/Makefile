@@ -177,7 +177,7 @@ GREP = grep -E --color=auto
 # - with dependencies: 'rob.simv', 'rob.cov', and 'synth/rob.vg'
 
 # TODO: add more modules here
-TESTED_MODULES = map_table reservation_station reorder_buffer stage_id dcache cdb stage_if stage_is icache zcache stage_cp stage_ex lsq stage_rt pipeline rob_rs stage_mem
+TESTED_MODULES = map_table reservation_station reorder_buffer stage_id dcache cdb stage_if stage_is icache zcache stage_cp stage_ex lsq stage_rt pipeline rob_rs stage_mem multi
 
 MODULE = rob_rs
 
@@ -342,7 +342,7 @@ SOURCES = verilog/pipeline.sv \
           verilog/stage_rt.sv \
 		  verilog/lsq.sv \
 		  verilog/map_table.sv \
-		  verilog/dcache.sv
+		  verilog/dcache.sv  
 		  
 SYNTH_FILES = synth/pipeline.vg
 
