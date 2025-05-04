@@ -242,7 +242,14 @@ module pipeline (
 
     output logic hold_mult_valid,
     output logic hold_alu0_valid,
-    output logic hold_alu1_valid
+    output logic hold_alu1_valid,
+
+    output EX_CP_PACKET hold_alu0_pkt,
+    output EX_CP_PACKET hold_alu1_pkt,
+    output EX_CP_PACKET hold_mult_pkt,
+    output EX_CP_PACKET tmp_alu0_pkt,
+    output EX_CP_PACKET tmp_alu1_pkt,
+    output EX_CP_PACKET tmp_mult_pkt
 );
 
     //////////////////////////////////////////////////
@@ -706,7 +713,14 @@ module pipeline (
 
         .hold_alu0_valid(hold_alu0_valid),
         .hold_alu1_valid(hold_alu1_valid),
-        .hold_mult_valid(hold_mult_valid)
+        .hold_mult_valid(hold_mult_valid),
+
+        .hold_alu0_pkt(hold_alu0_pkt),
+        .hold_alu1_pkt(hold_alu1_pkt),
+        .hold_mult_pkt(hold_mult_pkt),
+        .tmp_alu0_pkt(tmp_alu0_pkt),
+        .tmp_alu1_pkt(tmp_alu1_pkt),
+        .tmp_mult_pkt(tmp_mult_pkt)
     );
 
      //////////////////////////////////////////////////

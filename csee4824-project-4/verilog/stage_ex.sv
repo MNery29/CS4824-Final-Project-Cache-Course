@@ -110,7 +110,14 @@ module stage_ex (
 
     output logic hold_mult_valid,
     output logic hold_alu0_valid,
-    output logic hold_alu1_valid
+    output logic hold_alu1_valid,
+
+    output EX_CP_PACKET hold_alu0_pkt,
+    output EX_CP_PACKET hold_alu1_pkt,
+    output EX_CP_PACKET hold_mult_pkt,
+    output EX_CP_PACKET tmp_alu0_pkt,
+    output EX_CP_PACKET tmp_alu1_pkt,
+    output EX_CP_PACKET tmp_mult_pkt
 
 );
     //functional unit inputs
@@ -139,12 +146,12 @@ module stage_ex (
 
     EX_CP_PACKET next_ex_cp_packet;
 
-    EX_CP_PACKET hold_alu0_pkt;
-    EX_CP_PACKET hold_alu1_pkt;
-    EX_CP_PACKET hold_mult_pkt;
-    EX_CP_PACKET tmp_alu0_pkt;
-    EX_CP_PACKET tmp_alu1_pkt;
-    EX_CP_PACKET tmp_mult_pkt;
+    // EX_CP_PACKET hold_alu0_pkt;
+    // EX_CP_PACKET hold_alu1_pkt;
+    // EX_CP_PACKET hold_mult_pkt;
+    // EX_CP_PACKET tmp_alu0_pkt;
+    // EX_CP_PACKET tmp_alu1_pkt;
+    // EX_CP_PACKET tmp_mult_pkt;
     logic hold_alu0_is_mem_op;
     logic hold_alu1_is_mem_op;
     logic hold_mult_is_mem_op;
@@ -235,6 +242,9 @@ module stage_ex (
     
     logic mult_started;
     logic [4:0] mult_tag;
+
+    logic [31:0] mult_opa;
+    logic [31:0] mult_opb;
    
 
     always_ff @(posedge clk or posedge rst) begin
@@ -266,6 +276,11 @@ module stage_ex (
             end
             else if (mult_done) begin
                 mult_started <= 0;
+            end
+            else begin
+                mult_started <= 0;
+                mult_opa <= opa_mux_out2;
+                mult_opb <= opb_mux_out2;
             end
 
             hold_alu0_is_mem_op <= hold_alu0_valid ? hold_alu0_is_mem_op : (is_ex_reg[0].rd_mem || is_ex_reg[0].wr_mem);
@@ -449,8 +464,8 @@ module stage_ex (
         //inputs
         .clock(clk),
         .reset(rst),
-        .mcand({32'b0, opa_mux_out2}),
-        .mplier({32'b0, opb_mux_out2}),
+        .mcand({32'b0, mult_opa}),
+        .mplier({32'b0, mult_opb}),
         .mult_func(is_ex_reg[2].alu_func),
         .start(mult_start),
         .product(mult_result),

@@ -253,6 +253,13 @@ module testbench;
     logic hold_alu0_valid;
     logic hold_alu1_valid;
 
+    EX_CP_PACKET hold_alu0_pkt;
+    EX_CP_PACKET hold_alu1_pkt;
+    EX_CP_PACKET hold_mult_pkt;
+    EX_CP_PACKET tmp_alu0_pkt;
+    EX_CP_PACKET tmp_alu1_pkt;
+    EX_CP_PACKET tmp_mult_pkt;
+
     // logic [`XLEN-1:0] if_NPC_dbg;
     // logic [31:0]      if_inst_dbg;
     // logic             if_valid_dbg;
@@ -460,7 +467,14 @@ module testbench;
 
         .hold_mult_valid(hold_mult_valid),
         .hold_alu0_valid(hold_alu0_valid),
-        .hold_alu1_valid(hold_alu1_valid)
+        .hold_alu1_valid(hold_alu1_valid),
+
+        .hold_alu0_pkt(hold_alu0_pkt),
+        .hold_alu1_pkt(hold_alu1_pkt),
+        .hold_mult_pkt(hold_mult_pkt),
+        .tmp_alu0_pkt(tmp_alu0_pkt),
+        .tmp_alu1_pkt(tmp_alu1_pkt),
+        .tmp_mult_pkt(tmp_mult_pkt)
         
 
         // .if_NPC_dbg       (if_NPC_dbg),
@@ -979,6 +993,18 @@ module testbench;
 
             $display("ex reg");
             show_ex_packet  (ex_cp_reg, cdb_busy);
+            $display("hold alu0");
+            show_ex_packet  (hold_alu0_pkt, cdb_busy);
+            $display("hold alu1");
+            show_ex_packet  (hold_alu1_pkt, cdb_busy);
+            $display("hold mult");
+            show_ex_packet  (hold_mult_pkt, cdb_busy);
+            $display("tmp alu0");
+            show_ex_packet  (tmp_alu0_pkt, cdb_busy);
+            $display("tmp alu1");
+            show_ex_packet  (tmp_alu1_pkt, cdb_busy);
+            $display("tmp mult");
+            show_ex_packet  (tmp_mult_pkt, cdb_busy);
             // show_rs_debug(rs_debug, "RS[0]");
             $display("FU SELECT: %b and rs_Entry found: %b", fu_select, rs_entry_found);
             $display("FU BUSY SIGNSL : %b", fu_busy_signals);
@@ -1138,8 +1164,8 @@ module testbench;
         end else begin
             clock_count <= (clock_count + 1);
             instr_count <= (instr_count + pipeline_completed_insts);
-            // $display("______________POS EDGE CLOCK CYCLE!!!________________");
-            // display_all_signals();
+            $display("______________POS EDGE CLOCK CYCLE!!!________________");
+            display_all_signals();
 
             // $display("dcache2mem_addr =%h", dcache2mem_addr);
             // $display("dcache2mem_data =%h", dcache2mem_data);
@@ -1184,8 +1210,8 @@ module testbench;
             debug_counter <= 0;
         end else begin
             #2;
-            // $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");  
-            // display_all_signals();
+            $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");  
+            display_all_signals();
             // $display("dcache2mem_addr =%h", dcache2mem_addr);
             // $display("dcache2mem_data =%h", dcache2mem_data);
             // $display("dcache2mem_command =%b", dcache2mem_command);
