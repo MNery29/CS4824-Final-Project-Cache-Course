@@ -117,6 +117,7 @@ module stage_ex (
     logic [`XLEN-1:0] opa_mux_out0, opb_mux_out0;
     logic [`XLEN-1:0] opa_mux_out1, opb_mux_out1;
     logic [`XLEN-1:0] opa_mux_out2, opb_mux_out2;
+    priv_addr_packet next_priv_addr_out;
 
 
     // logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
@@ -135,6 +136,8 @@ module stage_ex (
     // logic hold_alu0_valid;
     // logic hold_alu1_valid;
 
+
+    EX_CP_PACKET next_ex_cp_packet;
 
     EX_CP_PACKET hold_alu0_pkt;
     EX_CP_PACKET hold_alu1_pkt;
@@ -155,34 +158,34 @@ module stage_ex (
     //Logic for which FU to select from: 
     logic [1:0] fu_index;
     always_comb begin
-        ex_cp_packet = '{default: 0};
+        next_ex_cp_packet = '{default: 0};
         if (!cdb_packet_busy && (tmp_mult_pkt.valid || (hold_mult_valid && hold_mult_pkt.valid)) ) begin //MULT 
             fu_index = 2'd2;
             if (tmp_mult_pkt.valid) begin
-                ex_cp_packet = tmp_mult_pkt;
+                next_ex_cp_packet = tmp_mult_pkt;
             end
             else begin
-                ex_cp_packet = hold_mult_pkt;
+                next_ex_cp_packet = hold_mult_pkt;
             end
         end
         else if (!cdb_packet_busy && ((tmp_alu0_pkt.valid && !(is_ex_reg[0].rd_mem || is_ex_reg[0].wr_mem) )
                             || (hold_alu0_valid && hold_alu0_pkt.valid && !hold_alu0_is_mem_op))) begin //ALU0
             fu_index = 2'd0;
             if (tmp_alu0_pkt.valid) begin
-                ex_cp_packet = tmp_alu0_pkt;
+                next_ex_cp_packet = tmp_alu0_pkt;
             end
             else begin
-                ex_cp_packet = hold_alu0_pkt;
+                next_ex_cp_packet = hold_alu0_pkt;
             end
         end
         else if (!cdb_packet_busy && ((tmp_alu1_pkt.valid && !(is_ex_reg[1].rd_mem || is_ex_reg[1].wr_mem))
                             || (hold_alu1_valid && hold_alu1_pkt.valid && !hold_alu1_is_mem_op))) begin //ALU1
             fu_index = 2'd1;
             if (tmp_alu1_pkt.valid) begin
-                ex_cp_packet = tmp_alu1_pkt;
+                next_ex_cp_packet = tmp_alu1_pkt;
             end
             else begin
-                ex_cp_packet = hold_alu1_pkt;
+                next_ex_cp_packet = hold_alu1_pkt;
             end
         end
         else begin
@@ -193,20 +196,20 @@ module stage_ex (
     logic [1:0] fu_index_priv_addr;
 
     always_comb begin
-        priv_addr_out = '{default: 0};
+        next_priv_addr_out = '{default: 0};
         if (((tmp_alu0_pkt.valid && (is_ex_reg[0].rd_mem || is_ex_reg[0].wr_mem) )
                             || (hold_alu0_valid && hold_alu0_pkt.valid && hold_alu0_is_mem_op))) begin//ALU0
             fu_index_priv_addr = 2'd0;
-            priv_addr_out.valid = tmp_alu0_pkt.valid;
-            priv_addr_out.tag   = tmp_alu0_pkt.rob_tag;
-            priv_addr_out.addr  = tmp_alu0_pkt.value;
+            next_priv_addr_out.valid = tmp_alu0_pkt.valid;
+            next_priv_addr_out.tag   = tmp_alu0_pkt.rob_tag;
+            next_priv_addr_out.addr  = tmp_alu0_pkt.value;
         end
         else if (((tmp_alu1_pkt.valid && (is_ex_reg[1].rd_mem || is_ex_reg[1].wr_mem))
                             || (hold_alu1_valid && hold_alu1_pkt.valid && hold_alu1_is_mem_op))) begin //ALU1
             fu_index_priv_addr = 2'd1;
-            priv_addr_out.valid = tmp_alu1_pkt.valid;
-            priv_addr_out.tag   = tmp_alu1_pkt.rob_tag;
-            priv_addr_out.addr  = tmp_alu1_pkt.value;
+            next_priv_addr_out.valid = tmp_alu1_pkt.valid;
+            next_priv_addr_out.tag   = tmp_alu1_pkt.rob_tag;
+            next_priv_addr_out.addr  = tmp_alu1_pkt.value;
         end
         else begin
             fu_index_priv_addr = 2'b11; // default (NOP)
@@ -248,10 +251,15 @@ module stage_ex (
             hold_alu0_is_mem_op <= 1'b0;
             hold_alu1_is_mem_op <= 1'b0;
             hold_mult_is_mem_op <= 1'b0;
+
+            priv_addr_out <= '{default:0};
+            ex_cp_packet <= '{default:0};
             
             mult_tag <= 5'b0;
         end
         else begin
+            priv_addr_out <= next_priv_addr_out;
+            ex_cp_packet <= next_ex_cp_packet;
             if (mult_start && !mult_done) begin
                 mult_started <= 1;
                 mult_tag <= is_ex_reg[2].rob_tag;
@@ -283,50 +291,29 @@ module stage_ex (
                 hold_mult_pkt <= tmp_mult_pkt;
             end
 
-            case (fu_index) 
-                2'b00: begin
-                    if (tmp_alu1_pkt.valid && fu_index_priv_addr != 2'b01) begin
-                        hold_alu1_valid <= 1;
-                    end
-
-                    if (tmp_mult_pkt.valid) begin
-                        hold_mult_valid <= 1;
-                    end
-
-                    hold_alu0_valid <= 0;
+            if ((tmp_alu0_pkt.valid || (hold_alu0_pkt.valid && hold_alu0_valid)) &&
+                fu_index != 2'd0 && fu_index_priv_addr != 2'd0) begin
+                    hold_alu0_valid <= 1'b1;
                 end
-                2'b01: begin
-                    if (tmp_alu0_pkt.valid && fu_index_priv_addr != 2'b00) begin
-                        hold_alu0_valid <= 1;
-                    end
+            else begin
+                hold_alu0_valid <= 1'b0;
+            end
 
-                    if (tmp_mult_pkt.valid) begin
-                        hold_mult_valid <= 1;
-                    end
+            if ((tmp_alu1_pkt.valid || (hold_alu1_pkt.valid && hold_alu1_valid)) &&
+                fu_index != 2'd1 && fu_index_priv_addr != 2'd1) begin
+                    hold_alu1_valid <= 1'b1;
+                end
+            else begin
+                hold_alu1_valid <= 1'b0;
+            end
 
-                    hold_alu1_valid <= 0;
+            if ((tmp_mult_pkt.valid || (hold_mult_pkt.valid && hold_mult_valid)) &&
+                fu_index != 2'd2) begin
+                    hold_mult_valid <= 1'b1;
                 end
-                2'b10: begin
-                    if (tmp_alu0_pkt.valid && fu_index_priv_addr != 2'b00) begin
-                        hold_alu0_valid <= 1;
-                    end
-                    if (tmp_alu1_pkt.valid && fu_index_priv_addr != 2'b01) begin
-                        hold_alu1_valid <= 1;
-                    end
-                    hold_mult_valid <= 0;
-                end
-                default: begin
-                    if (tmp_alu0_pkt.valid) begin
-                        hold_alu0_valid <= 1;
-                    end
-                    if (tmp_alu1_pkt.valid) begin
-                        hold_alu1_valid <= 1;
-                    end
-                    if (tmp_mult_pkt.valid) begin
-                        hold_mult_valid <= 1;
-                    end      
-                end
-            endcase
+            else begin
+                hold_mult_valid <= 1'b0;
+            end
         end
     end
 
