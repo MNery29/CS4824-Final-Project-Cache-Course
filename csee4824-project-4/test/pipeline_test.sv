@@ -1165,10 +1165,33 @@ module testbench;
 
     // Count the number of posedges and number of instructions completed
     // till simulation ends
+    real rob_occ_sum;      // cumulative occupied entries
+    real rob_cycles;       // #cycles we’ve accumulated for
+    real rob_max;          // optional: peak occupancy observed
+    real avg_util;
+    real rob_occ_sum,  rob_cycles,  rob_max;
+    real rs_occ_sum,   rs_cycles,   rs_max;
+    real lsq_occ_sum,  lsq_cycles,  lsq_max;
+    real dc_occ_sum,   dc_cycles,   dc_max;      // valid cache lines
+    real mshr_occ_sum, mshr_cycles, mshr_max;    // inflight requests
+    integer dc_accesses;
+    integer dc_hits;
+    integer dc_misses;
+
+    logic [`XLEN-1:0] last_evt_addr;
+bit               have_last_evt_addr;
     always @(posedge clock) begin
         if(reset) begin
             clock_count <= 0;
             instr_count <= 0;
+            rob_occ_sum <= 0.0;
+            rob_cycles  <= 0.0;
+            rob_max     <= 0.0;
+            dc_accesses = 0;
+            dc_hits     = 0;
+            dc_misses   = 0;
+            last_evt_addr = 0;
+            have_last_evt_addr = 0;
         end else begin
             clock_count <= (clock_count + 1);
             instr_count <= (instr_count + pipeline_completed_insts);
@@ -1210,7 +1233,14 @@ module testbench;
     //     $display("[%0t] >>> watchdog tick", $time);
     // end
 
-
+    int occ;         // local per-cycle count
+    int rob_occ, rs_occ, lsq_occ, dc_occ, mshr_occ;
+    real hit_pct;
+    real miss_pct;
+    function automatic real pct (input real sum, input real cyc, input int cap);
+        return (cyc == 0) ? 0.0 : (100.0 * sum) / (cyc * cap);
+    endfunction
+    
     always @(negedge clock) begin
         if(reset) begin
             $display("@@\n@@  %t : System STILL at reset, can't show anything\n@@",
@@ -1218,6 +1248,72 @@ module testbench;
             debug_counter <= 0;
         end else begin
             #2;
+            
+            rob_occ  = 0;
+            rs_occ   = 0;
+            lsq_occ  = 0;
+            dc_occ   = 0;
+            mshr_occ = 0;
+
+            // ---------- ROB ----------
+            for (int i = 0; i < `ROB_SZ; i++)
+                if (id_rob_debug[i][45:44] != 2'b00)
+                    rob_occ++;
+
+            // ---------- Reservation Stations ----------
+            for (int i = 0; i < `RS_SIZE; i++)
+                if (rs_debug[i][2])           // bit 2 = in_use
+                    rs_occ++;
+
+            // ---------- LSQ ----------
+            for (int i = 0; i < 8; i++)
+                if (lsq_out[i].valid)
+                    lsq_occ++;
+
+            // ---------- d-cache valid lines ----------
+            for (int i = 0; i < 64; i++)
+                if (cache_valid[i])
+                    dc_occ++;
+
+            // ---------- in-flight tags / “MSHRs” ----------
+            for (int i = 0; i < 16; i++)
+                if (tag_to_addr_valid[i])
+                    mshr_occ++;
+
+            // ---- accumulate sums & maxima ----
+            rob_occ_sum  += rob_occ;   rs_occ_sum  += rs_occ;
+            lsq_occ_sum  += lsq_occ;   dc_occ_sum  += dc_occ;
+            mshr_occ_sum += mshr_occ;
+
+            rob_cycles++;  rs_cycles++;  lsq_cycles++;
+            dc_cycles++;   mshr_cycles++;
+
+            if (rob_occ  > rob_max ) rob_max  = rob_occ;
+            if (rs_occ   > rs_max  ) rs_max   = rs_occ;
+            if (lsq_occ  > lsq_max ) lsq_max  = lsq_occ;
+            if (dc_occ   > dc_max  ) dc_max   = dc_occ;
+            if (mshr_occ > mshr_max) mshr_max = mshr_occ;
+
+            if (dcache_hit || dcache_response != 0) begin
+                // The address associated with the event
+                logic [`XLEN-1:0] evt_addr = dcache_addr;
+
+                // Ignore if it’s the same address we already recorded last cycle
+                if (!have_last_evt_addr || evt_addr != last_evt_addr) begin
+                    dc_accesses++;
+
+                    if (dcache_hit)
+                        dc_hits++;
+                    else               // dcache_response asserted ⇒ miss completed
+                        dc_misses++;
+
+                    last_evt_addr      = evt_addr;
+                    have_last_evt_addr = 1;
+                end
+            end
+            else begin
+                have_last_evt_addr = 0;   // clear guard once the pulse is over
+            end
             // $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");  
             // display_all_signals();
             // $display("dcache2mem_addr =%h", dcache2mem_addr);
@@ -1235,8 +1331,8 @@ module testbench;
             // $display("mem2dcache response =%b", mem2dcache_response);
 
 
-            // // $display("cycle waiting for one step =%b", cycle_wait);
-            // // $display("next waiting for one step =%b", next_cycle_wait);
+            // // // $display("cycle waiting for one step =%b", cycle_wait);
+            // // // $display("next waiting for one step =%b", next_cycle_wait);
 
             // $display("real memory modules signasl:");
             // $display("proc2mem_command =%b", proc2mem_command);
@@ -1278,8 +1374,29 @@ module testbench;
 
             // deal with any halting conditions
             if(pipeline_error_status != NO_ERROR || debug_counter > 50000000) begin
-                $display("@@@ Unified Memory contents hex on left, decimal on right: ");
-                show_mem_with_decimal(0,`MEM_64BIT_LINES - 1);
+
+                hit_pct  = (dc_accesses == 0) ? 0.0
+                                : 100.0 * dc_hits   / dc_accesses;
+                miss_pct = (dc_accesses == 0) ? 0.0
+                                : 100.0 * dc_misses / dc_accesses;
+
+                $display("-----------------------------------------------------------------------");
+                $display("D$ accesses : %0d", dc_accesses);
+                $display("   hits     : %0d  (%5.2f%%)", dc_hits  , hit_pct );
+                $display("   misses   : %0d  (%5.2f%%)", dc_misses, miss_pct);
+                $display("-----------------------------------------------------------------------");
+               
+                $display("\n==== Average utilisation ===============================================");
+                $display("ROB : %5.2f%%  (peak %0.0f / %0d)",  pct(rob_occ_sum ,rob_cycles ,`ROB_SZ ), rob_max ,`ROB_SZ );
+                $display("RS  : %5.2f%%  (peak %0.0f / %0d)",  pct(rs_occ_sum  ,rs_cycles  ,`RS_SIZE), rs_max  ,`RS_SIZE);
+                $display("LSQ : %5.2f%%  (peak %0.0f / %0d)",  pct(lsq_occ_sum ,lsq_cycles ,8 ), lsq_max ,8 );
+                $display("D$-valid lines  : %5.2f%%  (peak %0.0f / %0d)",
+                        pct(dc_occ_sum ,dc_cycles ,64), dc_max ,64);
+                $display("MSHR / inflight : %5.2f%%  (peak %0.0f / %0d)",
+                     pct(mshr_occ_sum ,mshr_cycles ,16), mshr_max , 16);
+                $display("=======================================================================\n");
+                    $display("@@@ Unified Memory contents hex on left, decimal on right: ");
+                    show_mem_with_decimal(0,`MEM_64BIT_LINES - 1);
                 // 8Bytes per line, 16kB total
 
                 $display("@@  %t : System halted\n@@", $realtime);

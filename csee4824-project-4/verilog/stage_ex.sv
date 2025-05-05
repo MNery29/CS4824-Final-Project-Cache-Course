@@ -169,34 +169,34 @@ module stage_ex (
     //Logic for which FU to select from: 
     logic [1:0] fu_index;
     always_comb begin
-        next_ex_cp_packet = '{default: 0};
+        ex_cp_packet = '{default: 0};
         if (!cdb_packet_busy && (tmp_mult_pkt.valid || (hold_mult_valid && hold_mult_pkt.valid)) ) begin //MULT 
             fu_index = 2'd2;
             if (tmp_mult_pkt.valid) begin
-                next_ex_cp_packet = tmp_mult_pkt;
+                ex_cp_packet = tmp_mult_pkt;
             end
             else begin
-                next_ex_cp_packet = hold_mult_pkt;
+                ex_cp_packet = hold_mult_pkt;
             end
         end
         else if (!cdb_packet_busy && ((tmp_alu0_pkt.valid && !(is_ex_reg[0].rd_mem || is_ex_reg[0].wr_mem) )
                             || (hold_alu0_valid && hold_alu0_pkt.valid && !hold_alu0_is_mem_op))) begin //ALU0
             fu_index = 2'd0;
             if (tmp_alu0_pkt.valid) begin
-                next_ex_cp_packet = tmp_alu0_pkt;
+                ex_cp_packet = tmp_alu0_pkt;
             end
             else begin
-                next_ex_cp_packet = hold_alu0_pkt;
+                ex_cp_packet = hold_alu0_pkt;
             end
         end
         else if (!cdb_packet_busy && ((tmp_alu1_pkt.valid && !(is_ex_reg[1].rd_mem || is_ex_reg[1].wr_mem))
                             || (hold_alu1_valid && hold_alu1_pkt.valid && !hold_alu1_is_mem_op))) begin //ALU1
             fu_index = 2'd1;
             if (tmp_alu1_pkt.valid) begin
-                next_ex_cp_packet = tmp_alu1_pkt;
+                ex_cp_packet = tmp_alu1_pkt;
             end
             else begin
-                next_ex_cp_packet = hold_alu1_pkt;
+                ex_cp_packet = hold_alu1_pkt;
             end
         end
         else begin
@@ -282,7 +282,7 @@ module stage_ex (
             hold_mult_is_mem_op <= 1'b0;
 
             priv_addr_out <= '{default:0};
-            ex_cp_packet <= '{default:0};
+            // ex_cp_packet <= '{default:0};
             
             mult_tag <= 5'b0;
             mult_func <= ALU_ADD;
@@ -291,7 +291,7 @@ module stage_ex (
         end
         else begin
             priv_addr_out <= next_priv_addr_out;
-            ex_cp_packet <= next_ex_cp_packet;
+            // ex_cp_packet <= next_ex_cp_packet;
             if (mult_start && !mult_done) begin
                 mult_started <= 1;
                 mult_tag <= is_ex_reg[2].rob_tag;

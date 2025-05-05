@@ -190,9 +190,12 @@ module reorder_buffer(
             if (rob_cdb_in.valid) begin
                 // so i guess for branches, what if we assume that a NON zero value means its taken?
                 // and we ALSO assume we always predict not taken
-                rob_values[rob_cdb_in.tag] <= rob_cdb_in.value;
-                rob_status[rob_cdb_in.tag] <= READY;
-                rob_branch_taken[rob_cdb_in.tag] <= rob_cdb_in.take_branch;
+                if (rob_status[rob_cdb_in.tag] == BUSY) begin
+                    rob_values[rob_cdb_in.tag] <= rob_cdb_in.value;
+                    rob_status[rob_cdb_in.tag] <= READY;
+                    rob_branch_taken[rob_cdb_in.tag] <= rob_cdb_in.take_branch;
+                end
+                
             end
 
             if (store_retire && rob_status[store_tag] == BUSY) begin
