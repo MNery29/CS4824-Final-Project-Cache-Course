@@ -71,7 +71,7 @@ logic [31:0] npc_reg;
 
 assign retire_value = take_branch ? npc_reg : retire_value_reg;
 assign retire_dest = retire_dest_reg;
-assign retire_valid_out = retire_valid_reg;
+assign retire_valid_out = halt_reg ? (!lsq_op_in_progress && retire_valid_reg) : retire_valid_reg;
 assign retire_tag = retire_tag_reg;
 assign mem_tag = mem_tag_reg;
 assign mem_valid = mem_valid_reg;
@@ -81,7 +81,7 @@ assign clear_lsq = clear_lsq_reg;
 assign take_branch = take_branch_reg;
 assign new_addr = take_branch ? retire_value_reg : 0; // if we take the branch, we need to set the new address to the value of the instruction
 
-assign halt = halt_reg;
+assign halt = !lsq_op_in_progress && halt_reg;
 assign illegal = illegal_reg;
 assign csr_op = csr_op_reg;
 

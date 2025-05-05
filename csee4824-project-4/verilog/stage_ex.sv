@@ -211,16 +211,31 @@ module stage_ex (
         if (((tmp_alu0_pkt.valid && (is_ex_reg[0].rd_mem || is_ex_reg[0].wr_mem) )
                             || (hold_alu0_valid && hold_alu0_pkt.valid && hold_alu0_is_mem_op))) begin//ALU0
             fu_index_priv_addr = 2'd0;
-            next_priv_addr_out.valid = tmp_alu0_pkt.valid;
-            next_priv_addr_out.tag   = tmp_alu0_pkt.rob_tag;
-            next_priv_addr_out.addr  = tmp_alu0_pkt.value;
+            if (tmp_alu0_pkt.valid) begin
+                next_priv_addr_out.valid = tmp_alu0_pkt.valid;
+                next_priv_addr_out.tag   = tmp_alu0_pkt.rob_tag;
+                next_priv_addr_out.addr  = tmp_alu0_pkt.value;
+            end
+            else begin
+                next_priv_addr_out.valid = hold_alu0_pkt.valid;
+                next_priv_addr_out.tag   = hold_alu0_pkt.rob_tag;
+                next_priv_addr_out.addr  = hold_alu0_pkt.value;
+            end
         end
         else if (((tmp_alu1_pkt.valid && (is_ex_reg[1].rd_mem || is_ex_reg[1].wr_mem))
                             || (hold_alu1_valid && hold_alu1_pkt.valid && hold_alu1_is_mem_op))) begin //ALU1
             fu_index_priv_addr = 2'd1;
-            next_priv_addr_out.valid = tmp_alu1_pkt.valid;
-            next_priv_addr_out.tag   = tmp_alu1_pkt.rob_tag;
-            next_priv_addr_out.addr  = tmp_alu1_pkt.value;
+            if (tmp_alu1_pkt.valid) begin
+                next_priv_addr_out.valid = tmp_alu1_pkt.valid;
+                next_priv_addr_out.tag   = tmp_alu1_pkt.rob_tag;
+                next_priv_addr_out.addr  = tmp_alu1_pkt.value;
+            end
+            else begin
+                next_priv_addr_out.valid = hold_alu1_pkt.valid;
+                next_priv_addr_out.tag   = hold_alu1_pkt.rob_tag;
+                next_priv_addr_out.addr  = hold_alu1_pkt.value;
+            end
+            
         end
         else begin
             fu_index_priv_addr = 2'b11; // default (NOP)

@@ -1172,8 +1172,8 @@ module testbench;
         end else begin
             clock_count <= (clock_count + 1);
             instr_count <= (instr_count + pipeline_completed_insts);
-            $display("______________POS EDGE CLOCK CYCLE!!!________________");
-            display_all_signals();
+            // $display("______________POS EDGE CLOCK CYCLE!!!________________");
+            // display_all_signals();
 
             // $display("dcache2mem_addr =%h", dcache2mem_addr);
             // $display("dcache2mem_data =%h", dcache2mem_data);
@@ -1218,8 +1218,8 @@ module testbench;
             debug_counter <= 0;
         end else begin
             #2;
-            $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");  
-            display_all_signals();
+            // $display("______________NEGATIVE EDGE CLOCK CYCLE!!!________________");  
+            // display_all_signals();
             // $display("dcache2mem_addr =%h", dcache2mem_addr);
             // $display("dcache2mem_data =%h", dcache2mem_data);
             // $display("dcache2mem_command =%b", dcache2mem_command);
